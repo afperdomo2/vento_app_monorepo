@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'vento-app'
+
+include 'common'
+include 'microservices:api-gateway'
+include 'microservices:user-service'

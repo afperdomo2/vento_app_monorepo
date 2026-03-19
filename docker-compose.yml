@@ -1,0 +1,38 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: microservices/api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - vento-network
+    depends_on:
+      - user-service
+
+  user-service:
+    build:
+      context: .
+      dockerfile: microservices/user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    networks:
+      - vento-network
+
+  frontend:
+    image: node:22-alpine
+    container_name: frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    networks:
+      - vento-network
+    command: sh -c "echo 'Coloca tu frontend en la carpeta ./frontend' && tail -f /dev/null"
+
+networks:
+  vento-network:
+    driver: bridge

@@ -1,0 +1,9 @@
+# User Service
+spring:
+  application:
+    name: user-service
+  config:
+    import: optional:file:./config/user-service.yml
+
+server:
+  port: 8081
