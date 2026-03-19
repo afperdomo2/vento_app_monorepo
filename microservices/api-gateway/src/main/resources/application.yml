@@ -8,13 +8,7 @@ spring:
     gateway:
       server:
         webflux:
-          routes:
-            - id: user-service
-              uri: http://user-service:8081
-              predicates:
-                - Path=/api/users/**
-              filters:
-                - StripPrefix=1
+          routes: [ ]
 
 server:
   port: 8080

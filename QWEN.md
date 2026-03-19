@@ -6,7 +6,7 @@ Este es un **monorepo de microservicios con Spring Boot** para el proyecto Vento
 compilación Gradle multi-módulo con la siguiente arquitectura:
 
 - **API Gateway** (Spring Cloud Gateway/WebFlux) - Punto de entrada único que enruta solicitudes a los servicios backend
-- **User Service** - Microservicio Spring Boot para gestión de usuarios
+- **Event Service** - Microservicio Spring Boot para gestión de eventos
 - **Módulo Common** - Librería compartida con DTOs, excepciones y utilerías
 - **Frontend** - Espacio reservado para una futura aplicación frontend (React, Vue, Next.js, etc.)
 
@@ -26,17 +26,23 @@ compilación Gradle multi-módulo con la siguiente arquitectura:
 ```
 vento_app_monorepo/
 ├── common/                          # Módulo compartido (DTOs, utilerías)
-│   ├── src/main/java/
-│   ├── src/main/resources/
-│   └── build.gradle
+│   └── src/main/java/com/vento/common/dto/
+│       ├── ApiResponse.java         # Wrapper de respuesta
+│       ├── event/                  # DTOs de eventos
+│       └── order/                  # DTOs de pedidos
 ├── microservices/
 │   ├── api-gateway/                 # Spring Cloud Gateway (:8080)
 │   │   ├── src/main/java/com/vento/gateway/
 │   │   ├── src/main/resources/application.yml
 │   │   ├── Dockerfile
 │   │   └── build.gradle
-│   └── user-service/                # Microservicio de usuarios (:8081)
-│       ├── src/main/java/com/vento/user/
+│   ├── event-service/               # Microservicio de eventos (:8082)
+│   │   ├── src/main/java/com/vento/event/
+│   │   ├── src/main/resources/application.yml
+│   │   ├── Dockerfile
+│   │   └── build.gradle
+│   └── order-service/               # Microservicio de pedidos (:8083)
+│       ├── src/main/java/com/vento/order/
 │       ├── src/main/resources/application.yml
 │       ├── Dockerfile
 │       └── build.gradle
@@ -65,19 +71,19 @@ sdk use java 25-tem
 
 ### Comandos de Build
 
-| Comando                                       | Descripción                                |
-|-----------------------------------------------|--------------------------------------------|
-| `./gradlew build -x test`                     | Construir todos los módulos (saltar tests) |
-| `./gradlew clean`                             | Limpiar todos los artefactos de build      |
-| `./gradlew :common:build`                     | Construir solo el módulo common            |
-| `./gradlew :microservices:user-service:build` | Construir solo user-service                |
-| `./gradlew :microservices:api-gateway:build`  | Construir solo api-gateway                 |
+| Comando                                      | Descripción                                |
+|----------------------------------------------|--------------------------------------------|
+| `./gradlew build -x test`                    | Construir todos los módulos (saltar tests) |
+| `./gradlew clean`                            | Limpiar todos los artefactos de build      |
+| `./gradlew :common:build`                    | Construir solo el módulo common            |
+| `./gradlew :microservices:event-service:build` | Construir solo event-service             |
+| `./gradlew :microservices:api-gateway:build` | Construir solo api-gateway                 |
 
 ### Ejecutar Localmente (Gradle)
 
 ```bash
-# Iniciar User Service
-./gradlew :microservices:user-service:bootRun
+# Iniciar Event Service
+./gradlew :microservices:event-service:bootRun
 
 # Iniciar API Gateway (en otra terminal)
 ./gradlew :microservices:api-gateway:bootRun
@@ -104,15 +110,15 @@ docker-compose logs -f
 | Servicio     | Puerto | Descripción                                 |
 |--------------|--------|---------------------------------------------|
 | API Gateway  | 8080   | Punto de entrada para todas las solicitudes |
-| User Service | 8081   | Microservicio de gestión de usuarios        |
+| Event Service | 8082  | Microservicio de gestión de eventos         |
+| Order Service | 8083  | Microservicio de gestión de pedidos         |
 | Frontend     | 3000   | Aplicación frontend (placeholder)           |
 
 ### Enrutamiento del API Gateway
 
-| Patrón de Endpoint | Enruta a                                 |
-|--------------------|------------------------------------------|
-| `/api/users/**`    | `user-service:8081` (elimina el prefijo) |
-| `/ui/*`            | `frontend:3000`                          |
+| Patrón de Endpoint | Enruta a                    |
+|--------------------|-----------------------------|
+| `/ui/*`            | `frontend:3000`             |
 
 ## Convenciones de Desarrollo
 

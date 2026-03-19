@@ -12,7 +12,7 @@ directamente en el dashboard de Keycloak.
 
 ### 1.1 - Contratos API (SpringDoc en código)
 
-- [ ] **Event-service**: Endpoints para CRUD de eventos
+- [x] **Event-service**: Endpoints para CRUD de eventos
     - `POST /api/events` - Crear evento
     - `GET /api/events/{id}` - Obtener evento
     - `GET /api/events` - Listar eventos (con filtros)
@@ -36,17 +36,17 @@ directamente en el dashboard de Keycloak.
 
 ### 1.3 - Event-service: Estructura Base
 
-- [ ] Crear `microservices/event-service/`
-- [ ] Crear `build.gradle` con dependencias:
+- [x] Crear `microservices/event-service/`
+- [x] Crear `build.gradle` con dependencias:
     - Spring Web, Spring Data JPA, PostgreSQL
     - SpringDoc OpenAPI
     - Lombok, validation
     - Dependencia a `:common`
-- [ ] Crear `application.yml`:
+- [x] Crear `application.yml`:
     - Puerto 8082
     - Conexión a `eventos_db`
     - Configuración SpringDoc
-- [ ] Crear clase principal `EventServiceApplication.java`
+- [x] Crear clase principal `EventServiceApplication.java`
 - [ ] Crear Dockerfile
 
 ### 1.4 - Order-service: Estructura Base
@@ -67,12 +67,13 @@ directamente en el dashboard de Keycloak.
 
 ### 1.5 - Common Module: DTOs Compartidos
 
-- [ ] `EventDto` - DTO de evento
-- [ ] `CreateEventRequest` - Request para crear evento
+- [x] `EventDto` - DTO de evento
+- [x] `CreateEventRequest` - Request para crear evento
+- [ ] `UpdateEventRequest` - Request para actualizar evento
 - [ ] `OrderDto` - DTO de pedido
 - [ ] `CreateOrderRequest` - Request para crear pedido
 - [ ] `OrderItemDto` - Item dentro de un pedido
-- [ ] `ApiResponse<T>` - Wrapper de respuesta estándar
+- [x] `ApiResponse<T>` - Wrapper de respuesta estándar
 
 ### 1.6 - 🔐 Seguridad (API Gateway + Keycloak)
 
@@ -115,18 +116,18 @@ directamente en el dashboard de Keycloak.
 
 ### 2.1 - Modelos y Repositorios (Event-service)
 
-- [ ] Entidad `Event`:
-    - id, name, description, eventDate, venue, totalCapacity, availableTickets, price, createdAt, updatedAt
+- [x] Entidad `Event`:
+    - id (UUID), name, description, eventDate, venue, totalCapacity, availableTickets, price, createdAt, updatedAt
     - Anotaciones JPA (@Entity, @Table)
     - @Version para optimistic locking
-- [ ] Repositorio `EventRepository` (JpaRepository)
-- [ ] Servicio `EventService`:
+- [x] Repositorio `EventRepository` (JpaRepository)
+- [x] Servicio `EventService`:
     - createEvent()
     - getEventById()
     - listEvents() con paginación
     - updateEvent()
     - getAvailableTickets(eventId)
-- [ ] Controlador `EventController` con @Operation/@ApiResponse
+- [x] Controlador `EventController` con @Operation/@ApiResponse
 
 ### 2.2 - Modelos y Repositorios (Order-service)
 
@@ -181,19 +182,19 @@ directamente en el dashboard de Keycloak.
 
 ```
 Semana 1 ──────────────────────────────────────
-  1.1 Contratos API
-  1.2 Docker Compose  ──> Necesario para tests locales
-  1.3 Event-service    ──> Depende de 1.5 (common)
-  1.4 Order-service    ──> Depende de 1.3 (OpenFeign client)
-  1.5 Common DTOs      ─> Dependencias base
-  1.6 Seguridad        ──> Depende de 1.2 (Keycloak), 1.3, 1.4 (routing)
+  1.1 Contratos API    ✅ (Event-service)
+  1.2 Docker Compose   ──> Pendiente
+  1.3 Event-service    ✅ Completado
+  1.4 Order-service    ──> Pendiente
+  1.5 Common DTOs      ✅ (Eventos), Pendiente (Órdenes)
+  1.6 Seguridad        ──> Pendiente
 
 Semana 2 ──────────────────────────────────────
-  2.1 Event models     ──> Depende de 1.3
-  2.2 Order models     ──> Depende de 1.4
-  2.3 OpenFeign        ──> Depende de 2.1
-  2.4 Flujo E2E        ──> Depende de 2.1, 2.2, 2.3
-  2.5 Tests            ──> Depende de 2.4
+  2.1 Event models     ✅ Completado
+  2.2 Order models     ──> Pendiente
+  2.3 OpenFeign        ──> Pendiente
+  2.4 Flujo E2E        ──> Pendiente
+  2.5 Tests            ──> Pendiente
 ```
 
 ---

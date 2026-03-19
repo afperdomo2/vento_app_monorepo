@@ -5,10 +5,34 @@
 Este es un monorepo Spring Boot + Gradle que contiene microservicios:
 
 - **common/** - DTOs compartidos, utilerias, excepciones
+  - `common/dto/event/` - DTOs de eventos
+  - `common/dto/order/` - DTOs de pedidos
 - **microservices/api-gateway/** - Spring Cloud Gateway (puerto 8080)
-- **microservices/user-service/** - Servicio de gestion de usuarios (puerto 8081)
+- **microservices/event-service/** - Servicio de gestion de eventos (puerto 8082)
+- **microservices/order-service/** - Servicio de gestion de pedidos (puerto 8083)
 
 Stack tecnologico: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0
+
+## Estructura de DTOs en Common
+
+```
+common/src/main/java/com/vento/common/dto/
+├── ApiResponse.java              # Wrapper de respuesta generico
+├── event/                        # DTOs de dominio de eventos
+│   ├── EventDto.java
+│   ├── CreateEventRequest.java
+│   └── UpdateEventRequest.java
+└── order/                        # DTOs de dominio de pedidos (futuro)
+    └── ...
+```
+
+## Puertos de los Servicios
+
+| Servicio | Puerto | Descripcion |
+|----------|--------|-------------|
+| api-gateway | 8080 | Punto de entrada, routing, auth |
+| event-service | 8082 | Gestion de eventos |
+| order-service | 8083 | Gestion de pedidos |
 
 ## Comandos de Build
 
@@ -27,14 +51,14 @@ Stack tecnologico: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0
 ### Compilar Un Solo Modulo
 
 ```bash
-./gradlew :microservices:user-service:build
+./gradlew :microservices:event-service:build
 ./gradlew :microservices:api-gateway:build
 ```
 
 ### Ejecutar Servicios (Desarrollo)
 
 ```bash
-./gradlew :microservices:user-service:bootRun
+./gradlew :microservices:event-service:bootRun
 ./gradlew :microservices:api-gateway:bootRun
 ```
 
@@ -42,13 +66,13 @@ Stack tecnologico: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0
 
 ```bash
 # Ejecutar clase de test especifica
-./gradlew :microservices:user-service:test --tests "com.vento.user.SomeTest"
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
 
 # Ejecutar metodo especifico
-./gradlew :microservices:user-service:test --tests "com.vento.user.SomeTest.testMethod"
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest.testMethod"
 
 # Ejecutar tests que coincidan con un patron
-./gradlew :microservices:user-service:test --tests "*UserServiceTest*"
+./gradlew :microservices:event-service:test --tests "*EventServiceTest*"
 ```
 
 ### Otros Comandos
@@ -56,7 +80,7 @@ Stack tecnologico: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0
 ```bash
 ./gradlew clean                              # Limpiar artefactos de build
 ./gradlew dependencies                       # Mostrar dependencias
-./gradlew :microservices:user-service:dependencies
+./gradlew :microservices:event-service:dependencies
 ```
 
 ### Docker
@@ -168,5 +192,5 @@ com.vento.<modulo>/
 
 - Raiz: `/home/felipe/www/vento_app_monorepo`
 - Modulo comun: `common/`
-- User service: `microservices/user-service/`
+- Event service: `microservices/event-service/`
 - API Gateway: `microservices/api-gateway/`

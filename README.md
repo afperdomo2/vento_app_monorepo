@@ -5,9 +5,14 @@
 ```
 vento_app_monorepo/
 ├── common/                      # Módulo compartido (DTOs, utilerías)
+│   └── src/main/java/com/vento/common/dto/
+│       ├── ApiResponse.java     # Wrapper de respuesta
+│       ├── event/               # DTOs de eventos
+│       └── order/               # DTOs de pedidos (futuro)
 ├── microservices/
 │   ├── api-gateway/             # Spring Cloud Gateway (:8080)
-│   ├── user-service/            # Microservicio de usuarios (:8081)
+│   ├── event-service/           # Microservicio de eventos (:8082)
+│   └── order-service/            # Microservicio de pedidos (:8083)
 └── frontend/                    # Carpeta para el frontend
 ```
 
@@ -36,7 +41,7 @@ sdk use java 25-tem
 ### 3. Ejecutar Microservicios
 
 ```bash
-./gradlew :microservices:user-service:bootRun
+./gradlew :microservices:event-service:bootRun
 ./gradlew :microservices:api-gateway:bootRun
 ```
 
@@ -62,29 +67,58 @@ docker-compose down
 
 ## 🌐 Ruteo del API Gateway
 
-| Endpoint | Servicio |
-|----------|----------|
-| `/api/users/*` | user-service:8081 |
-| `/ui/*` | frontend:3000 |
+| Endpoint | Servicio      | Descripción               |
+|----------|---------------|---------------------------|
+| `/ui/*`  | frontend:3000 | Frontend de la aplicación |
+
+## 🔌 Endpoints de Desarrollo
+
+> ⚠️ **NOTA:** Estas rutas son **solo para desarrollo**. En producción deben estar bloqueadas o no expuestas.
+
+### A través del API Gateway (Puerto 8080)
+
+**Swagger UI:** http://localhost:8080/swagger-ui.html
+
+| Método | Endpoint           | Descripción                  |
+|--------|--------------------|------------------------------|
+| POST   | `/api/events`      | Crear evento                 |
+| GET    | `/api/events/{id}` | Obtener evento por ID (UUID) |
+| GET    | `/api/events`      | Listar eventos (paginación)  |
+| PUT    | `/api/events/{id}` | Actualizar evento            |
+
+### Event Service (Puerto 8082)
+
+**Swagger UI:** http://localhost:8082/swagger-ui.html
+
+| Método | Endpoint           | Descripción                  |
+|--------|--------------------|------------------------------|
+| POST   | `/api/events`      | Crear evento                 |
+| GET    | `/api/events/{id}` | Obtener evento por ID (UUID) |
+| GET    | `/api/events`      | Listar eventos (paginación)  |
+| PUT    | `/api/events/{id}` | Actualizar evento            |
 
 ## 📦 Módulos
 
 ### `common/`
+
 Módulo compartido con DTOs, excepciones y utilerías disponibles para todos los microservicios.
 
 ### `microservices/api-gateway/`
+
 Punto de entrada único. Recibe todas las peticiones y las enruta a los microservicios correspondientes.
 
 ### `microservices/*-service/`
+
 Cada microservicio es independiente:
-- `user-service` - Gestión de usuarios
+
+- `event-service` - Gestión de eventos
 
 ## 🛠️ Desarrollo
 
 ### Compilar un módulo específico
 
 ```bash
-./gradlew :microservices:user-service:build
+./gradlew :microservices:event-service:build
 ```
 
 ### Limpiar build
@@ -96,7 +130,7 @@ Cada microservicio es independiente:
 ### Ver dependencias de un módulo
 
 ```bash
-./gradlew :microservices:user-service:dependencies
+./gradlew :microservices:event-service:dependencies
 ```
 
 ## 📂 Agregar un Nuevo Microservicio
@@ -117,10 +151,10 @@ include 'microservices:nombre-servicio'
 Para configurar Base de Datos, RabbitMQ, Redis, etc., crear archivos `application-dev.yml` en cada microservicio:
 
 ```yaml
-# microservices/user-service/src/main/resources/application.yml
+# microservices/event-service/src/main/resources/application.yml
 spring:
   config:
-    import: optional:file:./config/user-service.yml
+    import: optional:file:./config/event-service.yml
 ```
 
 ## 👤 Autor

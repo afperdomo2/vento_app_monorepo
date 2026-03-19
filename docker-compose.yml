@@ -8,18 +8,6 @@ services:
       - "8080:8080"
     networks:
       - vento-network
-    depends_on:
-      - user-service
-
-  user-service:
-    build:
-      context: .
-      dockerfile: microservices/user-service/Dockerfile
-    container_name: user-service
-    ports:
-      - "8081:8081"
-    networks:
-      - vento-network
 
   frontend:
     image: node:22-alpine
