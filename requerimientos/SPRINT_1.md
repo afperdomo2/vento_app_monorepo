@@ -28,11 +28,11 @@ directamente en el dashboard de Keycloak.
 
 ### 1.2 - Docker Compose (Infraestructura)
 
-- [ ] Agregar **PostgreSQL** para event-service (`eventos_db`, puerto 5432)
-- [ ] Agregar **PostgreSQL** para order-service (`pedidos_db`, puerto 5433)
-- [ ] Agregar **Redis** (puerto 6379)
-- [ ] Agregar **Keycloak** (puerto 8180) - Realm: vento-realm
-- [ ] Actualizar red y dependencias existentes
+- [x] Agregar **PostgreSQL** para event-service (`events_db`, puerto 5432)
+- [x] Agregar **PostgreSQL** para order-service (`orders_db`, puerto 5433)
+- [x] Agregar **Redis** (puerto 6379)
+- [x] Agregar **Keycloak** (puerto 8180) - Realm: vento-realm
+- [x] Actualizar red y dependencias existentes
 
 ### 1.3 - Event-service: Estructura Base
 
@@ -44,26 +44,26 @@ directamente en el dashboard de Keycloak.
     - Dependencia a `:common`
 - [x] Crear `application.yml`:
     - Puerto 8082
-    - Conexión a `eventos_db`
+    - Conexión a `events_db`
     - Configuración SpringDoc
 - [x] Crear clase principal `EventServiceApplication.java`
-- [ ] Crear Dockerfile
+- [x] Crear Dockerfile
 
 ### 1.4 - Order-service: Estructura Base
 
-- [ ] Crear `microservices/order-service/`
-- [ ] Crear `build.gradle` con dependencias:
+- [x] Crear `microservices/order-service/`
+- [x] Crear `build.gradle` con dependencias:
     - Spring Web, Spring Data JPA, PostgreSQL
     - SpringDoc OpenAPI
     - OpenFeign client
     - Lombok, validation
     - Dependencia a `:common`
-- [ ] Crear `application.yml`:
+- [x] Crear `application.yml`:
     - Puerto 8083
-    - Conexión a `pedidos_db`
+    - Conexión a `orders_db`
     - Configuración SpringDoc
-- [ ] Crear clase principal `OrderServiceApplication.java`
-- [ ] Crear Dockerfile
+- [x] Crear clase principal `OrderServiceApplication.java`
+- [x] Crear Dockerfile
 
 ### 1.5 - Common Module: DTOs Compartidos
 
@@ -82,7 +82,7 @@ directamente en el dashboard de Keycloak.
     - Crear cliente `vento-api` (confidential/public)
     - Definir roles: `ADMIN`, `USER`
 
-- [ ] **API Gateway - Routing Configuration**:
+- [x] **API Gateway - Routing Configuration**:
     - Configurar ruta `/api/events/**` → `http://event-service:8082` (StripPrefix=1)
     - Configurar ruta `/api/orders/**` → `http://order-service:8083` (StripPrefix=1)
     - El Gateway recibe requests externas y las reenvía a los microservicios internos
@@ -183,11 +183,11 @@ directamente en el dashboard de Keycloak.
 ```
 Semana 1 ──────────────────────────────────────
   1.1 Contratos API    ✅ (Event-service)
-  1.2 Docker Compose   ──> Pendiente
+  1.2 Docker Compose   ✅ Completado
   1.3 Event-service    ✅ Completado
-  1.4 Order-service    ──> Pendiente
+  1.4 Order-service    ✅ Completado
   1.5 Common DTOs      ✅ (Eventos), Pendiente (Órdenes)
-  1.6 Seguridad        ──> Pendiente
+  1.6 Seguridad        🔄 En progreso (Routing completado)
 
 Semana 2 ──────────────────────────────────────
   2.1 Event models     ✅ Completado
@@ -201,8 +201,8 @@ Semana 2 ───────────────────────�
 
 ## Criterios de Aceptación
 
-- [ ] `docker-compose up` levanta: api-gateway, event-service, order-service, postgres-eventos,
-  postgres-pedidos, redis, keycloak
+- [x] `docker compose up` levanta: api-gateway, event-service, order-service, postgres-events,
+  postgres-orders, redis, keycloak
 - [ ] Keycloak accesible en http://localhost:8180 con realm `vento-realm`
 - [ ] Dashboard de Keycloak permite crear/editar/eliminar usuarios
 - [ ] Solicitudes sin token JWT retornan 401 Unauthorized
@@ -220,11 +220,11 @@ Semana 2 ───────────────────────�
 | Servicio         | Puerto | DB              | Descripción                        |
 |------------------|--------|-----------------|------------------------------------|
 | api-gateway      | 8080   | -               | Routing, JWT validation, X-User-Id |
-| event-service    | 8082   | eventos_db:5432 | Gestión de eventos                 |
-| order-service    | 8083   | pedidos_db:5433 | Gestión de pedidos                 |
-| postgres-eventos | 5432   | -               | DB eventos                         |
-| postgres-pedidos | 5433   | -               | DB pedidos                         |
-| redis            | 6379   | -               | Cache y gestión de stock           |
+| event-service    | 8082   | events_db:5432  | Gestión de eventos                 |
+| order-service    | 8083   | orders_db:5433  | Gestión de pedidos                 |
+| postgres-events  | 5432   | -               | DB eventos                         |
+| postgres-orders  | 5433   | -               | DB pedidos                         |
+| redis            | 6379   | -               | Caché y gestión de stock           |
 | keycloak         | 8180   | -               | Auth/SSO, Gestión de usuarios      |
 
 **Nota:** La gestión de usuarios (crear, editar, eliminar) se realiza directamente en el dashboard de Keycloak.

@@ -7,6 +7,7 @@ compilación Gradle multi-módulo con la siguiente arquitectura:
 
 - **API Gateway** (Spring Cloud Gateway/WebFlux) - Punto de entrada único que enruta solicitudes a los servicios backend
 - **Event Service** - Microservicio Spring Boot para gestión de eventos
+- **Order Service** - Microservicio Spring Boot para gestión de pedidos
 - **Módulo Common** - Librería compartida con DTOs, excepciones y utilerías
 - **Frontend** - Espacio reservado para una futura aplicación frontend (React, Vue, Next.js, etc.)
 
@@ -93,32 +94,38 @@ sdk use java 25-tem
 
 ```bash
 # Construir todas las imágenes Docker
-docker-compose build
+docker compose build
 
 # Iniciar todos los servicios
-docker-compose up -d
+docker compose up -d
 
 # Detener todos los servicios
-docker-compose down
+docker compose down
 
 # Ver logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Puertos de los Servicios
 
-| Servicio     | Puerto | Descripción                                 |
-|--------------|--------|---------------------------------------------|
-| API Gateway  | 8080   | Punto de entrada para todas las solicitudes |
-| Event Service | 8082  | Microservicio de gestión de eventos         |
-| Order Service | 8083  | Microservicio de gestión de pedidos         |
-| Frontend     | 3000   | Aplicación frontend (placeholder)           |
+| Servicio       | Puerto | Descripción                                 |
+|----------------|--------|---------------------------------------------|
+| API Gateway    | 8080   | Punto de entrada para todas las solicitudes |
+| Event Service  | 8082   | Microservicio de gestión de eventos         |
+| Order Service  | 8083   | Microservicio de gestión de pedidos         |
+| Frontend       | 3000   | Aplicación frontend (placeholder)           |
+| PostgreSQL     | 5432   | Base de datos events_db                     |
+| PostgreSQL     | 5433   | Base de datos orders_db                     |
+| Redis          | 6379   | Caché y gestión de stock                    |
+| Keycloak       | 8180   | Autenticación y gestión de usuarios         |
 
 ### Enrutamiento del API Gateway
 
-| Patrón de Endpoint | Enruta a                    |
-|--------------------|-----------------------------|
-| `/ui/*`            | `frontend:3000`             |
+| Patrón de Endpoint | Enruta a                                 |
+|--------------------|------------------------------------------|
+| `/api/events/**`   | `event-service:8082` (elimina el prefijo)|
+| `/api/orders/**`   | `order-service:8083` (elimina el prefijo)|
+| `/ui/*`            | `frontend:3000`                          |
 
 ## Convenciones de Desarrollo
 
@@ -169,7 +176,7 @@ Todos los servicios usan un build Docker de dos etapas:
 | `settings.gradle`     | Define nombre del proyecto y módulos incluidos                   |
 | `build.gradle` (raíz) | Declara plugins de Spring Boot y dependency management           |
 | `gradle.properties`   | Configuración de rendimiento de Gradle (caché, paralelo, daemon) |
-| `docker-compose.yml`  | Define servicios, redes y contextos de build                     |
+| `docker-compose.yml`  | Define servicios, redes y contextos de build (Docker Compose)    |
 | `common/build.gradle` | Configuración de librería Java con Lombok                        |
 
 ## Notas

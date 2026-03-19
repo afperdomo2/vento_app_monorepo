@@ -33,6 +33,10 @@ common/src/main/java/com/vento/common/dto/
 | api-gateway | 8080 | Punto de entrada, routing, auth |
 | event-service | 8082 | Gestion de eventos |
 | order-service | 8083 | Gestion de pedidos |
+| postgres-events | 5432 | Base de datos events_db |
+| postgres-orders | 5433 | Base de datos orders_db |
+| redis | 6379 | Cache y gestion de stock |
+| keycloak | 8180 | Auth/SSO, Gestion de usuarios |
 
 ## Comandos de Build
 
@@ -86,9 +90,9 @@ common/src/main/java/com/vento/common/dto/
 ### Docker
 
 ```bash
-docker-compose build
-docker-compose up -d
-docker-compose down
+docker compose build
+docker compose up -d
+docker compose down
 ```
 
 ## Guías de Estilo de Codigo
@@ -193,4 +197,5 @@ com.vento.<modulo>/
 - Raiz: `/home/felipe/www/vento_app_monorepo`
 - Modulo comun: `common/`
 - Event service: `microservices/event-service/`
+- Order service: `microservices/order-service/`
 - API Gateway: `microservices/api-gateway/`

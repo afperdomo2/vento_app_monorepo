@@ -41,7 +41,13 @@ sdk use java 25-tem
 ### 3. Ejecutar Microservicios
 
 ```bash
+# Iniciar Event Service
 ./gradlew :microservices:event-service:bootRun
+
+# Iniciar Order Service (en otra terminal)
+./gradlew :microservices:order-service:bootRun
+
+# Iniciar API Gateway (en otra terminal)
 ./gradlew :microservices:api-gateway:bootRun
 ```
 
@@ -50,25 +56,59 @@ sdk use java 25-tem
 ### Construir imágenes
 
 ```bash
-docker-compose build
+docker compose build
 ```
 
 ### Ejecutar todos los servicios
 
 ```bash
-docker-compose up -d
+docker compose up -d
+```
+
+```bash
+# Más usados en development para evitar levantar toda la infraestructura
+docker compose up -d postgres-events postgres-orders redis keycloak
+```
+
+### Ejecutar servicios individuales
+
+```bash
+docker compose up -d postgres-events
+docker compose up -d postgres-orders
+docker compose up -d redis
+docker compose up -d keycloak
+docker compose up -d event-service
+docker compose up -d order-service
+docker compose up -d api-gateway
 ```
 
 ### Detener servicios
 
 ```bash
-docker-compose down
+docker compose down
+```
+
+### Detener servicios individuales
+
+```bash
+docker compose stop event-service
+docker compose stop order-service
+docker compose stop api-gateway
+```
+
+### Ver logs
+
+```bash
+docker compose logs -f
+docker compose logs -f event-service
 ```
 
 ## 🌐 Ruteo del API Gateway
 
 | Endpoint | Servicio      | Descripción               |
 |----------|---------------|---------------------------|
+| `/api/events/**` | event-service:8082 | Gestión de eventos |
+| `/api/orders/**` | order-service:8083 | Gestión de pedidos |
 | `/ui/*`  | frontend:3000 | Frontend de la aplicación |
 
 ## 🔌 Endpoints de Desarrollo
@@ -79,23 +119,38 @@ docker-compose down
 
 **Swagger UI:** http://localhost:8080/swagger-ui.html
 
-| Método | Endpoint           | Descripción                  |
-|--------|--------------------|------------------------------|
-| POST   | `/api/events`      | Crear evento                 |
-| GET    | `/api/events/{id}` | Obtener evento por ID (UUID) |
-| GET    | `/api/events`      | Listar eventos (paginación)  |
-| PUT    | `/api/events/{id}` | Actualizar evento            |
+| Método | Endpoint            | Descripción                  |
+|--------|---------------------|------------------------------|
+| POST   | `/api/events`       | Crear evento                 |
+| GET    | `/api/events/{id}`  | Obtener evento por ID (UUID) |
+| GET    | `/api/events`       | Listar eventos (paginación)  |
+| PUT    | `/api/events/{id}`  | Actualizar evento            |
+| POST   | `/api/orders`       | Crear reserva                |
+| GET    | `/api/orders/{id}`  | Obtener pedido por ID        |
+| GET    | `/api/orders/user/{userId}` | Pedidos por usuario  |
+| PUT    | `/api/orders/{id}/cancel` | Cancelar pedido        |
 
 ### Event Service (Puerto 8082)
 
 **Swagger UI:** http://localhost:8082/swagger-ui.html
 
-| Método | Endpoint           | Descripción                  |
-|--------|--------------------|------------------------------|
-| POST   | `/api/events`      | Crear evento                 |
-| GET    | `/api/events/{id}` | Obtener evento por ID (UUID) |
-| GET    | `/api/events`      | Listar eventos (paginación)  |
-| PUT    | `/api/events/{id}` | Actualizar evento            |
+| Método | Endpoint            | Descripción                  |
+|--------|---------------------|------------------------------|
+| POST   | `/events`           | Crear evento                 |
+| GET    | `/events/{id}`      | Obtener evento por ID (UUID) |
+| GET    | `/events`           | Listar eventos (paginación)  |
+| PUT    | `/events/{id}`      | Actualizar evento            |
+
+### Order Service (Puerto 8083)
+
+**Swagger UI:** http://localhost:8083/swagger-ui.html
+
+| Método | Endpoint                  | Descripción            |
+|--------|---------------------------|------------------------|
+| POST   | `/orders`                 | Crear reserva          |
+| GET    | `/orders/{id}`            | Obtener pedido por ID  |
+| GET    | `/orders/user/{userId}`   | Pedidos por usuario    |
+| PUT    | `/orders/{id}/cancel`     | Cancelar pedido        |
 
 ## 📦 Módulos
 
@@ -112,6 +167,7 @@ Punto de entrada único. Recibe todas las peticiones y las enruta a los microser
 Cada microservicio es independiente:
 
 - `event-service` - Gestión de eventos
+- `order-service` - Gestión de pedidos
 
 ## 🛠️ Desarrollo
 
