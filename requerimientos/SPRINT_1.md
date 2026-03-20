@@ -19,7 +19,7 @@ directamente en el dashboard de Keycloak.
     - `PUT /api/events/{id}` - Actualizar evento
     - Anotaciones SpringDoc en todos los endpoints
 
-- [ ] **Order-service**: Endpoints para gestión de pedidos
+- [x] **Order-service**: Endpoints para gestión de pedidos
     - `POST /api/orders` - Crear reserva
     - `GET /api/orders/{id}` - Obtener pedido
     - `GET /api/orders/user/{userId}` - Pedidos por usuario
@@ -70,8 +70,8 @@ directamente en el dashboard de Keycloak.
 - [x] `EventDto` - DTO de evento
 - [x] `CreateEventRequest` - Request para crear evento
 - [ ] `UpdateEventRequest` - Request para actualizar evento
-- [ ] `OrderDto` - DTO de pedido
-- [ ] `CreateOrderRequest` - Request para crear pedido
+- [x] `OrderDto` - DTO de pedido
+- [x] `CreateOrderRequest` - Request para crear pedido
 - [ ] `OrderItemDto` - Item dentro de un pedido
 - [x] `ApiResponse<T>` - Wrapper de respuesta estándar
 
@@ -131,18 +131,18 @@ directamente en el dashboard de Keycloak.
 
 ### 2.2 - Modelos y Repositorios (Order-service)
 
-- [ ] Entidad `Order`:
+- [x] Entidad `Order`:
     - id, userId, eventId, quantity, totalAmount, status (PENDING, CONFIRMED, CANCELLED), createdAt, updatedAt
     - @Version para optimistic locking
-- [ ] Entidad `OrderItem`:
+- [x] Entidad `OrderItem`:
     - id, orderId, ticketType, price
-- [ ] Repositorio `OrderRepository`
-- [ ] Servicio `OrderService`:
+- [x] Repositorio `OrderRepository`
+- [x] Servicio `OrderService`:
     - createOrder() - valida disponibilidad y crea reserva
     - getOrderById()
     - getOrdersByUserId()
     - cancelOrder()
-- [ ] Controlador `OrderController`
+- [x] Controlador `OrderController`
 
 ### 2.3 - OpenFeign: Comunicación Síncrona
 
@@ -182,16 +182,16 @@ directamente en el dashboard de Keycloak.
 
 ```
 Semana 1 ──────────────────────────────────────
-  1.1 Contratos API    ✅ (Event-service)
+  1.1 Contratos API    ✅ Completado (Event-service + Order-service)
   1.2 Docker Compose   ✅ Completado
   1.3 Event-service    ✅ Completado
   1.4 Order-service    ✅ Completado
-  1.5 Common DTOs      ✅ (Eventos), Pendiente (Órdenes)
+  1.5 Common DTOs      ✅ (Eventos + Órdenes: OrderDto, CreateOrderRequest, OrderStatus)
   1.6 Seguridad        🔄 En progreso (Routing completado)
 
 Semana 2 ──────────────────────────────────────
   2.1 Event models     ✅ Completado
-  2.2 Order models     ──> Pendiente
+  2.2 Order models     ✅ Completado (Order, OrderItem, OrderRepository, OrderService, OrderController)
   2.3 OpenFeign        ──> Pendiente
   2.4 Flujo E2E        ──> Pendiente
   2.5 Tests            ──> Pendiente

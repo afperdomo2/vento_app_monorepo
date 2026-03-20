@@ -105,52 +105,52 @@ docker compose logs -f event-service
 
 ## 🌐 Ruteo del API Gateway
 
-| Endpoint | Servicio      | Descripción               |
-|----------|---------------|---------------------------|
-| `/api/events/**` | event-service:8082 | Gestión de eventos |
-| `/api/orders/**` | order-service:8083 | Gestión de pedidos |
-| `/ui/*`  | frontend:3000 | Frontend de la aplicación |
+| Endpoint         | Servicio           | Descripción               |
+|------------------|--------------------|---------------------------|
+| `/api/events/**` | event-service:8082 | Gestión de eventos        |
+| `/api/orders/**` | order-service:8083 | Gestión de pedidos        |
+| `/ui/*`          | frontend:3000      | Frontend de la aplicación |
 
-## 🔌 Endpoints de Desarrollo
-
-> ⚠️ **NOTA:** Estas rutas son **solo para desarrollo**. En producción deben estar bloqueadas o no expuestas.
+## 🔌 Endpoints
 
 ### A través del API Gateway (Puerto 8080)
 
-**Swagger UI:** http://localhost:8080/swagger-ui.html
+| Método | Endpoint                    | Descripción                  |
+|--------|-----------------------------|------------------------------|
+| POST   | `/api/events`               | Crear evento                 |
+| GET    | `/api/events/{id}`          | Obtener evento por ID (UUID) |
+| GET    | `/api/events`               | Listar eventos (paginación)  |
+| PUT    | `/api/events/{id}`          | Actualizar evento            |
+| POST   | `/api/orders`               | Crear reserva                |
+| GET    | `/api/orders/{id}`          | Obtener pedido por ID        |
+| GET    | `/api/orders/user/{userId}` | Pedidos por usuario          |
+| PUT    | `/api/orders/{id}/cancel`   | Cancelar pedido              |
 
-| Método | Endpoint            | Descripción                  |
-|--------|---------------------|------------------------------|
-| POST   | `/api/events`       | Crear evento                 |
-| GET    | `/api/events/{id}`  | Obtener evento por ID (UUID) |
-| GET    | `/api/events`       | Listar eventos (paginación)  |
-| PUT    | `/api/events/{id}`  | Actualizar evento            |
-| POST   | `/api/orders`       | Crear reserva                |
-| GET    | `/api/orders/{id}`  | Obtener pedido por ID        |
-| GET    | `/api/orders/user/{userId}` | Pedidos por usuario  |
-| PUT    | `/api/orders/{id}/cancel` | Cancelar pedido        |
+----
+
+> ⚠️ **NOTA:** Estas rutas son **solo para desarrollo**. En producción deben estar bloqueadas o no expuestas.
 
 ### Event Service (Puerto 8082)
 
 **Swagger UI:** http://localhost:8082/swagger-ui.html
 
-| Método | Endpoint            | Descripción                  |
-|--------|---------------------|------------------------------|
-| POST   | `/events`           | Crear evento                 |
-| GET    | `/events/{id}`      | Obtener evento por ID (UUID) |
-| GET    | `/events`           | Listar eventos (paginación)  |
-| PUT    | `/events/{id}`      | Actualizar evento            |
+| Método | Endpoint       | Descripción                  |
+|--------|----------------|------------------------------|
+| POST   | `/events`      | Crear evento                 |
+| GET    | `/events/{id}` | Obtener evento por ID (UUID) |
+| GET    | `/events`      | Listar eventos (paginación)  |
+| PUT    | `/events/{id}` | Actualizar evento            |
 
 ### Order Service (Puerto 8083)
 
 **Swagger UI:** http://localhost:8083/swagger-ui.html
 
-| Método | Endpoint                  | Descripción            |
-|--------|---------------------------|------------------------|
-| POST   | `/orders`                 | Crear reserva          |
-| GET    | `/orders/{id}`            | Obtener pedido por ID  |
-| GET    | `/orders/user/{userId}`   | Pedidos por usuario    |
-| PUT    | `/orders/{id}/cancel`     | Cancelar pedido        |
+| Método | Endpoint                | Descripción           |
+|--------|-------------------------|-----------------------|
+| POST   | `/orders`               | Crear reserva         |
+| GET    | `/orders/{id}`          | Obtener pedido por ID |
+| GET    | `/orders/user/{userId}` | Pedidos por usuario   |
+| PUT    | `/orders/{id}/cancel`   | Cancelar pedido       |
 
 ## 📦 Módulos
 
