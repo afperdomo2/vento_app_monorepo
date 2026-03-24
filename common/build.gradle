@@ -14,8 +14,9 @@ repositories {
 dependencies {
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    
+
     implementation "jakarta.validation:jakarta.validation-api:${jakartaValidationApiVersion}"
     implementation "io.swagger.core.v3:swagger-annotations:${swaggerAnnotationsVersion}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonAnnotationsVersion}"
+    implementation "jakarta.persistence:jakarta.persistence-api:${jakartaPersistenceApiVersion}"
 }
