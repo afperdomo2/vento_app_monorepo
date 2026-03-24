@@ -303,24 +303,83 @@ export SPRING_PROFILES_ACTIVE=dev
 ./gradlew :microservices:event-service:bootRun --args='--spring.profiles.active=prod'
 ```
 
-## 🔒 Variables de Entorno para Producción
+## 🔐 Variables de Entorno (.env)
 
-Para producción, se requieren las siguientes variables de entorno:
+Para los entornos **Dev** y **Prod** con Docker, el proyecto usa variables de entorno externalizadas.
+
+### Archivos de Variables
+
+| Archivo | Propósito | Versionado |
+|---------|-----------|------------|
+| `.env.example` | Plantilla con todas las variables | ✅ Sí (git) |
+| `.env` | Valores para desarrollo local | ❌ No (ignorado) |
+| `.env.prod` | Valores específicos para producción (opcional) | ❌ No (ignorado) |
+
+### Configurar para Desarrollo (Dev)
+
+```bash
+# 1. Copiar plantilla
+cp .env.example .env
+
+# 2. (Opcional) Editar valores en .env
+# Las contraseñas por defecto son: postgres
+
+# 3. Levantar entorno dev
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+### Configurar para Producción (Prod)
+
+**Opción 1: Usar archivo `.env.prod`**
+
+```bash
+# Crear archivo específico para producción
+cp .env.example .env.prod
+
+# Editar con valores seguros
+# POSTGRES_EVENTS_PASSWORD=tu_password_seguro
+# POSTGRES_ORDERS_PASSWORD=tu_password_seguro
+# KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
+
+# Desplegar
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+**Opción 2: Exportar variables en el shell**
+
+```bash
+export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
+export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
+export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+**Opción 3: Usar Docker Compose directamente**
+
+```bash
+POSTGRES_EVENTS_PASSWORD=tu_password_seguro \
+POSTGRES_ORDERS_PASSWORD=tu_password_seguro \
+KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro \
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+### Variables Disponibles
 
 ```bash
 # PostgreSQL Event Service
-POSTGRES_EVENTS_DB=events_db
-POSTGRES_EVENTS_USER=postgres
-POSTGRES_EVENTS_PASSWORD=<password_seguro>
+POSTGRES_EVENTS_DB=events_db          # Nombre de la base de datos
+POSTGRES_EVENTS_USER=postgres         # Usuario de la base de datos
+POSTGRES_EVENTS_PASSWORD=postgres     # Contraseña (CAMBIAR EN PROD)
 
 # PostgreSQL Order Service
-POSTGRES_ORDERS_DB=orders_db
-POSTGRES_ORDERS_USER=postgres
-POSTGRES_ORDERS_PASSWORD=<password_seguro>
+POSTGRES_ORDERS_DB=orders_db          # Nombre de la base de datos
+POSTGRES_ORDERS_USER=postgres         # Usuario de la base de datos
+POSTGRES_ORDERS_PASSWORD=postgres     # Contraseña (CAMBIAR EN PROD)
 
 # Keycloak
-KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=<password_seguro>
+KEYCLOAK_ADMIN=admin                  # Usuario admin de Keycloak
+KEYCLOAK_ADMIN_PASSWORD=admin         # Contraseña admin (CAMBIAR EN PROD)
 ```
 
 ## 🐛 Troubleshooting

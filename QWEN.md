@@ -223,6 +223,39 @@ spring:
       ddl-auto: validate  # Nunca modificar schema automáticamente
 ```
 
+### Variables de Entorno (.env)
+
+Para los entornos **Dev** y **Prod** con Docker, el proyecto usa variables de entorno externalizadas:
+
+```bash
+# Archivos de variables
+.env.example    # Plantilla versionada (git)
+.env            # Desarrollo local (ignorado)
+.env.prod       # Producción (ignorado, opcional)
+
+# Variables principales
+POSTGRES_EVENTS_DB=events_db
+POSTGRES_EVENTS_USER=postgres
+POSTGRES_EVENTS_PASSWORD=<password>
+
+POSTGRES_ORDERS_DB=orders_db
+POSTGRES_ORDERS_USER=postgres
+POSTGRES_ORDERS_PASSWORD=<password>
+
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=<password>
+```
+
+**Uso en Docker Compose:**
+
+```bash
+# Dev (usa .env automáticamente)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Prod (usa .env.prod o exportar variables)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
 ### Agregar un Nuevo Microservicio
 
 1. Crear directorio: `microservices/<nombre-servicio>/`

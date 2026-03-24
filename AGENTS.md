@@ -233,6 +233,51 @@ export SPRING_PROFILES_ACTIVE=dev
 ./gradlew :microservices:event-service:bootRun --args='--spring.profiles.active=prod'
 ```
 
+### Variables de Entorno (.env)
+
+Para Dev y Prod con Docker, usar archivos `.env`:
+
+```bash
+# Desarrollo (copiar plantilla)
+cp .env.example .env
+
+# Produccion (valores seguros)
+cp .env.example .env.prod
+# Editar con contraseñas seguras
+```
+
+**Variables principales:**
+
+```bash
+# PostgreSQL Event Service
+POSTGRES_EVENTS_DB=events_db
+POSTGRES_EVENTS_USER=postgres
+POSTGRES_EVENTS_PASSWORD=<password>
+
+# PostgreSQL Order Service
+POSTGRES_ORDERS_DB=orders_db
+POSTGRES_ORDERS_USER=postgres
+POSTGRES_ORDERS_PASSWORD=<password>
+
+# Keycloak
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=<password>
+```
+
+**Despliegue con variables:**
+
+```bash
+# Opcion 1: Archivo .env (automatico)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Opcion 2: Exportar variables
+export POSTGRES_EVENTS_PASSWORD=xxx
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Opcion 3: Inline
+POSTGRES_EVENTS_PASSWORD=xxx docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
 ### Pruebas
 
 - Colocar tests en `src/test/java` reflejando la estructura de src/main

@@ -9,15 +9,15 @@ services:
     image: postgres:16-alpine
     container_name: postgres-events
     environment:
-      POSTGRES_DB: events_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_EVENTS_DB:-events_db}
+      POSTGRES_USER: ${POSTGRES_EVENTS_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     networks:
       - vento-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_EVENTS_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,15 +27,15 @@ services:
     image: postgres:16-alpine
     container_name: postgres-orders
     environment:
-      POSTGRES_DB: orders_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_ORDERS_DB:-orders_db}
+      POSTGRES_USER: ${POSTGRES_ORDERS_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:-postgres}
     ports:
       - "5433:5432"
     networks:
       - vento-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_ORDERS_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,8 +59,8 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     container_name: keycloak
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_DB: dev-mem
     ports:
       - "8180:8080"
@@ -87,9 +87,9 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       DATABASE_HOST: postgres-events
       DATABASE_PORT: 5432
-      DATABASE_NAME: events_db
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: ${POSTGRES_EVENTS_DB:-events_db}
+      DATABASE_USERNAME: ${POSTGRES_EVENTS_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:-postgres}
     depends_on:
       postgres-events:
         condition: service_healthy
@@ -109,9 +109,9 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       DATABASE_HOST: postgres-orders
       DATABASE_PORT: 5432
-      DATABASE_NAME: orders_db
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: ${POSTGRES_ORDERS_DB:-orders_db}
+      DATABASE_USERNAME: ${POSTGRES_ORDERS_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:-postgres}
       EVENT_SERVICE_URL: http://event-service:8082
     depends_on:
       postgres-orders:
