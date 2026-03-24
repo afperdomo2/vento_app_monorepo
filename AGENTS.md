@@ -26,13 +26,26 @@ common/src/main/java/com/vento/common/dto/
     └── ...
 ```
 
+## 🌍 Entornos
+
+El proyecto soporta tres entornos de ejecucion:
+
+| Entorno | Base de Datos | Microservicios | Docker Compose |
+|---------|---------------|----------------|----------------|
+| **Local** | PostgreSQL en Docker | Gradle (hot reload) | `docker-compose.local.yml` |
+| **Dev** | PostgreSQL en Docker | Docker | `docker-compose.dev.yml` |
+| **Prod** | PostgreSQL persistente | Docker | `docker-compose.prod.yml` |
+
 ## Puertos de los Servicios
 
 | Servicio | Puerto | Descripcion |
 |----------|--------|-------------|
 | api-gateway | 8080 | Punto de entrada, routing, auth |
+| api-gateway (debug) | 5005 | Debug remoto (solo dev) |
 | event-service | 8082 | Gestion de eventos |
+| event-service (debug) | 5005 | Debug remoto (solo dev) |
 | order-service | 8083 | Gestion de pedidos |
+| order-service (debug) | 5005 | Debug remoto (solo dev) |
 | postgres-events | 5432 | Base de datos events_db |
 | postgres-orders | 5433 | Base de datos orders_db |
 | redis | 6379 | Cache y gestion de stock |
@@ -59,11 +72,30 @@ common/src/main/java/com/vento/common/dto/
 ./gradlew :microservices:api-gateway:build
 ```
 
-### Ejecutar Servicios (Desarrollo)
+### Ejecutar Servicios (Entorno Local)
 
 ```bash
+# Terminal 1: Iniciar infraestructura
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Terminal 2: Event Service con hot reload
 ./gradlew :microservices:event-service:bootRun
+
+# Terminal 3: Order Service con hot reload
+./gradlew :microservices:order-service:bootRun
+
+# Terminal 4: API Gateway con hot reload
 ./gradlew :microservices:api-gateway:bootRun
+```
+
+### Ejecutar Servicios (Entorno Dev - Docker)
+
+```bash
+# Todos los servicios en Docker
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Ver logs
+docker compose logs -f
 ```
 
 ### Ejecutar Un Solo Test (Java/JUnit)
@@ -87,12 +119,25 @@ common/src/main/java/com/vento/common/dto/
 ./gradlew :microservices:event-service:dependencies
 ```
 
-### Docker
+### Docker por Entorno
 
 ```bash
-docker compose build
-docker compose up -d
-docker compose down
+# ===== LOCAL =====
+# Solo infraestructura (microservicios con Gradle)
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml down
+
+# ===== DEV =====
+# Todos los servicios en Docker
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+# ===== PROD =====
+# Todos los servicios en Docker (produccion)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 ```
 
 ## Guías de Estilo de Codigo
@@ -159,10 +204,34 @@ com.vento.<modulo>/
 
 ### Configuracion
 
-- Usar `application.yml` para configuracion
+- Usar `application.yml` para configuracion base
+- Usar `application-local.yml`, `application-dev.yml`, `application-prod.yml` para configuraciones por entorno
 - Externalizar config con `spring.config.import` para archivos por entorno
 - Usar `@ConfigurationProperties` para configuracion tipada
-- Evitar valores hardcodeados
+- Evitar valores hardcodeados (excepto en `application-local.yml` para desarrollo rapido)
+
+### Perfiles de Spring Boot
+
+Cada microservicio tiene configuraciones especificas por perfil:
+
+```
+microservices/event-service/src/main/resources/
+├── application.yml           # Configuracion base (perfil por defecto: local)
+├── application-local.yml     # PostgreSQL localhost para desarrollo rapido
+├── application-dev.yml       # PostgreSQL con variables de entorno
+└── application-prod.yml      # PostgreSQL con validacion de schema
+```
+
+Para cambiar de perfil:
+
+```bash
+# Usar perfil especifico (local, dev, prod)
+export SPRING_PROFILES_ACTIVE=dev
+./gradlew :microservices:event-service:bootRun
+
+# O pasar como argumento
+./gradlew :microservices:event-service:bootRun --args='--spring.profiles.active=prod'
+```
 
 ### Pruebas
 

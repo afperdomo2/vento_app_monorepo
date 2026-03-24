@@ -4,27 +4,8 @@ spring:
     name: api-gateway
   config:
     import: optional:file:./config/api-gateway.yml
-  cloud:
-    gateway:
-      server:
-        web-flux:
-          routes:
-            - id: event-service
-              uri: http://localhost:8082
-              predicates:
-                - Path=/api/events/**
-
-            - id: order-service
-              uri: http://localhost:8083
-              predicates:
-                - Path=/api/orders/**
-
-            - id: frontend
-              uri: http://frontend:3000
-              predicates:
-                - Path=/ui/**
-              filters:
-                - StripPrefix=1
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
 server:
   port: 8080

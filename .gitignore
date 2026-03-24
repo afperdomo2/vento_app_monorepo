@@ -22,6 +22,8 @@ Thumbs.db
 # Environment
 .env
 .env.local
+.env.dev
+.env.prod
 
 # Docker
 docker-compose.override.yml
@@ -29,3 +31,13 @@ docker-compose.override.yml
 # Agents
 .agents/
 .qwen/
+
+# Configuraciones locales de Spring Boot
+microservices/*/src/main/resources/config/*.yml
+!microservices/*/src/main/resources/config/.gitkeep
+
+# Keys y certificados
+*.key
+*.pem
+*.crt
+*.jks

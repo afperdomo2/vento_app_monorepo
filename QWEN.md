@@ -22,6 +22,16 @@ compilación Gradle multi-módulo con la siguiente arquitectura:
 | Containerización | Docker y Docker Compose         |
 | Frontend         | Node.js 22 (placeholder)        |
 
+## 🌍 Entornos
+
+El proyecto soporta tres entornos de ejecución:
+
+| Entorno | Base de Datos | Microservicios | Uso |
+|---------|---------------|----------------|-----|
+| **Local** | PostgreSQL en Docker | Gradle (hot reload) | Desarrollo diario |
+| **Dev** | PostgreSQL en Docker | Docker | Testing integrado |
+| **Prod** | PostgreSQL persistente | Docker | Producción |
+
 ## Estructura del Repositorio
 
 ```
@@ -34,21 +44,42 @@ vento_app_monorepo/
 ├── microservices/
 │   ├── api-gateway/                 # Spring Cloud Gateway (:8080)
 │   │   ├── src/main/java/com/vento/gateway/
-│   │   ├── src/main/resources/application.yml
-│   │   ├── Dockerfile
+│   │   ├── src/main/resources/
+│   │   │   ├── application.yml          # Config base (default: local)
+│   │   │   ├── application-local.yml    # Rutas a localhost
+│   │   │   ├── application-dev.yml      # Rutas a contenedores
+│   │   │   └── application-prod.yml     # Rutas a contenedores (prod)
+│   │   ├── Dockerfile               # Legacy (usar dev/prod)
+│   │   ├── Dockerfile.dev           # Debug remoto habilitado
+│   │   ├── Dockerfile.prod          # Optimizado para producción
 │   │   └── build.gradle
 │   ├── event-service/               # Microservicio de eventos (:8082)
 │   │   ├── src/main/java/com/vento/event/
-│   │   ├── src/main/resources/application.yml
-│   │   ├── Dockerfile
+│   │   ├── src/main/resources/
+│   │   │   ├── application.yml          # Config base
+│   │   │   ├── application-local.yml    # PostgreSQL localhost
+│   │   │   ├── application-dev.yml      # PostgreSQL Docker
+│   │   │   └── application-prod.yml     # PostgreSQL prod
+│   │   ├── Dockerfile               # Legacy
+│   │   ├── Dockerfile.dev           # Debug remoto
+│   │   ├── Dockerfile.prod          # Producción
 │   │   └── build.gradle
 │   └── order-service/               # Microservicio de pedidos (:8083)
 │       ├── src/main/java/com/vento/order/
-│       ├── src/main/resources/application.yml
-│       ├── Dockerfile
+│       ├── src/main/resources/
+│       │   ├── application.yml          # Config base
+│       │   ├── application-local.yml    # PostgreSQL localhost
+│       │   ├── application-dev.yml      # PostgreSQL Docker
+│       │   └── application-prod.yml     # PostgreSQL prod
+│       ├── Dockerfile               # Legacy
+│       ├── Dockerfile.dev           # Debug remoto
+│       ├── Dockerfile.prod          # Producción
 │       └── build.gradle
 ├── frontend/                        # Espacio para frontend (basado en Node.js)
-├── docker-compose.yml               # Orquestación Docker
+├── docker-compose.yml               # Red base
+├── docker-compose.local.yml         # Infraestructura local
+├── docker-compose.dev.yml           # Todos los servicios (dev)
+├── docker-compose.prod.yml          # Todos los servicios (prod)
 ├── build.gradle                     # Configuración raíz del build
 ├── settings.gradle                  # Definición de módulos
 ├── gradle.properties                # Configuración de Gradle
@@ -80,30 +111,47 @@ sdk use java 25-tem
 | `./gradlew :microservices:event-service:build` | Construir solo event-service             |
 | `./gradlew :microservices:api-gateway:build` | Construir solo api-gateway                 |
 
-### Ejecutar Localmente (Gradle)
+### Ejecutar en Entorno Local (Recomendado para Desarrollo)
 
 ```bash
-# Iniciar Event Service
+# Terminal 1: Iniciar infraestructura (PostgreSQL, Redis, Keycloak)
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Terminal 2: Iniciar Event Service con hot reload
 ./gradlew :microservices:event-service:bootRun
 
-# Iniciar API Gateway (en otra terminal)
+# Terminal 3: Iniciar Order Service con hot reload
+./gradlew :microservices:order-service:bootRun
+
+# Terminal 4: Iniciar API Gateway con hot reload
 ./gradlew :microservices:api-gateway:bootRun
 ```
 
-### Ejecutar con Docker
+**Ventajas del entorno local:**
+- ✅ Hot reload automático al cambiar código
+- ✅ Debugging directo desde el IDE
+- ✅ Iteración rápida en desarrollo
+
+### Ejecutar en Entorno Dev (Testing)
 
 ```bash
-# Construir todas las imágenes Docker
-docker compose build
-
-# Iniciar todos los servicios
-docker compose up -d
-
-# Detener todos los servicios
-docker compose down
+# Todos los servicios en Docker
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # Ver logs
 docker compose logs -f
+```
+
+### Ejecutar en Entorno Prod (Producción)
+
+```bash
+# Requiere variables de entorno para secretos
+export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
+export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
+export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
+
+# Todos los servicios en Docker con configuración de producción
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 ### Puertos de los Servicios
@@ -111,8 +159,11 @@ docker compose logs -f
 | Servicio       | Puerto | Descripción                                 |
 |----------------|--------|---------------------------------------------|
 | API Gateway    | 8080   | Punto de entrada para todas las solicitudes |
+| API Gateway    | 5005   | Debug remoto (solo dev)                     |
 | Event Service  | 8082   | Microservicio de gestión de eventos         |
+| Event Service  | 5005   | Debug remoto (solo dev)                     |
 | Order Service  | 8083   | Microservicio de gestión de pedidos         |
+| Order Service  | 5005   | Debug remoto (solo dev)                     |
 | Frontend       | 3000   | Aplicación frontend (placeholder)           |
 | PostgreSQL     | 5432   | Base de datos events_db                     |
 | PostgreSQL     | 5433   | Base de datos orders_db                     |
@@ -121,11 +172,13 @@ docker compose logs -f
 
 ### Enrutamiento del API Gateway
 
-| Patrón de Endpoint | Enruta a                                 |
-|--------------------|------------------------------------------|
-| `/api/events/**`   | `event-service:8082` (elimina el prefijo)|
-| `/api/orders/**`   | `order-service:8083` (elimina el prefijo)|
-| `/ui/*`            | `frontend:3000`                          |
+El API Gateway tiene configuraciones de rutas específicas por perfil:
+
+| Perfil  | Event Service         | Order Service         | Frontend            |
+|---------|-----------------------|-----------------------|---------------------|
+| Local   | `http://localhost:8082` | `http://localhost:8083` | `http://localhost:3000` |
+| Dev     | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:3000` |
+| Prod    | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:3000` |
 
 ## Convenciones de Desarrollo
 
@@ -135,39 +188,70 @@ docker compose logs -f
 - Se usa Lombok para reducir código boilerplate (`@Data`, `@Builder`, etc.)
 - Spring Cloud BOM gestiona las versiones de dependencias para componentes cloud
 
-### Patrón de Configuración
+### Configuración por Perfiles
 
-Cada microservicio usa un patrón de archivo de configuración externo:
+Cada microservicio usa configuraciones específicas por perfil:
 
 ```yaml
-# application.yml en cada servicio
+# application.yml (base)
 spring:
-  config:
-    import: optional:file:./config/<nombre-servicio>.yml
-```
+  application:
+    name: event-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}  # Default: local
 
-Crear archivos `config/<nombre-servicio>.yml` para configuraciones específicas del entorno (base de datos, RabbitMQ,
-Redis, etc.).
+# application-local.yml - Desarrollo rápido con PostgreSQL en Docker
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/events_db
+    username: postgres
+    password: postgres
+
+# application-dev.yml - Desarrollo con variables de entorno
+spring:
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:events_db}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+
+# application-prod.yml - Producción con validación
+spring:
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:events_db}
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Nunca modificar schema automáticamente
+```
 
 ### Agregar un Nuevo Microservicio
 
 1. Crear directorio: `microservices/<nombre-servicio>/`
 2. Agregar `build.gradle` basado en los servicios existentes
 3. Crear estructura de paquetes Java: `src/main/java/com/vento/<servicio>/`
-4. Agregar `src/main/resources/application.yml`
-5. Crear `Dockerfile` basado en los existentes
+4. Agregar `src/main/resources/application.yml` y configuraciones por perfil
+5. Crear `Dockerfile.dev` y `Dockerfile.prod`
 6. Registrar módulo en `settings.gradle`:
    ```groovy
    include 'microservices:<nombre-servicio>'
    ```
-7. Agregar ruta en `api-gateway/src/main/resources/application.yml`
+7. Agregar rutas en `api-gateway/src/main/resources/application-local.yml`, `application-dev.yml`, y `application-prod.yml`
 
 ### Build Multi-Etapa de Docker
 
-Todos los servicios usan un build Docker de dos etapas:
+**Dockerfile.dev** (una etapa, con debug):
+```dockerfile
+FROM eclipse-temurin:25-jdk-alpine
+# ... con puerto de debug 5005 expuesto
+```
 
-1. **Etapa builder**: Usa JDK para compilar y crear el JAR
-2. **Etapa runtime**: Usa imagen solo-JRE para menor tamaño
+**Dockerfile.prod** (multi-etapa, optimizado):
+```dockerfile
+FROM eclipse-temurin:25-jdk-alpine AS builder
+# ... compilar JAR
+
+FROM eclipse-temurin:25-jre-alpine
+# ... usuario no-root, optimizaciones JVM
+```
 
 ## Referencia de Archivos Clave
 
@@ -176,11 +260,20 @@ Todos los servicios usan un build Docker de dos etapas:
 | `settings.gradle`     | Define nombre del proyecto y módulos incluidos                   |
 | `build.gradle` (raíz) | Declara plugins de Spring Boot y dependency management           |
 | `gradle.properties`   | Configuración de rendimiento de Gradle (caché, paralelo, daemon) |
-| `docker-compose.yml`  | Define servicios, redes y contextos de build (Docker Compose)    |
+| `docker-compose.yml`  | Red base compartida                                              |
+| `docker-compose.local.yml` | Infraestructura local (solo para desarrollo)             |
+| `docker-compose.dev.yml` | Todos los servicios con Dockerfile.dev                     |
+| `docker-compose.prod.yml` | Todos los servicios con Dockerfile.prod                    |
 | `common/build.gradle` | Configuración de librería Java con Lombok                        |
+| `microservices/*/src/main/resources/application.yml` | Config base con perfil default |
+| `microservices/*/src/main/resources/application-local.yml` | Config local (DB hardcodeada) |
+| `microservices/*/src/main/resources/application-dev.yml` | Config dev (variables de entorno) |
+| `microservices/*/src/main/resources/application-prod.yml` | Config prod (validación) |
 
 ## Notas
 
 - El directorio `frontend/` es un placeholder; implementar con React, Vue, Next.js o similar
 - Los archivos de configuración externos en `./config/` son opcionales y se cargan si existen
 - Git ignora `.gradle/`, `build/`, `.idea/`, y archivos específicos del entorno
+- **Importante**: El perfil por defecto es `local` para facilitar el desarrollo rápido
+- Los Dockerfile originales (`Dockerfile`) se mantienen por compatibilidad pero se recomienda usar `Dockerfile.dev` y `Dockerfile.prod`

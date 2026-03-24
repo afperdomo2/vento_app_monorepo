@@ -1,0 +1,33 @@
+# API Gateway - Configuración de Desarrollo (Dev)
+# Rutas apuntan a los contenedores Docker
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  cloud:
+    gateway:
+      routes:
+        - id: event-service
+          uri: http://event-service:8082
+          predicates:
+            - Path=/api/events/**
+
+        - id: order-service
+          uri: http://order-service:8083
+          predicates:
+            - Path=/api/orders/**
+
+        - id: frontend
+          uri: http://frontend:3000
+          predicates:
+            - Path=/ui/**
+          filters:
+            - StripPrefix=1
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

@@ -38,69 +38,147 @@ sdk use java 25-tem
 ./gradlew build -x test
 ```
 
-### 3. Ejecutar Microservicios
+### 3. Ejecutar Microservicios (Entorno Local)
 
 ```bash
-# Iniciar Event Service
+# Terminal 1: Iniciar infraestructura (PostgreSQL, Redis, Keycloak)
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Terminal 2: Iniciar Event Service con hot reload
 ./gradlew :microservices:event-service:bootRun
 
-# Iniciar Order Service (en otra terminal)
+# Terminal 3: Iniciar Order Service con hot reload
 ./gradlew :microservices:order-service:bootRun
 
-# Iniciar API Gateway (en otra terminal)
+# Terminal 4: Iniciar API Gateway con hot reload
 ./gradlew :microservices:api-gateway:bootRun
 ```
 
+## 🌍 Entornos
+
+El proyecto soporta tres entornos de ejecución:
+
+| Entorno | Base de Datos | Microservicios | Uso |
+|---------|---------------|----------------|-----|
+| **Local** | PostgreSQL en Docker | Gradle (hot reload) | Desarrollo diario |
+| **Dev** | PostgreSQL en Docker | Docker | Testing integrado |
+| **Prod** | PostgreSQL persistente | Docker | Producción |
+
+### 🏠 Entorno Local (Desarrollo)
+
+Los microservicios se ejecutan localmente con Gradle para aprovechar el hot reload. Solo la infraestructura (PostgreSQL, Redis, Keycloak) corre en Docker.
+
+```bash
+# Iniciar solo infraestructura
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Ejecutar microservicios en terminales separadas
+./gradlew :microservices:event-service:bootRun
+./gradlew :microservices:order-service:bootRun
+./gradlew :microservices:api-gateway:bootRun
+```
+
+**Ventajas:**
+- ✅ Hot reload automático al cambiar código
+- ✅ Debugging directo desde el IDE
+- ✅ Iteración rápida en desarrollo
+
+### 🔧 Entorno Dev (Testing)
+
+Todos los servicios corren en contenedores Docker con configuración de desarrollo.
+
+```bash
+# Construir y ejecutar todo
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Ver logs
+docker compose logs -f
+```
+
+**Ventajas:**
+- ✅ Entorno consistente y reproducible
+- ✅ Testing de integración real
+- ✅ Debug remoto habilitado (puerto 5005)
+
+### 🚀 Entorno Prod (Producción)
+
+Todos los servicios corren en contenedores Docker con configuración optimizada para producción.
+
+```bash
+# Ejecutar en producción
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Requiere variables de entorno para secretos
+export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
+export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
+export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
+```
+
+**Características:**
+- ✅ Imágenes optimizadas (multi-stage build)
+- ✅ Volúmenes persistentes para datos
+- ✅ Health checks configurados
+- ✅ Políticas de restart automático
+- ✅ Usuario no-root por seguridad
+
 ## 🐳 Docker
 
-### Construir imágenes
+### Comandos por Entorno
 
 ```bash
-docker compose build
+# ===== LOCAL =====
+# Solo infraestructura (microservicios con Gradle)
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml down
+
+# ===== DEV =====
+# Todos los servicios en Docker
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+# ===== PROD =====
+# Todos los servicios en Docker (producción)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 ```
 
-### Ejecutar todos los servicios
+### Servicios Individuales
 
 ```bash
-docker compose up -d
-```
-
-```bash
-# Más usados en development para evitar levantar toda la infraestructura
-docker compose up -d postgres-events postgres-orders redis keycloak
-```
-
-### Ejecutar servicios individuales
-
-```bash
+# Infraestructura común
 docker compose up -d postgres-events
 docker compose up -d postgres-orders
 docker compose up -d redis
 docker compose up -d keycloak
+
+# Microservicios (solo en dev/prod)
 docker compose up -d event-service
 docker compose up -d order-service
 docker compose up -d api-gateway
 ```
 
-### Detener servicios
+### Ver Logs
 
 ```bash
-docker compose down
+# Todos los logs
+docker compose logs -f
+
+# Logs de un servicio específico
+docker compose logs -f event-service
+docker compose logs -f postgres-events
 ```
 
-### Detener servicios individuales
+### Detener Servicios
 
 ```bash
+# Detener todo
+docker compose down
+
+# Detener servicios individuales
 docker compose stop event-service
 docker compose stop order-service
-docker compose stop api-gateway
-```
-
-### Ver logs
-
-```bash
-docker compose logs -f
-docker compose logs -f event-service
 ```
 
 ## 🌐 Ruteo del API Gateway
@@ -202,15 +280,99 @@ include 'microservices:nombre-servicio'
 
 5. Agregar ruta en `api-gateway/application.yml`
 
-## 🔧 Variables de Entorno
+## 🔧 Configuración por Perfiles
 
-Para configurar Base de Datos, RabbitMQ, Redis, etc., crear archivos `application-dev.yml` en cada microservicio:
+Cada microservicio tiene configuración específica para cada entorno:
 
-```yaml
-# microservices/event-service/src/main/resources/application.yml
-spring:
-  config:
-    import: optional:file:./config/event-service.yml
+```
+microservices/event-service/src/main/resources/
+├── application.yml           # Configuración base (perfil por defecto: local)
+├── application-local.yml     # PostgreSQL localhost para desarrollo rápido
+├── application-dev.yml       # PostgreSQL con variables de entorno
+└── application-prod.yml      # PostgreSQL con validación de schema
+```
+
+### Cambiar de Perfil
+
+```bash
+# Usar perfil específico (local, dev, prod)
+export SPRING_PROFILES_ACTIVE=dev
+./gradlew :microservices:event-service:bootRun
+
+# O pasar como argumento
+./gradlew :microservices:event-service:bootRun --args='--spring.profiles.active=prod'
+```
+
+## 🔒 Variables de Entorno para Producción
+
+Para producción, se requieren las siguientes variables de entorno:
+
+```bash
+# PostgreSQL Event Service
+POSTGRES_EVENTS_DB=events_db
+POSTGRES_EVENTS_USER=postgres
+POSTGRES_EVENTS_PASSWORD=<password_seguro>
+
+# PostgreSQL Order Service
+POSTGRES_ORDERS_DB=orders_db
+POSTGRES_ORDERS_USER=postgres
+POSTGRES_ORDERS_PASSWORD=<password_seguro>
+
+# Keycloak
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=<password_seguro>
+```
+
+## 🐛 Troubleshooting
+
+### Los microservicios no se conectan a la base de datos (Local)
+
+1. Verificar que la infraestructura esté corriendo:
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.local.yml ps
+   ```
+
+2. Verificar puertos expuestos:
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.local.yml ps
+   # PostgreSQL events: 5432
+   # PostgreSQL orders: 5433
+   ```
+
+3. Verificar logs de la base de datos:
+   ```bash
+   docker compose logs postgres-events
+   ```
+
+### Error "Connection refused" en API Gateway
+
+El API Gateway en modo `local` apunta a `localhost:8082` y `localhost:8083`. Asegúrate de que los microservicios estén corriendo:
+
+```bash
+# Verificar que los servicios estén activos
+curl http://localhost:8082/actuator/health
+curl http://localhost:8083/actuator/health
+```
+
+### Debug remoto en Docker (Dev)
+
+Los contenedores Dev exponen el puerto 5005 para debug remoto:
+
+1. En tu IDE, crear configuración de "Remote JVM Debug"
+2. Host: `localhost`, Puerto: `5005`
+3. El servicio debe estar corriendo en modo dev:
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d event-service
+   ```
+
+### Resetear bases de datos (Local)
+
+```bash
+# Detener contenedores y eliminar volúmenes
+docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
+
+# Reiniciar
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 ```
 
 ## 👤 Autor

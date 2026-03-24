@@ -1,0 +1,197 @@
+# Docker Compose - Entorno de Producción (Prod)
+# Todos los servicios en contenedores Docker con configuración de producción
+
+name: vento-app-prod
+
+services:
+  # PostgreSQL para Event Service
+  postgres-events:
+    image: postgres:16-alpine
+    container_name: postgres-events
+    environment:
+      POSTGRES_DB: ${POSTGRES_EVENTS_DB:-events_db}
+      POSTGRES_USER: ${POSTGRES_EVENTS_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
+    volumes:
+      - postgres-events-data:/var/lib/postgresql/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_EVENTS_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL para Order Service
+  postgres-orders:
+    image: postgres:16-alpine
+    container_name: postgres-orders
+    environment:
+      POSTGRES_DB: ${POSTGRES_ORDERS_DB:-orders_db}
+      POSTGRES_USER: ${POSTGRES_ORDERS_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:?Database password required}
+    volumes:
+      - postgres-orders-data:/var/lib/postgresql/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_ORDERS_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis para cache y gestión de stock
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Keycloak para autenticación y gestión de usuarios
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Keycloak admin password required}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-events:5432/${POSTGRES_EVENTS_DB:-events_db}
+      KC_DB_USERNAME: ${POSTGRES_EVENTS_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3;grep -q '200 OK' <&3" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # Event Service
+  event-service:
+    build:
+      context: .
+      dockerfile: microservices/event-service/Dockerfile.prod
+    container_name: event-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_HOST: postgres-events
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_EVENTS_DB:-events_db}
+      DATABASE_USERNAME: ${POSTGRES_EVENTS_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
+    depends_on:
+      postgres-events:
+        condition: service_healthy
+    networks:
+      - vento-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Order Service
+  order-service:
+    build:
+      context: .
+      dockerfile: microservices/order-service/Dockerfile.prod
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_HOST: postgres-orders
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_ORDERS_DB:-orders_db}
+      DATABASE_USERNAME: ${POSTGRES_ORDERS_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:?Database password required}
+      EVENT_SERVICE_URL: http://event-service:8082
+    depends_on:
+      postgres-orders:
+        condition: service_healthy
+      event-service:
+        condition: service_started
+    networks:
+      - vento-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: microservices/api-gateway/Dockerfile.prod
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/vento-realm
+    depends_on:
+      event-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - vento-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend (placeholder)
+  frontend:
+    image: node:22-alpine
+    container_name: frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    networks:
+      - vento-network
+    command: sh -c "echo 'Coloca tu frontend en la carpeta ./frontend' && tail -f /dev/null"
+    restart: unless-stopped
+
+networks:
+  vento-network:
+    driver: bridge
+
+volumes:
+  postgres-events-data:
+    driver: local
+  postgres-orders-data:
+    driver: local
+  redis-data:
+    driver: local
+  keycloak-data:
+    driver: local

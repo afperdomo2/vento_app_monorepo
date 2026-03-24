@@ -1,0 +1,79 @@
+# Docker Compose - Entorno Local
+# Solo infraestructura - los microservicios se ejecutan localmente con Gradle para hot reload
+
+name: vento-app-local
+
+services:
+  # PostgreSQL para Event Service
+  postgres-events:
+    image: postgres:16-alpine
+    container_name: postgres-events
+    environment:
+      POSTGRES_DB: events_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL para Order Service
+  postgres-orders:
+    image: postgres:16-alpine
+    container_name: postgres-orders
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para cache y gestión de stock
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Keycloak para autenticación y gestión de usuarios
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+    ports:
+      - "8180:8080"
+    command: start-dev
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3;grep -q '200 OK' <&3" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  vento-network:
+    driver: bridge

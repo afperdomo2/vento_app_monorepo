@@ -1,0 +1,18 @@
+# Event Service - Dockerfile de Desarrollo
+# Incluye soporte para debug remoto
+
+FROM eclipse-temurin:25-jdk-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN ./gradlew :microservices:event-service:bootJar --no-daemon -x test
+
+FROM eclipse-temurin:25-jdk-alpine
+WORKDIR /app
+COPY --from=builder /app/microservices/event-service/build/libs/*.jar app.jar
+
+# Exponer puerto de la aplicación y puerto de debug
+EXPOSE 8082
+EXPOSE 5005
+
+# Configurar JVM para desarrollo con debug remoto habilitado
+ENTRYPOINT ["java", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-jar", "app.jar"]
