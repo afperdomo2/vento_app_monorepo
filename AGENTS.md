@@ -1,315 +1,117 @@
 # AGENTS.md - Vento App Monorepo
 
-## Descripcion del Proyecto
+## Proyecto
+Monorepo Spring Boot + Gradle con microservicios: `common/`, `api-gateway/` (8080), `event-service/` (8082), `order-service/` (8083). Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0.
 
-Este es un monorepo Spring Boot + Gradle que contiene microservicios:
+## Comandos
 
-- **common/** - DTOs compartidos, utilerias, excepciones
-  - `common/dto/event/` - DTOs de eventos
-  - `common/dto/order/` - DTOs de pedidos
-- **microservices/api-gateway/** - Spring Cloud Gateway (puerto 8080)
-- **microservices/event-service/** - Servicio de gestion de eventos (puerto 8082)
-- **microservices/order-service/** - Servicio de gestion de pedidos (puerto 8083)
-
-Stack tecnologico: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0
-
-## Estructura de DTOs en Common
-
-```
-common/src/main/java/com/vento/common/dto/
-├── ApiResponse.java              # Wrapper de respuesta generico
-├── event/                        # DTOs de dominio de eventos
-│   ├── EventDto.java
-│   ├── CreateEventRequest.java
-│   └── UpdateEventRequest.java
-└── order/                        # DTOs de dominio de pedidos (futuro)
-    └── ...
-```
-
-## 🌍 Entornos
-
-El proyecto soporta tres entornos de ejecucion:
-
-| Entorno | Base de Datos | Microservicios | Docker Compose |
-|---------|---------------|----------------|----------------|
-| **Local** | PostgreSQL en Docker | Gradle (hot reload) | `docker-compose.local.yml` |
-| **Dev** | PostgreSQL en Docker | Docker | `docker-compose.dev.yml` |
-| **Prod** | PostgreSQL persistente | Docker | `docker-compose.prod.yml` |
-
-## Puertos de los Servicios
-
-| Servicio | Puerto | Descripcion |
-|----------|--------|-------------|
-| api-gateway | 8080 | Punto de entrada, routing, auth |
-| api-gateway (debug) | 5005 | Debug remoto (solo dev) |
-| event-service | 8082 | Gestion de eventos |
-| event-service (debug) | 5005 | Debug remoto (solo dev) |
-| order-service | 8083 | Gestion de pedidos |
-| order-service (debug) | 5005 | Debug remoto (solo dev) |
-| postgres-events | 5432 | Base de datos events_db |
-| postgres-orders | 5433 | Base de datos orders_db |
-| redis | 6379 | Cache y gestion de stock |
-| keycloak | 8180 | Auth/SSO, Gestion de usuarios |
-
-## Comandos de Build
-
-### Compilar Todo
-
+### Build
 ```bash
-./gradlew build
+./gradlew build                  # Compilar todo con tests
+./gradlew build -x test          # Compilar sin tests
+./gradlew :microservices:event-service:build   # Compilar modulo especifico
+./gradlew clean                  # Limpiar artefactos
+./gradlew dependencies           # Ver dependencias
 ```
 
-### Compilar Sin Tests
-
+### Tests
 ```bash
-./gradlew build -x test
+./gradlew test                           # Ejecutar todos los tests
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest.testMethod"
+./gradlew :microservices:event-service:test --tests "*EventServiceTest*"
+./gradlew :microservices:order-service:test --tests "*OrderServiceTest*"
 ```
 
-### Compilar Un Solo Modulo
-
+### Ejecutar Servicios (Local)
 ```bash
-./gradlew :microservices:event-service:build
-./gradlew :microservices:api-gateway:build
-```
-
-### Ejecutar Servicios (Entorno Local)
-
-```bash
-# Terminal 1: Iniciar infraestructura
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-
-# Terminal 2: Event Service con hot reload
+# Infra: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 ./gradlew :microservices:event-service:bootRun
-
-# Terminal 3: Order Service con hot reload
 ./gradlew :microservices:order-service:bootRun
-
-# Terminal 4: API Gateway con hot reload
 ./gradlew :microservices:api-gateway:bootRun
 ```
 
-### Ejecutar Servicios (Entorno Dev - Docker)
-
-```bash
-# Todos los servicios en Docker
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# Ver logs
-docker compose logs -f
-```
-
-### Ejecutar Un Solo Test (Java/JUnit)
-
-```bash
-# Ejecutar clase de test especifica
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
-
-# Ejecutar metodo especifico
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest.testMethod"
-
-# Ejecutar tests que coincidan con un patron
-./gradlew :microservices:event-service:test --tests "*EventServiceTest*"
-```
-
-### Otros Comandos
-
-```bash
-./gradlew clean                              # Limpiar artefactos de build
-./gradlew dependencies                       # Mostrar dependencias
-./gradlew :microservices:event-service:dependencies
-```
-
-### Docker por Entorno
-
-```bash
-# ===== LOCAL =====
-# Solo infraestructura (microservicios con Gradle)
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-docker compose -f docker-compose.yml -f docker-compose.local.yml down
-
-# ===== DEV =====
-# Todos los servicios en Docker
-docker compose -f docker-compose.yml -f docker-compose.dev.yml build
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-docker compose -f docker-compose.yml -f docker-compose.dev.yml down
-
-# ===== PROD =====
-# Todos los servicios en Docker (produccion)
-docker compose -f docker-compose.yml -f docker-compose.prod.yml build
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down
-```
-
-## Guías de Estilo de Codigo
-
-### General
-
-- Usar convenciones estandar de Java/Kotlin
-- Seguir mejores practicas de Spring Boot
-- Mantener las clases enfocadas en una unica responsabilidad
-
-### Convenciones de Nombres
-
-- **Clases**: PascalCase (ej., `UserService`, `ApiGatewayApplication`)
-- **Metodos**: camelCase (ej., `getUserById`, `saveUser`)
-- **Constantes**: UPPER_SNAKE_CASE (ej., `MAX_RETRY_COUNT`)
-- **Paquetes**: minusculas, singular (ej., `com.vento.user`, `com.vento.gateway`)
+## Convenciones de Codigo
 
 ### Estructura de Paquetes
-
 ```
 com.vento.<modulo>/
-├── controller/    # Controladores REST
-├── service/       # Logica de negocio
-├── repository/    # Acceso a datos
-├── model/         # Modelos de dominio
-├── dto/           # Objetos de transferencia de datos
-├── config/        # Clases de configuracion
-├── exception/     # Excepciones personalizadas
-└── util/          # Clases de utilidad
+├── controller/   # REST endpoints
+├── service/      # Logica de negocio (interfaz + impl)
+├── repository/   # Acceso a datos
+├── model/        # Entidades JPA
+├── dto/          # Data Transfer Objects
+├── config/       # Configuracion
+├── exception/    # Excepciones personalizadas
+└── util/         # Utilidades
 ```
+
+### Nombres
+- Clases: PascalCase (`UserService`, `EventController`)
+- Metodos: camelCase (`getUserById`, `saveEvent`)
+- Constantes: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
+- Paquetes: minusculas, singular (`com.vento.event`)
+- Variables: camelCase (`userList`, `maxItems`)
 
 ### Imports
+- Imports explicitos (sin `.*`)
+- Orden: static > java > javax > org.springframework > terceros
+- Agrupar con lineas en blanco entre grupos
 
-- Usar imports explicitos (sin comodines `.*`)
-- Orden: static, java, javax, org.springframework, terceros
-- Agrupar por categoria con lineas en blanco entre grupos
-
-### Tipos
-
-- Usar interfaces para servicios donde sea apropiado
-- Preferir objetos inmutables (usar `@Value` de Lombok o record)
-- Usar `Optional` para tipos que pueden ser nulos
-- Evitar tipos crudos con genericos
-
-### Anotaciones
-
+### Tipos y Anotaciones
+- Usar interfaces para servicios cuando aplique
+- Preferir inmutables (`@Value`, records)
+- Usar `Optional` para valores nulos
+- `@Autowired` en constructores (no en campos)
+- Usar `@Valid` en DTOs de entrada
+- Usar `@Builder` para objetos complejos
 - Usar `@Service`, `@Repository`, `@Controller` apropiadamente
-- Usar `@Autowired` en constructores (preferido sobre inyeccion de campos)
-- Usar `@Valid` en DTOs en metodos de controlador
-- Usar `@Builder` para construccion de objetos complejos
 
 ### Manejo de Errores
-
-- Usar excepciones personalizadas extendiendo `RuntimeException`
-- Crear manejador global de excepciones con `@ControllerAdvice`
-- Retornar codigos HTTP apropiados (4xx para errores de cliente, 5xx para errores de servidor)
-- Registrar errores apropiadamente (usar `@Slf4j` de Lombok)
-
-### Logging
-
-- Usar `@Slf4j` para logging
-- Registrar en niveles apropiados (ERROR para fallos, INFO para eventos importantes)
-- No registrar datos sensibles (contraseñas, tokens, PII)
+- Excepciones personalizadas extienden `RuntimeException`
+- `@ControllerAdvice` para manejo global de excepciones
+- Codigos HTTP apropiados (4xx para cliente, 5xx para servidor)
+- Usar `@Slf4j` para logging con Lombok
+- Registrar en niveles apropiados (ERROR, WARN, INFO)
 
 ### Configuracion
-
-- Usar `application.yml` para configuracion base
-- Usar `application-local.yml`, `application-dev.yml`, `application-prod.yml` para configuraciones por entorno
-- Externalizar config con `spring.config.import` para archivos por entorno
-- Usar `@ConfigurationProperties` para configuracion tipada
-- Evitar valores hardcodeados (excepto en `application-local.yml` para desarrollo rapido)
-
-### Perfiles de Spring Boot
-
-Cada microservicio tiene configuraciones especificas por perfil:
-
-```
-microservices/event-service/src/main/resources/
-├── application.yml           # Configuracion base (perfil por defecto: local)
-├── application-local.yml     # PostgreSQL localhost para desarrollo rapido
-├── application-dev.yml       # PostgreSQL con variables de entorno
-└── application-prod.yml      # PostgreSQL con validacion de schema
-```
-
-Para cambiar de perfil:
-
-```bash
-# Usar perfil especifico (local, dev, prod)
-export SPRING_PROFILES_ACTIVE=dev
-./gradlew :microservices:event-service:bootRun
-
-# O pasar como argumento
-./gradlew :microservices:event-service:bootRun --args='--spring.profiles.active=prod'
-```
-
-### Variables de Entorno (.env)
-
-Para Dev y Prod con Docker, usar archivos `.env`:
-
-```bash
-# Desarrollo (copiar plantilla)
-cp .env.example .env
-
-# Produccion (valores seguros)
-cp .env.example .env.prod
-# Editar con contraseñas seguras
-```
-
-**Variables principales:**
-
-```bash
-# PostgreSQL Event Service
-POSTGRES_EVENTS_DB=events_db
-POSTGRES_EVENTS_USER=postgres
-POSTGRES_EVENTS_PASSWORD=<password>
-
-# PostgreSQL Order Service
-POSTGRES_ORDERS_DB=orders_db
-POSTGRES_ORDERS_USER=postgres
-POSTGRES_ORDERS_PASSWORD=<password>
-
-# Keycloak
-KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=<password>
-```
-
-**Despliegue con variables:**
-
-```bash
-# Opcion 1: Archivo .env (automatico)
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# Opcion 2: Exportar variables
-export POSTGRES_EVENTS_PASSWORD=xxx
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# Opcion 3: Inline
-POSTGRES_EVENTS_PASSWORD=xxx docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
+- `application.yml` base + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`)
+- Usar `@ConfigurationProperties` para config tipada
+- No hardcodear secrets (usar variables de entorno)
+- Perfiles: local (dev rapido), dev (docker), prod (produccion)
 
 ### Pruebas
-
-- Colocar tests en `src/test/java` reflejando la estructura de src/main
-- Usar JUnit 5 (Jupiter) con assertions de `org.junit.jupiter.api`
-- Usar `@SpringBootTest` para tests de integracion
-- Mockear dependencias externas con `@MockBean`
+- Ubicacion: `src/test/java` reflejando estructura de `src/main`
+- JUnit 5 (`org.junit.jupiter.api`)
+- `@SpringBootTest` para tests de integracion
+- `@MockBean` para dependencias externas
 - Seguir patron AAA (Arrange, Act, Assert)
+- Nombre: `*Test.java`, `*IntegrationTest.java`
 
-### Documentacion
+### Documentacion y Logging
+- Javadoc para APIs publicas y clases importantes
+- Codigo autodocumentado con nombres significativos
+- No loggear datos sensibles (contraseñas, tokens, PII)
 
-- Agregar Javadoc para APIs publicas y clases importantes
-- Usar nombres de metodos y variables significativos (codigo autodocumentado)
-- Mantener comentarios actualizados con los cambios del codigo
+## Agregar Nuevo Microservicio
+1. Crear `microservices/<nombre>/` con estructura de paquetes
+2. Crear `build.gradle` basado en servicios existentes
+3. Agregar en `settings.gradle`: `include 'microservices:<nombre>'`
+4. Agregar ruta en `api-gateway/src/main/resources/application.yml`
+5. Crear `application.yml` con perfiles local/dev/prod
 
-### Buenas Practicas de Git
-
-- Hacer commits atomicos
-- Escribir mensajes de commit significativos
-- Crear ramas de feature para nueva funcionalidad
-
-## Agregar un Nuevo Microservicio
-
-1. Crear carpeta en `microservices/<nombre-servicio>/`
-2. Crear `build.gradle` basado en los servicios existentes
-3. Crear estructura de paquetes Java bajo `src/main/java/com/vento/<modulo>/`
-4. Agregar en `settings.gradle`: `include 'microservices:<nombre-servicio>'`
-5. Agregar ruta en `api-gateway/src/main/resources/application.yml`
-
-## Rutas Importantes
-
+## Rutas Clave
 - Raiz: `/home/felipe/www/vento_app_monorepo`
-- Modulo comun: `common/`
+- Common: `common/`
 - Event service: `microservices/event-service/`
 - Order service: `microservices/order-service/`
 - API Gateway: `microservices/api-gateway/`
+
+## Puertos
+- api-gateway: 8080
+- event-service: 8082
+- order-service: 8083
+- postgres-events: 5432
+- postgres-orders: 5433
+- redis: 6379
+- keycloak: 8180

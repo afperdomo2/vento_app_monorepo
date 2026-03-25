@@ -24,6 +24,3 @@ spring:
             - Path=/ui/**
           filters:
             - StripPrefix=1
-
-server:
-  port: 8080

@@ -217,6 +217,78 @@ docker compose stop order-service
 | GET    | `/orders/user/{userId}` | Pedidos por usuario   |
 | PUT    | `/orders/{id}/cancel`   | Cancelar pedido       |
 
+## 🔐 Seguridad (Keycloak)
+
+La autenticación y autorización del sistema está centralizada en el **API Gateway** usando **Keycloak** como proveedor
+de identidad OAuth2/OpenID Connect.
+
+### 📋 Credenciales por Defecto (Solo Desarrollo Local)
+
+| Servicio               | URL                   | Usuario | Contraseña |
+|------------------------|-----------------------|---------|------------|
+| **Keycloak Dashboard** | http://localhost:8180 | `admin` | `admin`    |
+
+> ⚠️ **IMPORTANTE:** Estas credenciales son **EXCLUSIVAS para desarrollo local**. En producción, debes cambiar las
+> contraseñas en el archivo `.env.prod` antes de desplegar.
+
+### 🔑 Configuración Requerida
+
+Antes de usar la API, debes configurar Keycloak con los siguientes elementos:
+
+1. **Realm:** `vento-realm`
+2. **Cliente:** `vento-api` (OpenID Connect, confidential)
+3. **Roles:** `USER`, `ADMIN`
+4. **Usuarios:** Crear usuarios y asignar roles
+
+### 📖 Guía Completa de Configuración
+
+Para instrucciones detalladas paso a paso, consulta: **[KEYCLOAK_SETUP.md](./KEYCLOAK_SETUP.md)**
+
+La guía incluye:
+
+- ✅ Creación de realm, cliente y roles
+- ✅ Creación de usuarios
+- ✅ Cómo obtener tokens JWT
+- ✅ Ejemplos de requests autenticados
+- ✅ Troubleshooting de errores comunes
+
+### 🧪 Ejemplo Rápido de Uso
+
+```bash
+# 1. Obtener token JWT
+TOKEN=$(curl -X POST http://localhost:8180/realms/vento-realm/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=vento-api" \
+  -d "client_secret=<CLIENT_SECRET>" \
+  -d "username=testuser" \
+  -d "password=password123" | jq -r '.access_token')
+
+# 2. Usar token en requests a la API
+curl -X GET http://localhost:8080/api/events \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 🛡️ Comportamiento de Seguridad
+
+| Escenario                      | Comportamiento                   |
+|--------------------------------|----------------------------------|
+| Request sin token              | `401 Unauthorized`               |
+| Token inválido/expirado        | `401 Unauthorized`               |
+| Token válido sin rol requerido | `403 Forbidden`                  |
+| Token válido con rol correcto  | `200 OK` → pasa al microservicio |
+
+### 📡 Headers Propagados a Microservicios
+
+El API Gateway extrae información del JWT y la propaga como headers:
+
+| Header         | Descripción                         | Origen en JWT              |
+|----------------|-------------------------------------|----------------------------|
+| `X-User-Id`    | ID único del usuario                | Claim `sub`                |
+| `X-User-Roles` | Roles del usuario (comma-separated) | Claim `realm_access.roles` |
+
+> Los microservicios **NO validan JWT**. Confían en los headers propagados por el Gateway.
+
 ## 📦 Módulos
 
 ### `common/`

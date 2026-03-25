@@ -69,7 +69,7 @@ directamente en el dashboard de Keycloak.
 
 - [x] `EventDto` - DTO de evento
 - [x] `CreateEventRequest` - Request para crear evento
-- [ ] `UpdateEventRequest` - Request para actualizar evento
+- [x] `UpdateEventRequest` - Request para actualizar evento
 - [x] `OrderDto` - DTO de pedido
 - [x] `CreateOrderRequest` - Request para crear pedido
 - [ ] `OrderItemDto` - Item dentro de un pedido
@@ -77,7 +77,7 @@ directamente en el dashboard de Keycloak.
 
 ### 1.6 - 🔐 Seguridad (API Gateway + Keycloak)
 
-- [ ] **Keycloak Configuration**:
+- [x] **Keycloak Configuration**:
     - Configurar realm `vento-realm` en Keycloak
     - Crear cliente `vento-api` (confidential/public)
     - Definir roles: `ADMIN`, `USER`
@@ -87,7 +87,7 @@ directamente en el dashboard de Keycloak.
     - Configurar ruta `/api/orders/**` → `http://order-service:8083` (StripPrefix=1)
     - El Gateway recibe requests externas y las reenvía a los microservicios internos
 
-- [ ] **API Gateway - JWT Validation**:
+- [x] **API Gateway - JWT Validation**:
     - Agregar dependencia Spring Security OAuth2 Resource Server
     - Configurar JwtDecoder con Keycloak issuer URI
     - Validar tokens JWT en todas las rutas protegidas
