@@ -1,0 +1,901 @@
+{
+  "info": {
+    "_postman_id": "vento-app-collection-v1",
+    "name": "Vento App API",
+    "description": "Colección de endpoints para la API de Vento App - Microservicios con Spring Boot",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "keycloak_url",
+      "value": "http://localhost:8180",
+      "type": "string"
+    },
+    {
+      "key": "realm",
+      "value": "vento-realm",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "vento-api",
+      "type": "string"
+    },
+    {
+      "key": "client_secret",
+      "value": "<TU_CLIENT_SECRET>",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "testuser",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "event_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Get Access Token (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.access_token);",
+                  "    console.log('✅ Token guardado:', response.access_token.substring(0, 50) + '...');",
+                  "} else {",
+                  "    console.error('❌ Error al obtener token:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": [
+                "{{keycloak_url}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "description": "Obtiene un token de acceso JWT usando las credenciales del usuario.\n\nEl token se guarda automáticamente en la variable `access_token` de la colección."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Access Token (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.access_token);",
+                  "    console.log('✅ Token admin guardado:', response.access_token.substring(0, 50) + '...');",
+                  "} else {",
+                  "    console.error('❌ Error al obtener token:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": [
+                "{{keycloak_url}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "description": "Obtiene un token de acceso JWT usando las credenciales de administrador."
+          },
+          "response": []
+        },
+        {
+          "name": "Decode Current Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const token = pm.collectionVariables.get('access_token');",
+                  "if (token) {",
+                  "    const parts = token.split('.');",
+                  "    if (parts.length === 3) {",
+                  "        const payload = JSON.parse(atob(parts[1]));",
+                  "        console.log('📋 Payload del token:');",
+                  "        console.log('  - sub:', payload.sub);",
+                  "        console.log('  - username:', payload.preferred_username);",
+                  "        console.log('  - roles:', payload.realm_access?.roles || []);",
+                  "        console.log('  - exp:', new Date(payload.exp * 1000).toLocaleString());",
+                  "    }",
+                  "} else {",
+                  "    console.error('❌ No hay token guardado');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://jwt.io",
+              "protocol": "https",
+              "host": [
+                "jwt",
+                "io"
+              ]
+            },
+            "description": "Este request es solo informativo. Para decodificar el token, copia el valor de `access_token` y pégalo en https://jwt.io"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de autenticación con Keycloak"
+    },
+    {
+      "name": "📅 Events",
+      "item": [
+        {
+          "name": "List Events (Paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Eventos obtenidos:', response.content?.length || 0);",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/events?page=0&size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Número de página (0-indexed)"
+                },
+                {
+                  "key": "size",
+                  "value": "10",
+                  "description": "Elementos por página"
+                }
+              ]
+            },
+            "description": "Lista todos los eventos con paginación.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('event_id', response.data?.id || response.id);",
+                  "    console.log('✅ Evento creado. ID:', pm.collectionVariables.get('event_id'));",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Concierto de Rock 2026\",\n  \"description\": \"Gran concierto de rock al aire libre con bandas locales e internacionales\",\n  \"eventDate\": \"2026-08-15T20:00:00\",\n  \"venue\": \"Estadio Nacional\",\n  \"totalCapacity\": 5000,\n  \"price\": 75.50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "description": "Crea un nuevo evento.\n\nCampos requeridos:\n- name: Nombre del evento\n- description: Descripción detallada\n- eventDate: Fecha y hora (ISO 8601)\n- venue: Lugar del evento\n- totalCapacity: Capacidad total\n- price: Precio por entrada\n\nRequiere: Token JWT válido con rol ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Evento obtenido:', response.data?.name || response.name);",
+                  "} else if (pm.response.code === 404) {",
+                  "    console.error('❌ Evento no encontrado');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/events/{{event_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}"
+              ]
+            },
+            "description": "Obtiene los detalles de un evento por su ID.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Evento actualizado correctamente');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Concierto de Rock 2026 - Actualizado\",\n  \"description\": \"Gran concierto de rock al aire libre con bandas locales e internacionales - Edición especial\",\n  \"eventDate\": \"2026-08-15T21:00:00\",\n  \"venue\": \"Estadio Nacional - Tribuna Oeste\",\n  \"totalCapacity\": 5000,\n  \"price\": 85.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/{{event_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}"
+              ]
+            },
+            "description": "Actualiza un evento existente.\n\nRequiere: Token JWT válido con rol ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 204 || pm.response.code === 200) {",
+                  "    console.log('✅ Evento eliminado correctamente');",
+                  "    pm.collectionVariables.set('event_id', '');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/events/{{event_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}"
+              ]
+            },
+            "description": "Elimina un evento por su ID.\n\nRequiere: Token JWT válido con rol ADMIN."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para la gestión de eventos (CRUD)"
+    },
+    {
+      "name": "🎫 Orders",
+      "item": [
+        {
+          "name": "Create Order (Reserve Tickets)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('order_id', response.data?.id || response.id);",
+                  "    console.log('✅ Reserva creada. Order ID:', pm.collectionVariables.get('order_id'));",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.error('❌ Conflict: No hay suficientes tickets disponibles');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "test-user-id",
+                "type": "text",
+                "description": "ID del usuario (propagado por el Gateway)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{event_id}}\",\n  \"quantity\": 2,\n  \"ticketType\": \"GENERAL\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Crea una nueva reserva de entradas para un evento.\n\nCampos requeridos:\n- eventId: ID del evento (UUID)\n- quantity: Cantidad de entradas\n- ticketType: Tipo de entrada (GENERAL, VIP, etc.)\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Orden obtenida. Estado:', response.data?.status || response.status);",
+                  "} else if (pm.response.code === 404) {",
+                  "    console.error('❌ Orden no encontrada');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}"
+              ]
+            },
+            "description": "Obtiene los detalles de una orden por su ID.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Orders by User ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Órdenes obtenidas:', response.content?.length || 0);",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/user/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "user",
+                "{{user_id}}"
+              ]
+            },
+            "description": "Obtiene todas las órdenes de un usuario específico.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Mis órdenes obtenidas:', response.content?.length || 0);",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/my-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "my-orders"
+              ]
+            },
+            "description": "Obtiene todas las órdenes del usuario autenticado.\n\nEl userId se extrae automáticamente del token JWT por el API Gateway.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Orden cancelada correctamente');",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.error('❌ Conflict: La orden no puede ser cancelada (ya está confirmada o cancelada)');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancela una orden existente.\n\nSolo se pueden cancelar órdenes en estado PENDING.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para la gestión de pedidos y reservas"
+    },
+    {
+      "name": "🏥 Health Checks",
+      "item": [
+        {
+          "name": "API Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/actuator/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica el estado de salud del API Gateway.\n\nNo requiere autenticación."
+          },
+          "response": []
+        },
+        {
+          "name": "Event Service Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8082/actuator/health",
+              "host": [
+                "http://localhost:8082"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica el estado de salud del Event Service.\n\nNo requiere autenticación (acceso directo al servicio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Order Service Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8083/actuator/health",
+              "host": [
+                "http://localhost:8083"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica el estado de salud del Order Service.\n\nNo requiere autenticación (acceso directo al servicio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Keycloak Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloak_url}}/health/ready",
+              "host": [
+                "{{keycloak_url}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            },
+            "description": "Verifica el estado de salud de Keycloak.\n\nNo requiere autenticación."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de health check para monitoreo"
+    }
+  ]
+}
