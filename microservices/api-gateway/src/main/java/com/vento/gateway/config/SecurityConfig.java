@@ -8,6 +8,13 @@ import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+/**
+ * Configuración de seguridad del API Gateway.
+ *
+ * - Válida tokens JWT usando Keycloak como proveedor de identidad
+ * - Define rutas públicas vs protegidas
+ * - El JWT validado es disponible para filtros downstream (JwtHeaderFilter)
+ */
 @Configuration
 public class SecurityConfig {
 
@@ -26,7 +33,9 @@ public class SecurityConfig {
                 // Todas las demás rutas requieren autenticación
                 .anyExchange().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtDecoder(jwtDecoder())));
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtDecoder(jwtDecoder()))
+            );
 
         return http.build();
     }

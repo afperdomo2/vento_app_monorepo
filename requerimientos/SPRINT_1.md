@@ -93,10 +93,11 @@ directamente en el dashboard de Keycloak.
     - Validar tokens JWT en todas las rutas protegidas
     - Si token es inválido → retorna 401 Unauthorized
 
-- [ ] **API Gateway - Header Propagation**:
+- [x] **API Gateway - Header Propagation**:
     - Extraer `sub` (userId) del JWT
     - Insertar header `X-User-Id` en requests hacia microservicios
     - Insertar header `X-User-Roles` con roles del usuario
+    - Implementado: `JwtHeaderFilter.java` en API Gateway
 
 - [ ] **Rutas Protegidas vs Públicas**:
     - `/api/events/**` - Requiere rol `USER`
@@ -105,10 +106,11 @@ directamente en el dashboard de Keycloak.
     - `/swagger-ui/**`, `/v3/api-docs/**` - Público (desarrollo)
     - `/auth/**` - Público (para login, registro vía Keycloak)
 
-- [ ] **Microservicios - Confianza en Headers**:
+- [x] **Microservicios - Confianza en Headers**:
     - NO validar tokens en microservicios individuales
     - Confiar en `X-User-Id` y `X-User-Roles` del Gateway
     - Agregar filtro para extraer headers de contexto
+    - Implementado: `UserContextFilter.java` + `UserContext.java` en common module
 
 ---
 
@@ -187,7 +189,7 @@ Semana 1 ───────────────────────�
   1.3 Event-service    ✅ Completado
   1.4 Order-service    ✅ Completado
   1.5 Common DTOs      ✅ (Eventos + Órdenes: OrderDto, CreateOrderRequest, OrderStatus)
-  1.6 Seguridad        🔄 En progreso (Routing completado)
+  1.6 Seguridad        ✅ JWT Validation + Header Propagation completados
 
 Semana 2 ──────────────────────────────────────
   2.1 Event models     ✅ Completado
@@ -206,12 +208,12 @@ Semana 2 ───────────────────────�
 - [ ] Keycloak accesible en http://localhost:8180 con realm `vento-realm`
 - [ ] Dashboard de Keycloak permite crear/editar/eliminar usuarios
 - [ ] Solicitudes sin token JWT retornan 401 Unauthorized
-- [ ] Solicitudes con token válido pasan a través del Gateway con header `X-User-Id`
+- [x] Solicitudes con token válido pasan a través del Gateway con header `X-User-Id`
 - [ ] POST /api/events crea un evento y guarda en PostgreSQL
 - [ ] POST /api/orders crea una reserva verificando disponibilidad en event-service
 - [ ] GET /api/events retorna lista paginada con documentación Swagger
 - [ ] Tests unitarios pasan con `./gradlew test`
-- [ ] Build completo pasa con `./gradlew build`
+- [x] Build completo pasa con `./gradlew build`
 
 ---
 
