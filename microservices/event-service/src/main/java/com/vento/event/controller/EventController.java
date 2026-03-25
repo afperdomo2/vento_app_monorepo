@@ -88,20 +88,20 @@ public class EventController {
     })
     @GetMapping
     public ResponseEntity<ApiResponse<Page<EventDto>>> listEvents(
-            @Parameter(description = "Número de página (0-indexed)") 
+            @Parameter(description = "Número de página (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Tamaño de página") 
+            @Parameter(description = "Tamaño de página")
             @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Campo de ordenamiento") 
+            @Parameter(description = "Campo de ordenamiento")
             @RequestParam(defaultValue = "eventDate") String sortBy,
-            @Parameter(description = "Dirección de ordenamiento") 
+            @Parameter(description = "Dirección de ordenamiento")
             @RequestParam(defaultValue = "ASC") String sortDir) {
-        
-        Sort sort = sortDir.equalsIgnoreCase("DESC") 
-                ? Sort.by(sortBy).descending() 
+
+        Sort sort = sortDir.equalsIgnoreCase("DESC")
+                ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         PageRequest pageRequest = PageRequest.of(page, size, sort);
-        
+
         Page<EventDto> events = eventService.listEvents(pageRequest);
         return ResponseEntity.ok(ApiResponse.success(events));
     }

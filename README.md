@@ -52,6 +52,9 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # Terminal 4: Iniciar API Gateway con hot reload
 ./gradlew :microservices:api-gateway:bootRun
+
+# Terminal 5: Compilar continuamente para hot reload (opcional)
+./gradlew classes --continuous
 ```
 
 ## 🌍 Entornos

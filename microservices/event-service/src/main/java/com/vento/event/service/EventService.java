@@ -52,7 +52,7 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public Page<EventDto> listEvents(Pageable pageable) {
-        log.info("Listando eventos - Página: {}, Tamaño: {}", 
+        log.info("Listando eventos - Página: {}, Tamaño: {}",
                 pageable.getPageNumber(), pageable.getPageSize());
         return eventRepository.findAll(pageable)
                 .map(this::mapToDto);
