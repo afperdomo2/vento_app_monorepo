@@ -7,13 +7,12 @@ services:
   # PostgreSQL para Event Service
   postgres-events:
     image: postgres:16-alpine
-    container_name: postgres-events
     environment:
       POSTGRES_DB: ${POSTGRES_EVENTS_DB:-events_db}
       POSTGRES_USER: ${POSTGRES_EVENTS_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
     volumes:
-      - postgres-events-data:/var/lib/postgresql/data
+      - postgres-events-data-prod:/var/lib/postgresql/data
     networks:
       - vento-network
     healthcheck:
@@ -26,13 +25,12 @@ services:
   # PostgreSQL para Order Service
   postgres-orders:
     image: postgres:16-alpine
-    container_name: postgres-orders
     environment:
       POSTGRES_DB: ${POSTGRES_ORDERS_DB:-orders_db}
       POSTGRES_USER: ${POSTGRES_ORDERS_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:?Database password required}
     volumes:
-      - postgres-orders-data:/var/lib/postgresql/data
+      - postgres-orders-data-prod:/var/lib/postgresql/data
     networks:
       - vento-network
     healthcheck:
@@ -45,10 +43,9 @@ services:
   # Redis para cache y gestión de stock
   redis:
     image: redis:7-alpine
-    container_name: redis
     command: redis-server --appendonly yes
     volumes:
-      - redis-data:/data
+      - redis-data-prod:/data
     networks:
       - vento-network
     healthcheck:
@@ -61,7 +58,6 @@ services:
   # Keycloak para autenticación y gestión de usuarios
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    container_name: keycloak
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Keycloak admin password required}
@@ -70,7 +66,7 @@ services:
       KC_DB_USERNAME: ${POSTGRES_EVENTS_USER:-postgres}
       KC_DB_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
     volumes:
-      - keycloak-data:/opt/keycloak/data
+      - keycloak-data-prod:/opt/keycloak/data
     networks:
       - vento-network
     healthcheck:
@@ -86,7 +82,6 @@ services:
     build:
       context: .
       dockerfile: microservices/event-service/Dockerfile.prod
-    container_name: event-service
     ports:
       - "8082:8082"
     environment:
@@ -114,7 +109,6 @@ services:
     build:
       context: .
       dockerfile: microservices/order-service/Dockerfile.prod
-    container_name: order-service
     ports:
       - "8083:8083"
     environment:
@@ -145,7 +139,6 @@ services:
     build:
       context: .
       dockerfile: microservices/api-gateway/Dockerfile.prod
-    container_name: api-gateway
     ports:
       - "8080:8080"
     environment:
@@ -171,7 +164,6 @@ services:
   # Frontend (placeholder)
   frontend:
     image: node:22-alpine
-    container_name: frontend
     working_dir: /app
     volumes:
       - ./frontend:/app
@@ -187,11 +179,11 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-events-data:
+  postgres-events-data-prod:
     driver: local
-  postgres-orders-data:
+  postgres-orders-data-prod:
     driver: local
-  redis-data:
+  redis-data-prod:
     driver: local
-  keycloak-data:
+  keycloak-data-prod:
     driver: local

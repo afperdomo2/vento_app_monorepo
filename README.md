@@ -22,54 +22,32 @@ vento_app_monorepo/
 - **Gradle 9.4** (incluido via wrapper)
 - **Docker & Docker Compose** (para despliegue)
 
-## 🚀 Inicio Rápido
+## 🌍 Entornos
 
-### 1. Configurar Java
+El proyecto soporta tres entornos de ejecución:
+
+| Entorno   | Base de Datos          | Microservicios      | Uso               |
+|-----------|------------------------|---------------------|-------------------|
+| **Local** | PostgreSQL en Docker   | Gradle (hot reload) | Desarrollo diario |
+| **Dev**   | PostgreSQL en Docker   | Docker              | Testing integrado |
+| **Prod**  | PostgreSQL persistente | Docker              | Producción        |
+
+### 🏠 Entorno Local (Desarrollo)
 
 ```bash
+# Configurar Java 25
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install java 25-tem
 sdk use java 25-tem
 ```
 
-### 2. Compilar
-
 ```bash
+# Compilar
 ./gradlew build -x test
 ```
 
-### 3. Ejecutar Microservicios (Entorno Local)
-
-```bash
-# Terminal 1: Iniciar infraestructura (PostgreSQL, Redis, Keycloak)
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-
-# Terminal 2: Iniciar Event Service con hot reload
-./gradlew :microservices:event-service:bootRun
-
-# Terminal 3: Iniciar Order Service con hot reload
-./gradlew :microservices:order-service:bootRun
-
-# Terminal 4: Iniciar API Gateway con hot reload
-./gradlew :microservices:api-gateway:bootRun
-
-# Terminal 5: Compilar continuamente para hot reload (opcional)
-./gradlew classes --continuous
-```
-
-## 🌍 Entornos
-
-El proyecto soporta tres entornos de ejecución:
-
-| Entorno | Base de Datos | Microservicios | Uso |
-|---------|---------------|----------------|-----|
-| **Local** | PostgreSQL en Docker | Gradle (hot reload) | Desarrollo diario |
-| **Dev** | PostgreSQL en Docker | Docker | Testing integrado |
-| **Prod** | PostgreSQL persistente | Docker | Producción |
-
-### 🏠 Entorno Local (Desarrollo)
-
-Los microservicios se ejecutan localmente con Gradle para aprovechar el hot reload. Solo la infraestructura (PostgreSQL, Redis, Keycloak) corre en Docker.
+Los microservicios se ejecutan localmente con Gradle para aprovechar el hot reload. Solo la infraestructura (PostgreSQL,
+Redis, Keycloak) corre en Docker.
 
 ```bash
 # Iniciar solo infraestructura
@@ -79,9 +57,13 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 ./gradlew :microservices:event-service:bootRun
 ./gradlew :microservices:order-service:bootRun
 ./gradlew :microservices:api-gateway:bootRun
+
+# Compilar continuamente para hot reload (opcional)
+./gradlew classes --continuous
 ```
 
 **Ventajas:**
+
 - ✅ Hot reload automático al cambiar código
 - ✅ Debugging directo desde el IDE
 - ✅ Iteración rápida en desarrollo
@@ -99,6 +81,7 @@ docker compose logs -f
 ```
 
 **Ventajas:**
+
 - ✅ Entorno consistente y reproducible
 - ✅ Testing de integración real
 - ✅ Debug remoto habilitado (puerto 5005)
@@ -118,6 +101,7 @@ export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
 ```
 
 **Características:**
+
 - ✅ Imágenes optimizadas (multi-stage build)
 - ✅ Volúmenes persistentes para datos
 - ✅ Health checks configurados
@@ -312,11 +296,11 @@ Para los entornos **Dev** y **Prod** con Docker, el proyecto usa variables de en
 
 ### Archivos de Variables
 
-| Archivo | Propósito | Versionado |
-|---------|-----------|------------|
-| `.env.example` | Plantilla con todas las variables | ✅ Sí (git) |
-| `.env` | Valores para desarrollo local | ❌ No (ignorado) |
-| `.env.prod` | Valores específicos para producción (opcional) | ❌ No (ignorado) |
+| Archivo        | Propósito                                      | Versionado      |
+|----------------|------------------------------------------------|-----------------|
+| `.env.example` | Plantilla con todas las variables              | ✅ Sí (git)      |
+| `.env`         | Valores para desarrollo local                  | ❌ No (ignorado) |
+| `.env.prod`    | Valores específicos para producción (opcional) | ❌ No (ignorado) |
 
 ### Configurar para Desarrollo (Dev)
 
@@ -408,7 +392,8 @@ KEYCLOAK_ADMIN_PASSWORD=admin         # Contraseña admin (CAMBIAR EN PROD)
 
 ### Error "Connection refused" en API Gateway
 
-El API Gateway en modo `local` apunta a `localhost:8082` y `localhost:8083`. Asegúrate de que los microservicios estén corriendo:
+El API Gateway en modo `local` apunta a `localhost:8082` y `localhost:8083`. Asegúrate de que los microservicios estén
+corriendo:
 
 ```bash
 # Verificar que los servicios estén activos

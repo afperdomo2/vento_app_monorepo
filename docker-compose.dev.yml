@@ -7,13 +7,14 @@ services:
   # PostgreSQL para Event Service
   postgres-events:
     image: postgres:16-alpine
-    container_name: postgres-events
     environment:
       POSTGRES_DB: ${POSTGRES_EVENTS_DB:-events_db}
       POSTGRES_USER: ${POSTGRES_EVENTS_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:-postgres}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres-events-data-dev:/var/lib/postgresql/data
     networks:
       - vento-network
     healthcheck:
@@ -25,13 +26,14 @@ services:
   # PostgreSQL para Order Service
   postgres-orders:
     image: postgres:16-alpine
-    container_name: postgres-orders
     environment:
       POSTGRES_DB: ${POSTGRES_ORDERS_DB:-orders_db}
       POSTGRES_USER: ${POSTGRES_ORDERS_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:-postgres}
     ports:
       - "5433:5432"
+    volumes:
+      - postgres-orders-data-dev:/var/lib/postgresql/data
     networks:
       - vento-network
     healthcheck:
@@ -43,9 +45,11 @@ services:
   # Redis para cache y gestión de stock
   redis:
     image: redis:7-alpine
-    container_name: redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
     networks:
       - vento-network
     healthcheck:
@@ -57,14 +61,14 @@ services:
   # Keycloak para autenticación y gestión de usuarios
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    container_name: keycloak
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      KC_DB: dev-mem
     ports:
       - "8180:8080"
     command: start-dev
+    volumes:
+      - keycloak-data-dev:/opt/keycloak/data
     networks:
       - vento-network
     healthcheck:
@@ -79,7 +83,6 @@ services:
     build:
       context: .
       dockerfile: microservices/event-service/Dockerfile.dev
-    container_name: event-service
     ports:
       - "8082:8082"
       - "5005:5005"  # Debug port
@@ -101,7 +104,6 @@ services:
     build:
       context: .
       dockerfile: microservices/order-service/Dockerfile.dev
-    container_name: order-service
     ports:
       - "8083:8083"
       - "5005:5005"  # Debug port
@@ -126,7 +128,6 @@ services:
     build:
       context: .
       dockerfile: microservices/api-gateway/Dockerfile.dev
-    container_name: api-gateway
     ports:
       - "8080:8080"
       - "5005:5005"  # Debug port
@@ -146,7 +147,6 @@ services:
   # Frontend (placeholder)
   frontend:
     image: node:22-alpine
-    container_name: frontend
     working_dir: /app
     volumes:
       - ./frontend:/app
@@ -159,3 +159,13 @@ services:
 networks:
   vento-network:
     driver: bridge
+
+volumes:
+  postgres-events-data-dev:
+    driver: local
+  postgres-orders-data-dev:
+    driver: local
+  redis-data-dev:
+    driver: local
+  keycloak-data-dev:
+    driver: local
