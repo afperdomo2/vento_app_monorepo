@@ -30,6 +30,9 @@ public class SecurityConfig {
                 .pathMatchers("/swagger-ui/**").permitAll()
                 .pathMatchers("/v3/api-docs/**").permitAll()
                 .pathMatchers("/auth/**").permitAll()
+                // Rutas protegidas por rol
+                .pathMatchers("/api/events/**").hasRole("USER")
+                .pathMatchers("/api/orders/**").hasRole("USER")
                 // Todas las demás rutas requieren autenticación
                 .anyExchange().authenticated()
             )

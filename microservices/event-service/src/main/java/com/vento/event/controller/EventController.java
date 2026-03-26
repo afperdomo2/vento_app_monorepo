@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.UUID;
 
@@ -125,5 +126,57 @@ public class EventController {
         return eventService.updateEvent(id, request)
                 .map(event -> ResponseEntity.ok(ApiResponse.success("Evento actualizado exitosamente", event)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Obtener tickets disponibles", description = "Retorna la cantidad de tickets disponibles para un evento")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Tickets disponibles obtenidos exitosamente"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "Evento no encontrado"
+            )
+    })
+    @GetMapping("/{id}/available-tickets")
+    public ResponseEntity<Integer> getAvailableTickets(
+            @Parameter(description = "ID del evento") @PathVariable UUID id) {
+        try {
+            Integer availableTickets = eventService.getAvailableTickets(id);
+            return ResponseEntity.ok(availableTickets);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @Operation(summary = "Descontar tickets", description = "Desconta la cantidad de tickets disponibles para un evento (usado al crear una reserva)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Tickets descontados exitosamente"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "Evento no encontrado"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "No hay suficientes tickets disponibles"
+            )
+    })
+    @PutMapping("/{id}/tickets")
+    public ResponseEntity<Void> decrementAvailableTickets(
+            @Parameter(description = "ID del evento") @PathVariable UUID id,
+            @Parameter(description = "Cantidad de tickets a descontar") @RequestParam int quantity) {
+        try {
+            eventService.decrementAvailableTickets(id, quantity);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("no encontrado")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 }

@@ -3,8 +3,10 @@ package com.vento.order.service;
 import com.vento.common.dto.order.CreateOrderRequest;
 import com.vento.common.dto.order.OrderDto;
 import com.vento.common.dto.order.OrderStatus;
+import com.vento.order.client.EventClient;
 import com.vento.order.model.Order;
 import com.vento.order.repository.OrderRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,17 +23,41 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final EventClient eventClient;
 
     @Transactional
     public OrderDto createOrder(CreateOrderRequest request) {
         log.info("Creando nuevo pedido para el usuario: {}, evento: {}, cantidad: {}",
                 request.getUserId(), request.getEventId(), request.getQuantity());
 
-        // TODO: En el sprint 2.3/2.4, verificar disponibilidad con event-service via Feign Client
-        // Por ahora, creamos la orden sin validar disponibilidad
+        // Verificar disponibilidad de tickets en el Event Service
+        int availableTickets;
+        try {
+            availableTickets = eventClient.getAvailableTickets(request.getEventId());
+            log.info("Tickets disponibles para el evento {}: {}", request.getEventId(), availableTickets);
+        } catch (FeignException.NotFound e) {
+            log.error("Evento no encontrado: {}", request.getEventId());
+            throw new IllegalArgumentException("Evento no encontrado: " + request.getEventId());
+        } catch (FeignException e) {
+            log.error("Error al consultar disponibilidad del evento: {}", e.getMessage());
+            throw new RuntimeException("Error al verificar disponibilidad del evento", e);
+        }
 
-        BigDecimal totalAmount = BigDecimal.ZERO; // TODO: Calcular basado en el precio del evento
+        // Validar que hay suficientes tickets
+        if (availableTickets < request.getQuantity()) {
+            log.warn("No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
+                    availableTickets, request.getQuantity());
+            throw new IllegalStateException(
+                    "No hay suficientes tickets disponibles. Disponibles: " + availableTickets +
+                            ", Solicitados: " + request.getQuantity());
+        }
 
+        // Obtener precio del evento para calcular el total
+        // Nota: En una implementación más completa, podríamos tener un endpoint para obtener el precio
+        // Por ahora, usamos un precio base de 0 y se puede mejorar en el futuro
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // Crear la orden
         Order order = Order.builder()
                 .userId(request.getUserId())
                 .eventId(request.getEventId())
@@ -42,6 +68,18 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Pedido creado con ID: {}", savedOrder.getId());
+
+        // Descontar tickets en el Event Service
+        try {
+            eventClient.decrementAvailableTickets(request.getEventId(), request.getQuantity());
+            log.info("Tickets descontados exitosamente. Evento: {}, Cantidad: {}",
+                    request.getEventId(), request.getQuantity());
+        } catch (FeignException e) {
+            log.error("Error al descontar tickets: {}", e.getMessage());
+            // Rollback: eliminar la orden creada
+            orderRepository.delete(savedOrder);
+            throw new RuntimeException("Error al descontar tickets del evento", e);
+        }
 
         return mapToDto(savedOrder);
     }

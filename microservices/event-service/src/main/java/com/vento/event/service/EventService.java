@@ -95,6 +95,26 @@ public class EventService {
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado: " + eventId));
     }
 
+    @Transactional
+    public void decrementAvailableTickets(UUID eventId, int quantity) {
+        log.info("Descontando {} tickets para el evento: {}", quantity, eventId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado: " + eventId));
+
+        if (event.getAvailableTickets() < quantity) {
+            log.error("No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
+                    event.getAvailableTickets(), quantity);
+            throw new RuntimeException(
+                    "No hay suficientes tickets disponibles. Disponibles: " + event.getAvailableTickets() +
+                            ", Solicitados: " + quantity);
+        }
+
+        event.setAvailableTickets(event.getAvailableTickets() - quantity);
+        eventRepository.save(event);
+        log.info("Tickets descontados exitosamente. Nuevos disponibles: {}", event.getAvailableTickets());
+    }
+
     private EventDto mapToDto(Event event) {
         return EventDto.builder()
                 .id(event.getId())

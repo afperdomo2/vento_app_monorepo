@@ -98,7 +98,7 @@ directamente en el dashboard de Keycloak.
     - Insertar header `X-User-Roles` con roles del usuario
     - Implementado: `JwtHeaderFilter.java` en API Gateway
 
-- [ ] **Rutas Protegidas vs Públicas**:
+- [x] **Rutas Protegidas vs Públicas**:
     - `/api/events/**` - Requiere rol `USER`
     - `/api/orders/**` - Requiere rol `USER`
     - `/actuator/**` - Público (para health checks)
@@ -145,12 +145,12 @@ directamente en el dashboard de Keycloak.
 
 ### 2.3 - OpenFeign: Comunicación Síncrona
 
-- [ ] **Order-service → Event-service**:
+- [x] **Order-service → Event-service**:
     - Crear `EventClient` interface con @FeignClient
     - Método para verificar disponibilidad de tickets
     - Método para descontar tickets al confirmar
-- [ ] Configurar Eureka o DNS-based discovery (opcional por ahora)
-- [ ] Manejo de errores con @ErrorDecoder
+- [x] Configurar Eureka o DNS-based discovery (opcional por ahora)
+- [x] Manejo de errores con @ErrorDecoder
 
 ### 2.4 - Flujo Básico: Crear Evento -> Reservar Entrada
 

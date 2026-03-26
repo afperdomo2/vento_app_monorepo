@@ -9,6 +9,25 @@ spring:
 server:
   port: ${SERVER_PORT:8083}
 
+# Event Service URL para Feign Client
+event:
+  service:
+    url: ${EVENT_SERVICE_URL:http://localhost:8082}
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      event-service:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: BASIC
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
 spring-doc:
   api-docs:
     path: /v3/api-docs
