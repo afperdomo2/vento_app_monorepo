@@ -25,6 +25,9 @@ import java.util.Map;
  *
  * Activado automáticamente vía ExceptionHandlerAutoConfiguration solo en
  * módulos Spring MVC (SERVLET), ignorado en WebFlux (api-gateway).
+ *
+ * Excluye endpoints de SpringDoc (/v3/api-docs, /swagger-ui) para permitir
+ * que la documentación OpenAPI funcione correctamente.
  */
 @Slf4j
 @RestControllerAdvice
@@ -32,8 +35,49 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final String BASE_TYPE = "https://vento.app/errors/";
+    private static final String SPRINGDOC_PACKAGE = "org.springdoc";
 
     private final String serviceName;
+
+    /**
+     * Verifica si la excepción proviene de SpringDoc y debe ser ignorada.
+     */
+    private boolean isSpringDocException(Throwable ex) {
+        if (ex == null) return false;
+        
+        // Check current exception
+        String className = ex.getClass().getName();
+        if (className.startsWith("org.springdoc") 
+                || className.contains("springdoc")
+                || className.startsWith("io.swagger")) {
+            return true;
+        }
+        
+        // Check cause chain for SpringDoc exceptions
+        Throwable cause = ex.getCause();
+        while (cause != null && cause != ex) {
+            String causeClassName = cause.getClass().getName();
+            if (causeClassName.startsWith("org.springdoc") 
+                    || causeClassName.contains("springdoc")
+                    || causeClassName.startsWith("io.swagger")) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        
+        return false;
+    }
+
+    /**
+     * Verifica si el request es para un endpoint de SpringDoc.
+     */
+    private boolean isSpringDocEndpoint(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.contains("/v3/api-docs")
+                || path.contains("/swagger-ui")
+                || path.contains("/swagger-resources")
+                || path.contains("/webjars");
+    }
 
     // -------------------------------------------------------------------------
     // 400 — Validación DTO (@Valid, @NotNull, @NotBlank, etc.)
@@ -173,7 +217,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleUnexpected(
-            Exception ex, HttpServletRequest request) {
+            Exception ex, HttpServletRequest request) throws Exception {
+
+        // Excepciones de SpringDoc o endpoints de documentación deben propagarse
+        // para que Swagger funcione correctamente
+        if (isSpringDocException(ex) || isSpringDocEndpoint(request)) {
+            throw ex;
+        }
 
         ProblemDetail problem = buildProblem(
                 HttpStatus.INTERNAL_SERVER_ERROR,
