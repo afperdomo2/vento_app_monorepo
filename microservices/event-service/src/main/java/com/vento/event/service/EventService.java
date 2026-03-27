@@ -1,6 +1,7 @@
 package com.vento.event.service;
 
 import com.vento.common.dto.event.CreateEventRequest;
+import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
 import com.vento.common.exception.BusinessException;
@@ -90,10 +91,14 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public Integer getAvailableTickets(UUID eventId) {
-        return eventRepository.findById(eventId)
-                .map(Event::getAvailableTickets)
+    public EventAvailabilityDto getEventAvailability(UUID eventId) {
+        log.info("Obteniendo disponibilidad del evento: {}", eventId);
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
+        return EventAvailabilityDto.builder()
+                .availableTickets(event.getAvailableTickets())
+                .price(event.getPrice())
+                .build();
     }
 
     @Transactional

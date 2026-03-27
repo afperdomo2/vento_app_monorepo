@@ -1,5 +1,7 @@
 package com.vento.order.service;
 
+import com.vento.common.dto.ApiResponse;
+import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.order.CreateOrderRequest;
 import com.vento.common.dto.order.OrderDto;
 import com.vento.common.dto.order.OrderStatus;
@@ -33,11 +35,13 @@ public class OrderService {
         log.info("Creando nuevo pedido para el usuario: {}, evento: {}, cantidad: {}",
                 request.getUserId(), request.getEventId(), request.getQuantity());
 
-        // Verificar disponibilidad de tickets en el Event Service
-        int availableTickets;
+        // Verificar disponibilidad y obtener precio del evento
+        EventAvailabilityDto availability;
         try {
-            availableTickets = eventClient.getAvailableTickets(request.getEventId());
-            log.info("Tickets disponibles para el evento {}: {}", request.getEventId(), availableTickets);
+            ApiResponse<EventAvailabilityDto> response = eventClient.getEventAvailability(request.getEventId());
+            availability = response.getData();
+            log.info("Disponibilidad del evento {}: tickets={}, precio={}",
+                    request.getEventId(), availability.getAvailableTickets(), availability.getPrice());
         } catch (FeignException.NotFound e) {
             log.error("Evento no encontrado: {}", request.getEventId());
             throw new ResourceNotFoundException("Evento", request.getEventId());
@@ -47,16 +51,16 @@ public class OrderService {
         }
 
         // Validar que hay suficientes tickets
-        if (availableTickets < request.getQuantity()) {
+        if (availability.getAvailableTickets() < request.getQuantity()) {
             log.warn("No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
-                    availableTickets, request.getQuantity());
+                    availability.getAvailableTickets(), request.getQuantity());
             throw new BusinessException(
-                    "No hay suficientes tickets disponibles. Disponibles: " + availableTickets +
+                    "No hay suficientes tickets disponibles. Disponibles: " + availability.getAvailableTickets() +
                             ", Solicitados: " + request.getQuantity());
         }
 
-        // Nota: en una implementación más completa se obtendría el precio del evento
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        // Calcular el total: precio × cantidad
+        var totalAmount = availability.getPrice().multiply(java.math.BigDecimal.valueOf(request.getQuantity()));
 
         Order order = Order.builder()
                 .userId(request.getUserId())

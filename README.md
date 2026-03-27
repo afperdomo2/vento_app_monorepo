@@ -326,6 +326,35 @@ Cada microservicio es independiente:
 ./gradlew :microservices:event-service:dependencies
 ```
 
+## 🧪 Testing
+
+### Ejecutar Tests
+
+```bash
+# Todos los tests
+./gradlew test
+
+# Tests de un módulo específico
+./gradlew :microservices:event-service:test
+./gradlew :microservices:order-service:test
+
+# Tests con reporte detallado
+./gradlew test --info
+```
+
+### Cobertura Actual
+
+| Servicio        | Tests | Estado |
+|-----------------|-------|--------|
+| EventService    | 6     | ✅     |
+| OrderService    | 10    | ✅     |
+
+### Reportes
+
+Los reportes de tests se generan en:
+- **HTML:** `microservices/*/build/reports/tests/test/index.html`
+- **XML:** `microservices/*/build/test-results/test/`
+
 ## 📂 Agregar un Nuevo Microservicio
 
 1. Crear carpeta en `microservices/nombre-servicio/`

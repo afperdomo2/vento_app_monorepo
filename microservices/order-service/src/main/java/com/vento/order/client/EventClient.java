@@ -1,5 +1,7 @@
 package com.vento.order.client;
 
+import com.vento.common.dto.ApiResponse;
+import com.vento.common.dto.event.EventAvailabilityDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,13 +20,13 @@ import java.util.UUID;
 public interface EventClient {
 
     /**
-     * Obtiene la cantidad de tickets disponibles para un evento.
+     * Obtiene la disponibilidad de un evento (tickets disponibles y precio).
      *
      * @param eventId ID del evento
-     * @return Cantidad de tickets disponibles
+     * @return Respuesta con información de disponibilidad del evento
      */
-    @GetMapping("/api/events/{eventId}/available-tickets")
-    Integer getAvailableTickets(@PathVariable("eventId") UUID eventId);
+    @GetMapping("/api/events/{eventId}/availability")
+    ApiResponse<EventAvailabilityDto> getEventAvailability(@PathVariable("eventId") UUID eventId);
 
     /**
      * Descuenta la cantidad de tickets disponibles para un evento.

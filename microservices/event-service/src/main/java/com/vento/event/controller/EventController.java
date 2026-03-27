@@ -2,6 +2,7 @@ package com.vento.event.controller;
 
 import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.CreateEventRequest;
+import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
 import com.vento.common.exception.ResourceNotFoundException;
@@ -129,21 +130,22 @@ public class EventController {
         return ResponseEntity.ok(ApiResponse.success("Evento actualizado exitosamente", event));
     }
 
-    @Operation(summary = "Obtener tickets disponibles", description = "Retorna la cantidad de tickets disponibles para un evento")
+    @Operation(summary = "Obtener disponibilidad del evento", description = "Retorna la cantidad de tickets disponibles y el precio de un evento")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "Tickets disponibles obtenidos exitosamente"
+                    description = "Disponibilidad obtenida exitosamente",
+                    content = @Content(schema = @Schema(implementation = EventAvailabilityDto.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "Evento no encontrado"
             )
     })
-    @GetMapping("/{id}/available-tickets")
-    public ResponseEntity<Integer> getAvailableTickets(
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<ApiResponse<EventAvailabilityDto>> getEventAvailability(
             @Parameter(description = "ID del evento") @PathVariable UUID id) {
-        return ResponseEntity.ok(eventService.getAvailableTickets(id));
+        return ResponseEntity.ok(ApiResponse.success(eventService.getEventAvailability(id)));
     }
 
     @Operation(summary = "Descontar tickets", description = "Desconta la cantidad de tickets disponibles para un evento (usado al crear una reserva)")
