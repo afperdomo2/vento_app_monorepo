@@ -13,14 +13,26 @@ vento_app_monorepo/
 │   ├── api-gateway/             # Spring Cloud Gateway (:8080)
 │   ├── event-service/           # Microservicio de eventos (:8082)
 │   └── order-service/            # Microservicio de pedidos (:8083)
-└── frontend/                    # Carpeta para el frontend
+└── frontend/                    # Aplicación Angular 21 (:4200)
 ```
 
 ## ⚙️ Requisitos
 
+### Backend
+
 - **Java 25** (usar SDKMAN para gestionar versiones)
 - **Gradle 9.4** (incluido via wrapper)
 - **Docker & Docker Compose** (para despliegue)
+
+### Frontend
+
+- **Node.js 22+** (recomendado usar nvm o fnm)
+- **pnpm** (gestor de paquetes)
+
+```bash
+# Instalar pnpm globalmente
+npm install -g pnpm
+```
 
 ## 🌍 Entornos
 
@@ -67,6 +79,39 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 - ✅ Hot reload automático al cambiar código
 - ✅ Debugging directo desde el IDE
 - ✅ Iteración rápida en desarrollo
+
+### 🎨 Frontend (Angular 21)
+
+El frontend está construido con **Angular 21** usando **pnpm** como gestor de paquetes.
+
+**Requisitos:**
+
+- Node.js 22+
+- pnpm (`npm install -g pnpm`)
+
+**Inicio rápido:**
+
+```bash
+# Navegar a la carpeta frontend
+cd frontend
+
+# Instalar dependencias (primera vez)
+pnpm install
+
+# Iniciar servidor de desarrollo
+pnpm start
+```
+
+La aplicación estará disponible en: **http://localhost:4200**
+
+**Ventajas:**
+
+- ✅ **Signals** incorporados (reactividad moderna sin librerías adicionales)
+- ✅ **Standalone Components** (patrón moderno de Angular)
+- ✅ Hot reload automático
+- ✅ TypeScript para type safety
+
+**Documentación completa:** Ver [frontend/README.md](./frontend/README.md)
 
 ### 🔧 Entorno Dev (Testing)
 
@@ -174,7 +219,9 @@ docker compose stop order-service
 |------------------|--------------------|---------------------------|
 | `/api/events/**` | event-service:8082 | Gestión de eventos        |
 | `/api/orders/**` | order-service:8083 | Gestión de pedidos        |
-| `/ui/*`          | frontend:3000      | Frontend de la aplicación |
+| `/ui/*`          | frontend:4200      | Frontend de la aplicación |
+
+> **Nota:** Durante el desarrollo local, el frontend corre directamente en `http://localhost:4200`. El ruteo `/ui/*` es útil cuando el frontend se sirve a través del API Gateway en producción.
 
 ## 🔌 Endpoints
 
@@ -307,6 +354,34 @@ Cada microservicio es independiente:
 - `order-service` - Gestión de pedidos
 
 ## 🛠️ Desarrollo
+
+### Ejecutar Todo el Stack (Recomendado para Desarrollo)
+
+Para desarrollar con frontend y backend simultáneamente:
+
+```bash
+# Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak)
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Terminal 2: Event Service
+./gradlew :microservices:event-service:bootRun
+
+# Terminal 3: Order Service
+./gradlew :microservices:order-service:bootRun
+
+# Terminal 4: API Gateway
+./gradlew :microservices:api-gateway:bootRun
+
+# Terminal 5: Frontend
+cd frontend && pnpm start
+```
+
+**Acceso:**
+- 🌐 **Frontend:** http://localhost:4200
+- 🔌 **API Gateway:** http://localhost:8080
+- 📖 **Swagger Event Service:** http://localhost:8082/swagger-ui.html
+- 📖 **Swagger Order Service:** http://localhost:8083/swagger-ui.html
+- 🔐 **Keycloak:** http://localhost:8180
 
 ### Compilar un módulo específico
 

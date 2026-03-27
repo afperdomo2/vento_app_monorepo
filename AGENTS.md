@@ -3,8 +3,8 @@
 ## Proyecto
 
 Monorepo Spring Boot + Gradle con microservicios: `common/`, `api-gateway/` (8080), `event-service/` (8082),
-`order-service/` (8083).
-Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0.
+`order-service/` (8083), **frontend/** (Angular 21, 4200).
+Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0, Angular 21.2, pnpm 10.
 
 ## Comandos
 
@@ -48,7 +48,30 @@ docker compose logs -f <servicio>
 docker compose exec <servicio> sh
 ```
 
+### Frontend (Angular 21)
+
+```bash
+cd frontend
+pnpm install           # Instalar dependencias
+pnpm start             # Servidor desarrollo (localhost:4200)
+pnpm build             # Build producción
+pnpm watch             # Build en modo watch
+pnpm test              # Ejecutar tests
+pnpm ng <comando>      # Angular CLI commands
+```
+
+**Generar componentes/servicios:**
+
+```bash
+pnpm ng generate component components/my-component
+pnpm ng generate service services/my-service
+pnpm ng generate interceptor interceptors/my-interceptor
+pnpm ng generate guard guards/my-guard
+```
+
 ## Convenciones de Codigo
+
+### Backend (Java/Spring)
 
 ### Estructura de Paquetes
 
@@ -128,6 +151,43 @@ com.vento.<modulo>/
 - Codigo autodocumentado con nombres significativos
 - No documentar lo obvio
 
+### Frontend (Angular)
+
+#### Estructura de Carpetas
+
+```
+src/app/
+├── components/   # Componentes standalone
+├── services/     # Servicios (@injectable)
+├── models/       # Interfaces/Types
+├── config/       # Configuración de la app
+└── guards/       # Guards de rutas
+```
+
+#### Convenciones
+
+- Usar **Signals** para estado reactivo (`signal()`, `computed()`, `effect()`)
+- Componentes **standalone** (sin NgModules, usar `imports: []` en el decorator)
+- **SCSS** para estilos
+- Inmutabilidad preferida (usar `readonly` en señales cuando sea posible)
+- Inyección de dependencias con `inject()` (no constructor injection)
+
+#### Ejemplo Componente con Signals
+
+```typescript
+import { Component, signal, inject } from '@angular/core';
+
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  template: `<p>{{ count() }}</p>`
+})
+export class ExampleComponent {
+  private service = inject(MyService);
+  count = signal(0);
+}
+```
+
 ## Agregar Nuevo Microservicio
 
 1. Crear `microservices/<nombre>/` con estructura de paquetes
@@ -144,6 +204,7 @@ com.vento.<modulo>/
 - Event service: `microservices/event-service/`
 - Order service: `microservices/order-service/`
 - API Gateway: `microservices/api-gateway/`
+- Frontend: `frontend/`
 - Docker compose: `docker-compose.yml`, `docker-compose.local.yml`
 
 ## Puertos
@@ -151,6 +212,7 @@ com.vento.<modulo>/
 - api-gateway: 8080
 - event-service: 8082
 - order-service: 8083
+- frontend: 4200
 - postgres-events: 5432
 - postgres-orders: 5433
 - redis: 6379

@@ -9,18 +9,18 @@ compilación Gradle multi-módulo con la siguiente arquitectura:
 - **Event Service** - Microservicio Spring Boot para gestión de eventos
 - **Order Service** - Microservicio Spring Boot para gestión de pedidos
 - **Módulo Common** - Librería compartida con DTOs, excepciones y utilerías
-- **Frontend** - Espacio reservado para una futura aplicación frontend (React, Vue, Next.js, etc.)
+- **Frontend** - Aplicación Angular 21 con Signals y componentes standalone
 
 ### Stack Tecnológico
 
-| Componente       | Tecnología                      |
-|------------------|---------------------------------|
-| Lenguaje         | Java 25                         |
-| Build Tool       | Gradle 9.4.0 (wrapper incluido) |
-| Framework        | Spring Boot 3.5.0               |
-| API Gateway      | Spring Cloud Gateway (WebFlux)  |
-| Containerización | Docker y Docker Compose         |
-| Frontend         | Node.js 22 (placeholder)        |
+| Componente       | Tecnología                       |
+|------------------|----------------------------------|
+| Lenguaje         | Java 25                          |
+| Build Tool       | Gradle 9.4.0 (wrapper incluido)  |
+| Framework        | Spring Boot 3.5.0                |
+| API Gateway      | Spring Cloud Gateway (WebFlux)   |
+| Containerización | Docker y Docker Compose          |
+| Frontend         | Angular 21.2, TypeScript 5.9, pnpm 10 |
 
 ## Entornos
 
@@ -81,7 +81,21 @@ vento_app_monorepo/
 │       ├── Dockerfile.dev           # Debug remoto
 │       ├── Dockerfile.prod          # Producción
 │       └── build.gradle
-├── frontend/                        # Espacio para frontend (basado en Node.js)
+├── frontend/                        # Aplicación Angular 21
+│   ├── src/
+│   │   ├── app/                     # Código principal
+│   │   │   ├── app.ts               # Componente raíz
+│   │   │   ├── app.config.ts        # Configuración
+│   │   │   ├── app.routes.ts        # Rutas
+│   │   │   ├── components/          # Componentes standalone
+│   │   │   └── services/            # Servicios
+│   │   ├── main.ts                  # Entry point
+│   │   ├── styles.scss              # Estilos globales
+│   │   └── index.html
+│   ├── public/                      # Assets estáticos
+│   ├── angular.json                 # Configuración Angular
+│   ├── package.json                 # Dependencias (pnpm)
+│   └── README.md                    # Documentación frontend
 ├── requerimientos/                  # Documentación de requerimientos
 │   ├── REQUERIMIENTOS.md
 │   └── SPRINT_*.md
@@ -99,8 +113,15 @@ vento_app_monorepo/
 
 ### Prerrequisitos
 
+#### Backend
+
 - **Java 25** (recomendado: usar SDKMAN)
 - **Docker y Docker Compose** (para despliegue en contenedores)
+
+#### Frontend
+
+- **Node.js 22+** (recomendado: usar nvm o fnm)
+- **pnpm** (`npm install -g pnpm`)
 
 ### Configurar Entorno Java
 
@@ -112,6 +133,8 @@ sdk use java 25-tem
 
 ### Comandos de Build
 
+#### Backend
+
 | Comando                                        | Descripción                                |
 |------------------------------------------------|--------------------------------------------|
 | `./gradlew build`                              | Construir todos los módulos con tests      |
@@ -121,6 +144,17 @@ sdk use java 25-tem
 | `./gradlew :microservices:event-service:build` | Construir solo event-service               |
 | `./gradlew :microservices:api-gateway:build`   | Construir solo api-gateway                 |
 | `./gradlew dependencies`                       | Ver dependencias del proyecto              |
+
+#### Frontend
+
+| Comando                  | Descripción                           |
+|--------------------------|---------------------------------------|
+| `pnpm install`           | Instalar dependencias                 |
+| `pnpm start`             | Servidor desarrollo (localhost:4200)  |
+| `pnpm build`             | Build para producción                 |
+| `pnpm watch`             | Build en modo watch                   |
+| `pnpm test`              | Ejecutar tests                        |
+| `pnpm ng <comando>`      | Angular CLI commands                  |
 
 ### Comandos de Tests
 
@@ -145,13 +179,17 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # Terminal 4: Iniciar API Gateway con hot reload
 ./gradlew :microservices:api-gateway:bootRun
+
+# Terminal 5: Iniciar Frontend Angular
+cd frontend && pnpm start
 ```
 
 **Ventajas del entorno local:**
 
-- ✅ Hot reload automático al cambiar código
+- ✅ Hot reload automático al cambiar código (backend y frontend)
 - ✅ Debugging directo desde el IDE
 - ✅ Iteración rápida en desarrollo
+- ✅ Frontend accesible en http://localhost:4200
 
 ### Ejecutar en Entorno Dev (Testing)
 
@@ -185,7 +223,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 | Event Service | 5005   | Debug remoto (solo dev)                     |
 | Order Service | 8083   | Microservicio de gestión de pedidos         |
 | Order Service | 5005   | Debug remoto (solo dev)                     |
-| Frontend      | 3000   | Aplicación frontend (placeholder)           |
+| **Frontend**  | **4200** | **Aplicación Angular 21**                   |
 | PostgreSQL    | 5432   | Base de datos events_db                     |
 | PostgreSQL    | 5433   | Base de datos orders_db                     |
 | Redis         | 6379   | Caché y gestión de stock                    |
@@ -197,11 +235,92 @@ El API Gateway tiene configuraciones de rutas específicas por perfil:
 
 | Perfil | Event Service               | Order Service               | Frontend                |
 |--------|-----------------------------|-----------------------------|-------------------------|
-| Local  | `http://localhost:8082`     | `http://localhost:8083`     | `http://localhost:3000` |
-| Dev    | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:3000`  |
-| Prod   | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:3000`  |
+| Local  | `http://localhost:8082`     | `http://localhost:8083`     | `http://localhost:4200` |
+| Dev    | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:4200`  |
+| Prod   | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:4200`  |
+
+> **Nota:** Durante el desarrollo local, el frontend Angular corre directamente en `localhost:4200`. El ruteo a través del API Gateway se usa en producción.
 
 ## Convenciones de Desarrollo
+
+### Frontend (Angular 21)
+
+#### Signals (Reactividad Moderna)
+
+Angular 21 usa Signals como patrón principal de reactividad. No se requiere instalación adicional.
+
+```typescript
+import { Component, signal, computed, effect } from '@angular/core';
+
+@Component({
+  selector: 'app-example',
+  template: `
+    <p>Count: {{ count() }}</p>
+    <p>Double: {{ doubleCount() }}</p>
+    <button (click)="increment()">+</button>
+  `
+})
+export class ExampleComponent {
+  // Signal mutable
+  count = signal(0);
+  
+  // Signal computado (read-only)
+  doubleCount = computed(() => this.count() * 2);
+  
+  increment() {
+    this.count.update(value => value + 1);
+  }
+}
+```
+
+#### Componentes Standalone
+
+No usar NgModules. Todos los componentes son standalone.
+
+```typescript
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-my-component',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './my-component.html'
+})
+export class MyComponent {}
+```
+
+#### Inyección de Dependencias
+
+Usar `inject()` en lugar de constructor injection.
+
+```typescript
+import { Component, inject } from '@angular/core';
+import { MyService } from './my.service';
+
+@Component({ ... })
+export class MyComponent {
+  private service = inject(MyService);
+}
+```
+
+#### Estructura de Carpetas
+
+```
+src/app/
+├── components/          # Componentes standalone
+├── services/            # Servicios (@injectable)
+├── models/              # Interfaces y types
+├── config/              # Configuración de la app
+├── guards/              # Route guards
+└── interceptors/        # HTTP interceptors
+```
+
+#### Estilos
+
+- Usar **SCSS** para todos los estilos
+- Estilos específicos de componente en archivos `.scss` junto al componente
+- Estilos globales en `styles.scss`
 
 ### Dependencias entre Módulos
 
@@ -446,9 +565,16 @@ El API Gateway extrae información del JWT y la propaga como headers:
 
 ## Notas
 
-- El directorio `frontend/` es un placeholder; implementar con React, Vue, Next.js o similar
+- **Frontend Angular 21**: La aplicación frontend está construida con Angular 21 usando pnpm como gestor de paquetes
 - Los archivos de configuración externos en `./config/` son opcionales y se cargan si existen
 - Git ignora `.gradle/`, `build/`, `.idea/`, y archivos específicos del entorno
 - **Importante:** El perfil por defecto es `local` para facilitar el desarrollo rápido
 - Los Dockerfile originales (`Dockerfile`) se mantienen por compatibilidad pero se recomienda usar `Dockerfile.dev` y
   `Dockerfile.prod`
+
+### Frontend Development
+
+- El servidor de desarrollo de Angular corre en `http://localhost:4200`
+- Usar `pnpm start` en la carpeta `frontend/` para iniciar el desarrollo
+- Hot reload está habilitado automáticamente
+- Para producción, usar `pnpm build` y servir los archivos estáticos desde el API Gateway

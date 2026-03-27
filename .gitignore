@@ -32,6 +32,8 @@ docker-compose.override.yml
 .agents/
 .qwen/
 
+llms-full.txt
+
 # Configuraciones locales de Spring Boot
 microservices/*/src/main/resources/config/*.yml
 !microservices/*/src/main/resources/config/.gitkeep
