@@ -3,6 +3,9 @@ package com.vento.order.service;
 import com.vento.common.dto.order.CreateOrderRequest;
 import com.vento.common.dto.order.OrderDto;
 import com.vento.common.dto.order.OrderStatus;
+import com.vento.common.exception.BusinessException;
+import com.vento.common.exception.ExternalServiceException;
+import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.order.client.EventClient;
 import com.vento.order.model.Order;
 import com.vento.order.repository.OrderRepository;
@@ -37,27 +40,24 @@ public class OrderService {
             log.info("Tickets disponibles para el evento {}: {}", request.getEventId(), availableTickets);
         } catch (FeignException.NotFound e) {
             log.error("Evento no encontrado: {}", request.getEventId());
-            throw new IllegalArgumentException("Evento no encontrado: " + request.getEventId());
+            throw new ResourceNotFoundException("Evento", request.getEventId());
         } catch (FeignException e) {
             log.error("Error al consultar disponibilidad del evento: {}", e.getMessage());
-            throw new RuntimeException("Error al verificar disponibilidad del evento", e);
+            throw new ExternalServiceException("Error al verificar disponibilidad del evento", e);
         }
 
         // Validar que hay suficientes tickets
         if (availableTickets < request.getQuantity()) {
             log.warn("No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
                     availableTickets, request.getQuantity());
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "No hay suficientes tickets disponibles. Disponibles: " + availableTickets +
                             ", Solicitados: " + request.getQuantity());
         }
 
-        // Obtener precio del evento para calcular el total
-        // Nota: En una implementación más completa, podríamos tener un endpoint para obtener el precio
-        // Por ahora, usamos un precio base de 0 y se puede mejorar en el futuro
+        // Nota: en una implementación más completa se obtendría el precio del evento
         BigDecimal totalAmount = BigDecimal.ZERO;
 
-        // Crear la orden
         Order order = Order.builder()
                 .userId(request.getUserId())
                 .eventId(request.getEventId())
@@ -76,9 +76,8 @@ public class OrderService {
                     request.getEventId(), request.getQuantity());
         } catch (FeignException e) {
             log.error("Error al descontar tickets: {}", e.getMessage());
-            // Rollback: eliminar la orden creada
             orderRepository.delete(savedOrder);
-            throw new RuntimeException("Error al descontar tickets del evento", e);
+            throw new ExternalServiceException("Error al descontar tickets del evento", e);
         }
 
         return mapToDto(savedOrder);
@@ -109,7 +108,7 @@ public class OrderService {
                     if (order.getStatus() != OrderStatus.PENDING) {
                         log.warn("El pedido {} no puede ser cancelado. Estado actual: {}",
                                 id, order.getStatus());
-                        throw new IllegalStateException(
+                        throw new BusinessException(
                                 "Solo se pueden cancelar pedidos en estado PENDING. Estado actual: " + order.getStatus());
                     }
 
@@ -133,3 +132,4 @@ public class OrderService {
                 .build();
     }
 }
+

@@ -3,6 +3,8 @@ package com.vento.event.service;
 import com.vento.common.dto.event.CreateEventRequest;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
+import com.vento.common.exception.BusinessException;
+import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.event.model.Event;
 import com.vento.event.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
@@ -91,7 +93,7 @@ public class EventService {
     public Integer getAvailableTickets(UUID eventId) {
         return eventRepository.findById(eventId)
                 .map(Event::getAvailableTickets)
-                .orElseThrow(() -> new RuntimeException("Evento no encontrado: " + eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
     }
 
     @Transactional
@@ -99,12 +101,12 @@ public class EventService {
         log.info("Descontando {} tickets para el evento: {}", quantity, eventId);
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Evento no encontrado: " + eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
 
         if (event.getAvailableTickets() < quantity) {
             log.error("No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
                     event.getAvailableTickets(), quantity);
-            throw new RuntimeException(
+            throw new BusinessException(
                     "No hay suficientes tickets disponibles. Disponibles: " + event.getAvailableTickets() +
                             ", Solicitados: " + quantity);
         }
@@ -129,3 +131,4 @@ public class EventService {
                 .build();
     }
 }
+

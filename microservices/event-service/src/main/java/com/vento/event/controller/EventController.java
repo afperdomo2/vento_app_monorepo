@@ -4,6 +4,7 @@ import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.CreateEventRequest;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
+import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.event.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,9 +76,9 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<EventDto>> getEventById(
             @Parameter(description = "ID del evento") @PathVariable UUID id) {
-        return eventService.getEventById(id)
-                .map(event -> ResponseEntity.ok(ApiResponse.success(event)))
-                .orElse(ResponseEntity.notFound().build());
+        EventDto event = eventService.getEventById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento", id));
+        return ResponseEntity.ok(ApiResponse.success(event));
     }
 
     @Operation(summary = "Listar eventos", description = "Retorna una lista paginada de eventos")
@@ -123,9 +124,9 @@ public class EventController {
     public ResponseEntity<ApiResponse<EventDto>> updateEvent(
             @Parameter(description = "ID del evento") @PathVariable UUID id,
             @Valid @RequestBody UpdateEventRequest request) {
-        return eventService.updateEvent(id, request)
-                .map(event -> ResponseEntity.ok(ApiResponse.success("Evento actualizado exitosamente", event)))
-                .orElse(ResponseEntity.notFound().build());
+        EventDto event = eventService.updateEvent(id, request)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento", id));
+        return ResponseEntity.ok(ApiResponse.success("Evento actualizado exitosamente", event));
     }
 
     @Operation(summary = "Obtener tickets disponibles", description = "Retorna la cantidad de tickets disponibles para un evento")
@@ -142,12 +143,7 @@ public class EventController {
     @GetMapping("/{id}/available-tickets")
     public ResponseEntity<Integer> getAvailableTickets(
             @Parameter(description = "ID del evento") @PathVariable UUID id) {
-        try {
-            Integer availableTickets = eventService.getAvailableTickets(id);
-            return ResponseEntity.ok(availableTickets);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(eventService.getAvailableTickets(id));
     }
 
     @Operation(summary = "Descontar tickets", description = "Desconta la cantidad de tickets disponibles para un evento (usado al crear una reserva)")
@@ -169,14 +165,8 @@ public class EventController {
     public ResponseEntity<Void> decrementAvailableTickets(
             @Parameter(description = "ID del evento") @PathVariable UUID id,
             @Parameter(description = "Cantidad de tickets a descontar") @RequestParam int quantity) {
-        try {
-            eventService.decrementAvailableTickets(id, quantity);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("no encontrado")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        eventService.decrementAvailableTickets(id, quantity);
+        return ResponseEntity.ok().build();
     }
 }
+

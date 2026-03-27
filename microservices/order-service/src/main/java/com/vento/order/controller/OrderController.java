@@ -3,6 +3,7 @@ package com.vento.order.controller;
 import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.order.CreateOrderRequest;
 import com.vento.common.dto.order.OrderDto;
+import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,9 +76,9 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OrderDto>> getOrderById(
             @Parameter(description = "ID del pedido") @PathVariable UUID id) {
-        return orderService.getOrderById(id)
-                .map(order -> ResponseEntity.ok(ApiResponse.success(order)))
-                .orElse(ResponseEntity.notFound().build());
+        OrderDto order = orderService.getOrderById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
+        return ResponseEntity.ok(ApiResponse.success(order));
     }
 
     @Operation(summary = "Obtener pedidos por usuario", description = "Retorna la lista de pedidos de un usuario específico")
@@ -114,8 +115,9 @@ public class OrderController {
     @PutMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<OrderDto>> cancelOrder(
             @Parameter(description = "ID del pedido") @PathVariable UUID id) {
-        return orderService.cancelOrder(id)
-                .map(order -> ResponseEntity.ok(ApiResponse.success("Pedido cancelado exitosamente", order)))
-                .orElse(ResponseEntity.notFound().build());
+        OrderDto order = orderService.cancelOrder(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
+        return ResponseEntity.ok(ApiResponse.success("Pedido cancelado exitosamente", order));
     }
 }
+

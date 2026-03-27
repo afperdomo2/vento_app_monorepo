@@ -1,61 +1,207 @@
 package com.vento.common.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.vento.common.dto.ApiResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Manejador global de excepciones para microservicios Spring MVC.
+ * Produce respuestas con estructura RFC 9457 (application/problem+json).
+ *
+ * Activado automáticamente vía ExceptionHandlerAutoConfiguration solo en
+ * módulos Spring MVC (SERVLET), ignorado en WebFlux (api-gateway).
+ */
+@Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    // Error de tipo incorrecto: "abc" para Integer, "texto" para BigDecimal, etc.
+    private static final String BASE_TYPE = "https://vento.app/errors/";
+
+    private final String serviceName;
+
+    // -------------------------------------------------------------------------
+    // 400 — Validación DTO (@Valid, @NotNull, @NotBlank, etc.)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleValidationErrors(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
+
+        int count = errors.size();
+        String detail = "Se encontr" + (count == 1 ? "ó 1 error" : "aron " + count + " errores")
+                + " de validación en la solicitud";
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.BAD_REQUEST,
+                "validation-error",
+                "Errores de validación",
+                detail,
+                request.getRequestURI()
+        );
+        problem.setProperty("errors", errors);
+
+        log.warn("[{}] Validación fallida en {}: {}", serviceName, request.getRequestURI(), errors);
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 400 — JSON malformado o tipo de campo incorrecto
+    // -------------------------------------------------------------------------
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse<?>> handleJsonParseError(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ProblemDetail> handleJsonParseError(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
         Throwable causa = ex.getCause();
 
         if (causa instanceof InvalidFormatException invalidFormat) {
             String campo = invalidFormat.getPath().isEmpty()
                     ? "desconocido"
                     : invalidFormat.getPath().getFirst().getFieldName();
-
-            String mensajeCampo = "Se esperaba " + traducirTipo(invalidFormat.getTargetType());
-
-            // Mismo formato que handleValidationErrors → errors como Map
-            Map<String, String> errores = new LinkedHashMap<>();
-            errores.put(campo, mensajeCampo);
-
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Errores de validación en la solicitud", errores));
+            errors.put(campo, "Se esperaba " + traducirTipo(invalidFormat.getTargetType()));
+        } else {
+            errors.put("body", "El JSON enviado tiene un formato inválido");
         }
 
-        // JSON completamente malformado (llaves mal cerradas, etc.)
-        Map<String, String> errores = new LinkedHashMap<>();
-        errores.put("body", "El JSON enviado tiene un formato inválido");
+        ProblemDetail problem = buildProblem(
+                HttpStatus.BAD_REQUEST,
+                "validation-error",
+                "Errores de validación",
+                "Se encontró 1 error de validación en la solicitud",
+                request.getRequestURI()
+        );
+        problem.setProperty("errors", errors);
 
+        log.warn("[{}] JSON inválido en {}: {}", serviceName, request.getRequestURI(), errors);
         return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Errores de validación en la solicitud", errores));
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
     }
 
-    // Errores de Jakarta Validation (@NotNull, @NotBlank, @Min, etc.)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, String> errores = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errores.put(error.getField(), error.getDefaultMessage())
+    // -------------------------------------------------------------------------
+    // 404 — Recurso no encontrado
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(
+            ResourceNotFoundException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.NOT_FOUND,
+                "not-found",
+                "Recurso no encontrado",
+                ex.getMessage(),
+                request.getRequestURI()
         );
 
-        return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Errores de validación en la solicitud", errores));
+        log.warn("[{}] Recurso no encontrado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 409 — Conflicto de negocio
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ProblemDetail> handleBusiness(
+            BusinessException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.CONFLICT,
+                "conflict",
+                "Conflicto de negocio",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("[{}] Conflicto de negocio en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 502 — Fallo en llamada a servicio externo
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ProblemDetail> handleExternalService(
+            ExternalServiceException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.BAD_GATEWAY,
+                "bad-gateway",
+                "Error de servicio externo",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.error("[{}] Error de servicio externo en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 500 — Error inesperado (captura cualquier excepción no manejada)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleUnexpected(
+            Exception ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "internal-error",
+                "Error interno del servidor",
+                "Ocurrió un error inesperado. Por favor intente más tarde",
+                request.getRequestURI()
+        );
+
+        log.error("[{}] Error inesperado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private ProblemDetail buildProblem(HttpStatus status, String typeSlug,
+            String title, String detail, String instance) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setType(URI.create(BASE_TYPE + typeSlug));
+        problem.setTitle(title);
+        problem.setInstance(URI.create(instance));
+        problem.setProperty("service", serviceName);
+        problem.setProperty("timestamp", LocalDateTime.now().toString());
+        return problem;
     }
 
     private String traducirTipo(Class<?> tipo) {
