@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,7 +19,7 @@ public class ApiResponse<T> {
     private boolean success;
     private String message;
     private T data;
-    private Object errors;
+    private Map<String, String> errors; // ← tipado específico en lugar de Object
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
@@ -40,11 +43,23 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message, Object errors) {
+    // Errores con detalle por campo
+    public static <T> ApiResponse<T> error(String message, Map<String, String> errors) {
         return ApiResponse.<T>builder()
                 .success(false)
                 .message(message)
                 .errors(errors)
+                .build();
+    }
+
+    // Atajo para error de un solo campo
+    public static <T> ApiResponse<T> error(String message, String campo, String detalle) {
+        Map<String, String> errores = new LinkedHashMap<>();
+        errores.put(campo, detalle);
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .errors(errores)
                 .build();
     }
 }

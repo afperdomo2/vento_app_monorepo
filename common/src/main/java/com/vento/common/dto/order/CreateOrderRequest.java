@@ -3,6 +3,7 @@ package com.vento.common.dto.order;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,7 @@ public class CreateOrderRequest {
 
     @NotNull(message = "La cantidad de tickets es requerida")
     @Min(value = 1, message = "La cantidad debe ser al menos 1")
+    @Positive(message = "La cantidad debe ser un número positivo")
     @Schema(description = "Cantidad de tickets a reservar", example = "2")
     private Integer quantity;
 }

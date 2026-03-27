@@ -1,6 +1,5 @@
 package com.vento.event.service;
 
-import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.CreateEventRequest;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
