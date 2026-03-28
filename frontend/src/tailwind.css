@@ -1,1 +1,159 @@
 @import 'tailwindcss';
+
+/* Material Icons Font */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+/* Google Fonts - Manrope and Inter */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+/*
+ * Tailwind CSS 4 - Theme Configuration
+ * Using CSS-first @theme directive for custom design system
+ */
+
+@theme {
+  /* Colors - Based on Material Design 3 "Kinetic Editorial" palette */
+  --color-primary: #4a40e0;
+  --color-primary-dim: #3d30d4;
+  --color-primary-fixed: #9795ff;
+  --color-primary-fixed-dim: #8885ff;
+  --color-primary-container: #9795ff;
+  --color-on-primary: #f4f1ff;
+  --color-on-primary-container: #14007e;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #1a0099;
+
+  --color-secondary: #4d5d73;
+  --color-secondary-dim: #415166;
+  --color-secondary-fixed: #c8d8f3;
+  --color-secondary-fixed-dim: #bacae4;
+  --color-secondary-container: #c8d8f3;
+  --color-on-secondary: #edf3ff;
+  --color-on-secondary-container: #3c4c61;
+  --color-on-secondary-fixed: #29394e;
+  --color-on-secondary-fixed-variant: #46556b;
+
+  --color-tertiary: #b80438;
+  --color-tertiary-dim: #a20030;
+  --color-tertiary-fixed: #ff9099;
+  --color-tertiary-fixed-dim: #ff7986;
+  --color-tertiary-container: #ff9099;
+  --color-on-tertiary: #ffefef;
+  --color-on-tertiary-container: #68001b;
+  --color-on-tertiary-fixed: #39000b;
+  --color-on-tertiary-fixed-variant: #780021;
+
+  --color-error: #b41340;
+  --color-error-dim: #a70138;
+  --color-error-container: #f74b6d;
+  --color-on-error: #ffefef;
+  --color-on-error-container: #510017;
+
+  --color-background: #f6f6ff;
+  --color-on-background: #272e42;
+
+  --color-surface: #f6f6ff;
+  --color-surface-bright: #f6f6ff;
+  --color-surface-dim: #c7d4fa;
+  --color-surface-container: #e2e7ff;
+  --color-surface-container-low: #eef0ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #d9e2ff;
+  --color-surface-container-highest: #d1dcff;
+  --color-surface-variant: #d1dcff;
+  --color-on-surface: #272e42;
+  --color-on-surface-variant: #535b71;
+
+  --color-inverse-surface: #060e20;
+  --color-inverse-on-surface: #959cb5;
+  --color-inverse-primary: #8582ff;
+
+  --color-outline: #6f768e;
+  --color-outline-variant: #a5adc6;
+
+  --color-surface-tint: #4a40e0;
+
+  /* Font Families */
+  --font-headline: 'Manrope', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-label: 'Inter', system-ui, sans-serif;
+  --font-manrope: 'Manrope', system-ui, sans-serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+
+  /* Border Radius */
+  --radius-default: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+/* Base Styles */
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-headline);
+}
+
+/* Material Icons Utility */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom Utilities */
+@utility kinetic-gradient {
+  background: linear-gradient(135deg, #4a40e0 0%, #9795ff 100%);
+}
+
+@utility glass-effect {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@utility glass-nav {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+@utility ghost-border {
+  border: 1px solid rgba(165, 173, 198, 0.15);
+}
+
+/* Hide scrollbar utility */
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Animation utilities */
+@utility animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}

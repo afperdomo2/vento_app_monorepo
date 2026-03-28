@@ -1,0 +1,357 @@
+import { Component } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { BottomNavBar } from '../shared/bottom-nav-bar/bottom-nav-bar';
+import { CommonModule } from '@angular/common';
+
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  imageUrl: string;
+  status: 'sold-out' | 'selling' | 'draft';
+  percentageSold?: number;
+}
+
+interface Notification {
+  id: string;
+  type: 'alert' | 'sale' | 'registration';
+  title: string;
+  message: string;
+  time: string;
+}
+
+@Component({
+  selector: 'app-organizer-dashboard',
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive, BottomNavBar, CommonModule],
+  template: `
+    <div class="flex min-h-screen">
+      <!-- SideNavBar -->
+      <aside class="hidden md:flex flex-col h-screen w-64 bg-slate-50 dark:bg-slate-950 py-6 px-4 space-y-2 border-r-0 font-inter text-sm font-medium sticky top-0">
+        <div class="px-4 mb-8">
+          <h1 class="font-manrope font-bold text-indigo-700 text-2xl tracking-tighter">Evento</h1>
+          <p class="text-slate-400 text-xs mt-1">Organizer Hub</p>
+        </div>
+
+        <nav class="flex-1 space-y-1">
+          <!-- Dashboard is active -->
+          <a routerLink="/organizer" routerLinkActive="active-nav" 
+             class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center space-x-3 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-all duration-300 ease-in-out">
+            <span class="material-symbols-outlined">insights</span>
+            <span>Analytics</span>
+          </a>
+          <a href="#" class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center space-x-3 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-all duration-300 ease-in-out">
+            <span class="material-symbols-outlined">group</span>
+            <span>Attendees</span>
+          </a>
+          <a href="#" class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center space-x-3 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-all duration-300 ease-in-out">
+            <span class="material-symbols-outlined">payments</span>
+            <span>Ticketing</span>
+          </a>
+          <a href="#" class="text-slate-500 dark:text-slate-400 px-4 py-3 flex items-center space-x-3 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-all duration-300 ease-in-out">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Settings</span>
+          </a>
+        </nav>
+
+        <div class="mt-auto space-y-1 pt-4 border-t border-slate-200/50">
+          <button class="w-full kinetic-cta text-white font-bold py-3 px-4 rounded-full flex items-center justify-center space-x-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-transform">
+            <span class="material-symbols-outlined text-sm">add</span>
+            <span>Create Event</span>
+          </button>
+          <div class="pt-4 flex items-center px-4 space-x-3">
+            <img 
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" 
+              alt="Organizer Profile"
+              class="w-10 h-10 rounded-full object-cover"
+            />
+            <div class="overflow-hidden">
+              <p class="font-bold text-on-surface truncate">Alex Rivera</p>
+              <p class="text-[10px] text-slate-400 uppercase tracking-wider">Premium Account</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 min-w-0 bg-surface px-6 md:px-10 py-8 pb-32 md:pb-8 overflow-y-auto">
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+          <div>
+            <h2 class="font-headline text-4xl font-extrabold text-on-surface tracking-tight leading-none mb-2">Organizer Hub</h2>
+            <p class="text-on-surface-variant font-medium">Manage your events and track performance in real-time.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="glass-effect ghost-border px-4 py-2 rounded-xl flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              <span class="text-xs font-bold text-on-surface">LIVE: Jazz Night 2024</span>
+            </div>
+            <button class="p-3 bg-surface-container-lowest rounded-full ghost-border text-on-surface hover:scale-105 transition-transform">
+              <span class="material-symbols-outlined">notifications</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- KPI Grid (Bento Style) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between h-40 shadow-[0_4px_20px_rgba(74,64,224,0.03)] hover:translate-y-[-4px] transition-transform">
+            <div class="flex justify-between items-start">
+              <span class="text-on-surface-variant font-bold text-sm">Ventas Totales</span>
+              <span class="material-symbols-outlined text-primary-fixed">payments</span>
+            </div>
+            <div>
+              <div class="text-3xl font-headline font-extrabold text-on-surface">$42,850.00</div>
+              <div class="text-xs text-green-600 font-bold flex items-center mt-1">
+                <span class="material-symbols-outlined text-xs mr-1">trending_up</span>
+                +12.5% vs last month
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between h-40 shadow-[0_4px_20px_rgba(74,64,224,0.03)] hover:translate-y-[-4px] transition-transform">
+            <div class="flex justify-between items-start">
+              <span class="text-on-surface-variant font-bold text-sm">Asistentes Registrados</span>
+              <span class="material-symbols-outlined text-primary-fixed">group</span>
+            </div>
+            <div>
+              <div class="text-3xl font-headline font-extrabold text-on-surface">1,284</div>
+              <div class="w-full bg-surface-container-low h-1.5 rounded-full mt-3 overflow-hidden">
+                <div class="bg-primary h-full w-3/4 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between h-40 shadow-[0_4px_20px_rgba(74,64,224,0.03)] hover:translate-y-[-4px] transition-transform border-2 border-primary-container/20">
+            <div class="flex justify-between items-start">
+              <span class="text-on-surface-variant font-bold text-sm">Aforo Actual (En Vivo)</span>
+              <span class="material-symbols-outlined text-tertiary">sensors</span>
+            </div>
+            <div>
+              <div class="text-3xl font-headline font-extrabold text-on-surface">452 / 500</div>
+              <p class="text-[10px] text-tertiary font-bold uppercase tracking-widest mt-1">90% Capacity Reached</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Main Dashboard Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <!-- Sales Chart Simulation & Notifications (Left 8 cols) -->
+          <div class="lg:col-span-8 space-y-8">
+            <!-- Sales Analytics Area -->
+            <div class="bg-surface-container-low rounded-2xl p-8 relative overflow-hidden">
+              <div class="flex justify-between items-center mb-8">
+                <h3 class="font-headline text-xl font-bold">Ventas por Tiempo</h3>
+                <div class="flex bg-surface-container-lowest p-1 rounded-full ghost-border">
+                  <button class="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded-full">7D</button>
+                  <button class="px-4 py-1.5 text-xs font-bold text-on-surface-variant">30D</button>
+                  <button class="px-4 py-1.5 text-xs font-bold text-on-surface-variant">ALL</button>
+                </div>
+              </div>
+
+              <!-- Simulated Chart Visual -->
+              <div class="h-64 flex items-end justify-between space-x-2">
+                <div class="w-full bg-primary-container/20 rounded-t-lg h-[40%] hover:bg-primary-container/40 transition-colors"></div>
+                <div class="w-full bg-primary-container/20 rounded-t-lg h-[60%] hover:bg-primary-container/40 transition-colors"></div>
+                <div class="w-full bg-primary-container/20 rounded-t-lg h-[55%] hover:bg-primary-container/40 transition-colors"></div>
+                <div class="w-full bg-primary-container/20 rounded-t-lg h-[85%] hover:bg-primary-container/40 transition-colors"></div>
+                <div class="w-full bg-primary-container/20 rounded-t-lg h-[70%] hover:bg-primary-container/40 transition-colors"></div>
+                <div class="w-full bg-primary rounded-t-lg h-[95%] shadow-[0_-4px_15px_rgba(74,64,224,0.3)]"></div>
+                <div class="w-full bg-primary-container/20 rounded-t-lg h-[65%] hover:bg-primary-container/40 transition-colors"></div>
+              </div>
+
+              <div class="flex justify-between mt-4 px-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Mon</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Tue</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Wed</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Thu</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Fri</span>
+                <span class="text-[10px] font-bold text-primary uppercase">Sat</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Sun</span>
+              </div>
+            </div>
+
+            <!-- My Events List -->
+            <div>
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="font-headline text-xl font-bold">Mis Eventos</h3>
+                <button class="text-primary font-bold text-sm flex items-center space-x-1 hover:underline">
+                  <span>Ver todos</span>
+                  <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
+
+              <div class="space-y-4">
+                @for (event of events; track event.id) {
+                  <div class="bg-surface-container-lowest rounded-xl p-4 flex items-center justify-between shadow-sm ghost-border hover:shadow-md transition-shadow">
+                    <div class="flex items-center space-x-4">
+                      <div class="w-16 h-16 rounded-lg bg-surface-container overflow-hidden">
+                        <img [src]="event.imageUrl" [alt]="event.title" class="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-on-surface">{{ event.title }}</h4>
+                        <p class="text-xs text-on-surface-variant">{{ event.date }} • {{ event.location }}</p>
+                        <div class="mt-1 flex items-center space-x-2">
+                          @if (event.status === 'sold-out') {
+                            <span class="bg-tertiary-container text-on-tertiary-container text-[10px] px-2 py-0.5 rounded-full font-bold">Sold Out</span>
+                          } @else if (event.status === 'selling') {
+                            <span class="bg-primary-container/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">{{ event.percentageSold }}% Sold</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex space-x-2">
+                      <button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                      <button class="p-2 text-on-surface-variant hover:text-error transition-colors">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications & Feed (Right 4 cols) -->
+          <div class="lg:col-span-4 space-y-8">
+            <div class="bg-surface-container rounded-2xl p-6 h-full border-l-0">
+              <h3 class="font-headline text-xl font-bold mb-6 flex items-center">
+                <span class="material-symbols-outlined mr-2 text-primary">notifications_active</span>
+                Última hora
+              </h3>
+
+              <div class="space-y-6">
+                @for (notification of notifications; track notification.id; let first = $first) {
+                  <div class="flex space-x-3 relative">
+                    @if (!first) {
+                      <div class="absolute left-3 top-8 bottom-0 w-[1px] bg-outline-variant/20"></div>
+                    }
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 z-10"
+                         [ngClass]="getNotificationClasses(notification.type)">
+                      <span class="material-symbols-outlined text-[14px]" [ngClass]="getNotificationIconClasses(notification.type)">
+                        {{ getNotificationIcon(notification.type) }}
+                      </span>
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold text-on-surface">{{ notification.title }}</p>
+                      <p class="text-xs text-on-surface-variant mt-1">{{ notification.message }}</p>
+                      <span class="text-[10px] text-slate-400 font-medium">{{ notification.time }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="mt-10 p-4 bg-surface-container-lowest rounded-xl ghost-border">
+                <h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Meta Mensual</h4>
+                <div class="flex items-end justify-between mb-2">
+                  <span class="text-2xl font-headline font-bold">$42k</span>
+                  <span class="text-xs font-bold text-on-surface-variant">$50k Meta</span>
+                </div>
+                <div class="w-full bg-surface-container-low h-3 rounded-full overflow-hidden">
+                  <div class="kinetic-cta h-full w-[84%] rounded-full"></div>
+                </div>
+                <p class="text-[10px] text-on-surface-variant mt-3 text-center">
+                  ¡Estás al 84% de tu objetivo mensual!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <app-bottom-nav-bar />
+  `,
+  styles: [`
+    :host {
+      display: block;
+    }
+    
+    .active-nav {
+      background-color: rgba(99, 102, 241, 0.1);
+      color: #4a40e0;
+    }
+    
+    .active-nav .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1;
+    }
+  `]
+})
+export class OrganizerDashboard {
+  events: Event[] = [
+    {
+      id: '1',
+      title: 'Summer Jazz Night',
+      date: '24 June, 2024',
+      location: 'Marina Bay',
+      imageUrl: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=200&h=200&fit=crop',
+      status: 'sold-out'
+    },
+    {
+      id: '2',
+      title: 'Tech Summit 2024',
+      date: '12 July, 2024',
+      location: 'Convention Hall',
+      imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=200&h=200&fit=crop',
+      status: 'selling',
+      percentageSold: 85
+    }
+  ];
+
+  notifications: Notification[] = [
+    {
+      id: '1',
+      type: 'alert',
+      title: 'Cambio de Horario',
+      message: 'El evento "Jazz Night" ha sido retrasado 30 minutos por condiciones climáticas.',
+      time: 'Hace 5 min'
+    },
+    {
+      id: '2',
+      type: 'sale',
+      title: 'Nueva Venta',
+      message: 'Se han vendido 5 entradas VIP para "Tech Summit 2024".',
+      time: 'Hace 12 min'
+    },
+    {
+      id: '3',
+      type: 'registration',
+      title: 'Registro de Expositor',
+      message: 'Marina Soler ha completado su registro para el área de prensa.',
+      time: 'Hace 1 hora'
+    }
+  ];
+
+  getNotificationClasses(type: string): string {
+    const classes: Record<string, string> = {
+      'alert': 'bg-error-container/20',
+      'sale': 'bg-primary-container/20',
+      'registration': 'bg-secondary-container/30'
+    };
+    return classes[type] || '';
+  }
+
+  getNotificationIconClasses(type: string): string {
+    const classes: Record<string, string> = {
+      'alert': 'text-error',
+      'sale': 'text-primary',
+      'registration': 'text-secondary'
+    };
+    return classes[type] || '';
+  }
+
+  getNotificationIcon(type: string): string {
+    const icons: Record<string, string> = {
+      'alert': 'priority_high',
+      'sale': 'confirmation_number',
+      'registration': 'person_add'
+    };
+    return icons[type] || 'notifications';
+  }
+}
