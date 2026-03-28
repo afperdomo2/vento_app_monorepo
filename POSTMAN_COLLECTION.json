@@ -324,6 +324,53 @@
           "response": []
         },
         {
+          "name": "Get Featured Events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Eventos destacados obtenidos:', response.data?.length || 0);",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/events/featured",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "featured"
+              ]
+            },
+            "description": "Obtiene eventos destacados: eventos futuros con tickets disponibles, ordenados por fecha (más próximos primero).\n\nPor defecto retorna 6 eventos. Puedes especificar un límite con el query param 'limit' (mínimo 6, máximo 20).\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
           "name": "Create Event",
           "event": [
             {

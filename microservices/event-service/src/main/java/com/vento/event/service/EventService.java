@@ -11,10 +11,13 @@ import com.vento.event.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,6 +61,28 @@ public class EventService {
                 pageable.getPageNumber(), pageable.getPageSize());
         return eventRepository.findAll(pageable)
                 .map(this::mapToDto);
+    }
+
+    /**
+     * Obtiene eventos destacados: eventos futuros con tickets disponibles,
+     * ordenados por fecha (más próximos primero).
+     *
+     * @param limit cantidad máxima de eventos a retornar (mínimo 6, máximo 20)
+     * @return lista de eventos destacados
+     */
+    @Transactional(readOnly = true)
+    public List<EventDto> getFeaturedEvents(int limit) {
+        // Validar límites: mínimo 6, máximo 20
+        int effectiveLimit = Math.max(6, Math.min(20, limit));
+        log.info("Obteniendo eventos destacados - Límite: {}", effectiveLimit);
+
+        LocalDateTime now = LocalDateTime.now();
+        Pageable pageable = PageRequest.of(0, effectiveLimit);
+
+        return eventRepository.findFeaturedEvents(now, pageable)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
     @Transactional

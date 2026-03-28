@@ -145,7 +145,8 @@ Obtiene un token JWT para un usuario estándar.
 - Username: `testuser`
 
 > - Email: `testuser@vento.app`
->    - **First name:** `Test` ← Obligatorio
+    >
+- **First name:** `Test` ← Obligatorio
 >    - **Last name:** `User` ← Obligatorio
 >    - Email verified: `ON`
 >    - Enabled: `ON`
@@ -202,6 +203,60 @@ Lista todos los eventos con paginación.
     },
     "totalElements": 1,
     "totalPages": 1
+  }
+  ```
+
+---
+
+#### Get Featured Events
+
+Obtiene eventos destacados: eventos futuros con tickets disponibles, ordenados por fecha.
+
+- **Método:** `GET`
+- **URL:** `{{base_url}}/api/events/featured`
+- **Headers:**
+  ```
+  Authorization: Bearer {{access_token}}
+  Accept: application/json
+  ```
+- **Query Params:**
+  | Parámetro | Tipo | Default | Descripción |
+  |-----------|------|---------|-------------|
+  | `limit` | integer | 6 | Cantidad de eventos (mín 6, máx 20) |
+- **Ejemplos:**
+  ```
+  {{base_url}}/api/events/featured           ← 6 eventos (default)
+  {{base_url}}/api/events/featured?limit=10  ← 10 eventos
+  {{base_url}}/api/events/featured?limit=20  ← 20 eventos (máximo)
+  ```
+- **Criterios de selección:**
+    - Eventos futuros (`eventDate > NOW`)
+    - Con tickets disponibles (`availableTickets > 0`)
+    - Ordenados por fecha ascendente (más próximos primero)
+- **Respuesta exitosa:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "data": [
+      {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "name": "Concierto de Rock 2026",
+        "description": "Gran concierto de rock...",
+        "eventDate": "2026-08-15T20:00:00",
+        "venue": "Estadio Nacional",
+        "totalCapacity": 5000,
+        "availableTickets": 3500,
+        "price": 75.50
+      }
+      // ... hasta 6 eventos (o el límite especificado)
+    ]
+  }
+  ```
+- **Respuesta vacía:** `200 OK` (cuando no hay eventos futuros con disponibilidad)
+  ```json
+  {
+    "status": "success",
+    "data": []
   }
   ```
 

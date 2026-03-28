@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -106,6 +107,28 @@ public class EventController {
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
         Page<EventDto> events = eventService.listEvents(pageRequest);
+        return ResponseEntity.ok(ApiResponse.success(events));
+    }
+
+    @Operation(
+            summary = "Obtener eventos destacados",
+            description = "Retorna una lista de eventos destacados: eventos futuros con tickets disponibles, " +
+                    "ordenados por fecha (más próximos primero). " +
+                    "El límite por defecto es 6 eventos, mínimo 6 y máximo 20."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de eventos destacados obtenida exitosamente",
+                    content = @Content(schema = @Schema(implementation = EventDto.class))
+            )
+    })
+    @GetMapping("/featured")
+    public ResponseEntity<ApiResponse<List<EventDto>>> getFeaturedEvents(
+            @Parameter(description = "Cantidad máxima de eventos a retornar (mínimo 6, máximo 20, por defecto 6)")
+            @RequestParam(required = false, defaultValue = "6") int limit) {
+
+        List<EventDto> events = eventService.getFeaturedEvents(limit);
         return ResponseEntity.ok(ApiResponse.success(events));
     }
 
