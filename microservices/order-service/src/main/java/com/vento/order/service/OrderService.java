@@ -31,9 +31,9 @@ public class OrderService {
     private final EventClient eventClient;
 
     @Transactional
-    public OrderDto createOrder(CreateOrderRequest request) {
+    public OrderDto createOrder(CreateOrderRequest request, UUID userId) {
         log.info("Creando nuevo pedido para el usuario: {}, evento: {}, cantidad: {}",
-                request.getUserId(), request.getEventId(), request.getQuantity());
+                userId, request.getEventId(), request.getQuantity());
 
         // Verificar disponibilidad y obtener precio del evento
         EventAvailabilityDto availability;
@@ -63,7 +63,7 @@ public class OrderService {
         var totalAmount = availability.getPrice().multiply(java.math.BigDecimal.valueOf(request.getQuantity()));
 
         Order order = Order.builder()
-                .userId(request.getUserId())
+                .userId(userId)
                 .eventId(request.getEventId())
                 .quantity(request.getQuantity())
                 .totalAmount(totalAmount)

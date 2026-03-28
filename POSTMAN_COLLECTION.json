@@ -569,17 +569,11 @@
                 "key": "Accept",
                 "value": "application/json",
                 "type": "text"
-              },
-              {
-                "key": "X-User-Id",
-                "value": "test-user-id",
-                "type": "text",
-                "description": "ID del usuario (propagado por el Gateway)"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"eventId\": \"{{event_id}}\",\n  \"quantity\": 2,\n  \"ticketType\": \"GENERAL\"\n}"
+              "raw": "{\n  \"eventId\": \"{{event_id}}\",\n  \"quantity\": 2\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/orders",
@@ -591,7 +585,7 @@
                 "orders"
               ]
             },
-            "description": "Crea una nueva reserva de entradas para un evento.\n\nCampos requeridos:\n- eventId: ID del evento (UUID)\n- quantity: Cantidad de entradas\n- ticketType: Tipo de entrada (GENERAL, VIP, etc.)\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+            "description": "Crea una nueva reserva de entradas para un evento.\n\nCampos requeridos:\n- eventId: ID del evento (UUID)\n- quantity: Cantidad de entradas\n\nEl userId se extrae automáticamente del token JWT por el API Gateway.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
           },
           "response": []
         },
@@ -641,54 +635,6 @@
               ]
             },
             "description": "Obtiene los detalles de una orden por su ID.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Orders by User ID",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const response = pm.response.json();",
-                  "    console.log('✅ Órdenes obtenidas:', response.content?.length || 0);",
-                  "} else {",
-                  "    console.error('❌ Error:', pm.response.code);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/orders/user/{{user_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "orders",
-                "user",
-                "{{user_id}}"
-              ]
-            },
-            "description": "Obtiene todas las órdenes de un usuario específico.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
           },
           "response": []
         },

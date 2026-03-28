@@ -342,8 +342,7 @@ Crea una reserva de entradas.
   ```json
   {
     "eventId": "{{event_id}}",
-    "quantity": 2,
-    "ticketType": "GENERAL"
+    "quantity": 2
   }
   ```
 - **Campos requeridos:**
@@ -351,7 +350,7 @@ Crea una reserva de entradas.
   |-------|------|-------------|
   | `eventId` | string (UUID) | ID del evento |
   | `quantity` | integer | Cantidad de entradas |
-  | `ticketType` | string | Tipo de entrada (GENERAL, VIP, etc.) |
+- **Nota:** El `userId` se extrae automáticamente del token JWT por el API Gateway.
 - **Respuesta exitosa:** `201 Created`
   ```json
   {
@@ -372,7 +371,7 @@ Crea una reserva de entradas.
 
 #### Get Order by ID
 
-Obtiene los detalles de una orden.
+Obtiene los detalles de una orden. **Solo el dueño de la orden puede verla.**
 
 - **Método:** `GET`
 - **URL:** `{{base_url}}/api/orders/{{order_id}}`
@@ -397,21 +396,7 @@ Obtiene los detalles de una orden.
     }
   }
   ```
-
----
-
-#### Get Orders by User ID
-
-Obtiene todas las órdenes de un usuario.
-
-- **Método:** `GET`
-- **URL:** `{{base_url}}/api/orders/user/{{user_id}}`
-- **Headers:**
-  ```
-  Authorization: Bearer {{access_token}}
-  Accept: application/json
-  ```
-- **Respuesta exitosa:** `200 OK`
+- **Respuesta 403 Forbidden:** Si intentas ver una orden que no es tuya.
 
 ---
 
@@ -433,7 +418,7 @@ Obtiene todas las órdenes del usuario autenticado.
 
 #### Cancel Order
 
-Cancela una orden existente.
+Cancela una orden existente. **Solo el dueño de la orden puede cancelarla.**
 
 - **Método:** `PUT`
 - **URL:** `{{base_url}}/api/orders/{{order_id}}/cancel`
@@ -453,6 +438,7 @@ Cancela una orden existente.
     }
   }
   ```
+- **Respuesta 403 Forbidden:** Si intentas cancelar una orden que no es tuya.
 
 ---
 

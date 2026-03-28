@@ -9,6 +9,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -185,6 +186,53 @@ public class GlobalExceptionHandler {
 
         log.warn("[{}] Conflicto de negocio en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 403 — Acceso denegado (usuario no tiene permiso sobre el recurso)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.FORBIDDEN,
+                "access-denied",
+                "Acceso denegado",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("[{}] Acceso denegado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 400 — Header requerido faltante (X-User-Id)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ProblemDetail> handleMissingHeader(
+            MissingRequestHeaderException ex, HttpServletRequest request) {
+
+        String headerName = ex.getHeaderName();
+        String detail = "El header '%s' es requerido. Esta solicitud debe venir del API Gateway o debes especificarlo manualmente.".formatted(headerName);
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.BAD_REQUEST,
+                "missing-header",
+                "Header requerido faltante",
+                detail,
+                request.getRequestURI()
+        );
+
+        log.warn("[{}] Header requerido faltante en {}: {}", serviceName, request.getRequestURI(), headerName);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
     }
