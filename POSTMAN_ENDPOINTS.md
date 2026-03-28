@@ -15,6 +15,41 @@ Guía de referencia rápida para configurar y usar la colección de Postman.
 
 ---
 
+## 📐 Estándar de Errores (RFC 9457)
+
+> **Nota:** Esta API utiliza el estándar **[RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457)** (Problem Details
+> for HTTP APIs) para todas las respuestas de error.
+
+**Formato de respuesta de error:**
+
+```json
+{
+  "type": "https://vento.app/errors/validation-error",
+  "title": "Errores de validación",
+  "status": 400,
+  "detail": "Se encontraron 2 errores de validación en la solicitud",
+  "instance": "/api/orders",
+  "service": "order-service",
+  "timestamp": "2026-03-28T12:00:00.000"
+}
+```
+
+**Campos:**
+
+| Campo       | Descripción                          |
+|-------------|--------------------------------------|
+| `type`      | URI identificadora del tipo de error |
+| `title`     | Título corto y legible               |
+| `status`    | Código HTTP (400, 401, 403, etc.)    |
+| `detail`    | Descripción detallada del error      |
+| `instance`  | Path del endpoint                    |
+| `service`   | Microservicio que respondió          |
+| `timestamp` | Timestamp ISO 8601 (milisegundos)    |
+
+Este formato es **consistente en todos los microservicios** (API Gateway, Event Service, Order Service).
+
+---
+
 ## 🚀 Instalación
 
 ### Opción 1: Importar Colección JSON (Recomendado)
@@ -146,8 +181,10 @@ Obtiene un token JWT para un usuario estándar.
 
 > - Email: `testuser@vento.app`
     >
+
 - **First name:** `Test` ← Obligatorio
->    - **Last name:** `User` ← Obligatorio
+
+> - **Last name:** `User` ← Obligatorio
 >    - Email verified: `ON`
 >    - Enabled: `ON`
 > 4. En **Credentials**, establece:

@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -298,7 +299,7 @@ public class GlobalExceptionHandler {
         problem.setTitle(title);
         problem.setInstance(URI.create(instance));
         problem.setProperty("service", serviceName);
-        problem.setProperty("timestamp", LocalDateTime.now().toString());
+        problem.setProperty("timestamp", LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS).toString());
         return problem;
     }
 

@@ -221,7 +221,8 @@ docker compose stop order-service
 | `/api/orders/**` | order-service:8083 | Gestión de pedidos        |
 | `/ui/*`          | frontend:4200      | Frontend de la aplicación |
 
-> **Nota:** Durante el desarrollo local, el frontend corre directamente en `http://localhost:4200`. El ruteo `/ui/*` es útil cuando el frontend se sirve a través del API Gateway en producción.
+> **Nota:** Durante el desarrollo local, el frontend corre directamente en `http://localhost:4200`. El ruteo `/ui/*` es
+> útil cuando el frontend se sirve a través del API Gateway en producción.
 
 ## 🔌 Endpoints
 
@@ -377,6 +378,7 @@ cd frontend && pnpm start
 ```
 
 **Acceso:**
+
 - 🌐 **Frontend:** http://localhost:4200
 - 🔌 **API Gateway:** http://localhost:8080
 - 📖 **Swagger Event Service:** http://localhost:8082/swagger-ui.html
@@ -419,14 +421,15 @@ cd frontend && pnpm start
 
 ### Cobertura Actual
 
-| Servicio        | Tests | Estado |
-|-----------------|-------|--------|
-| EventService    | 6     | ✅     |
-| OrderService    | 10    | ✅     |
+| Servicio     | Tests | Estado |
+|--------------|-------|--------|
+| EventService | 6     | ✅      |
+| OrderService | 10    | ✅      |
 
 ### Reportes
 
 Los reportes de tests se generan en:
+
 - **HTML:** `microservices/*/build/reports/tests/test/index.html`
 - **XML:** `microservices/*/build/test-results/test/`
 
@@ -597,6 +600,53 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 # Reiniciar
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 ```
+
+---
+
+## 📐 Estándares de la API
+
+### Manejo de Errores (RFC 9457)
+
+La API utiliza el estándar **[RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457)** (Problem Details for HTTP APIs)
+para la gestión de errores. Todas las respuestas de error siguen este formato:
+
+```json
+{
+  "type": "https://vento.app/errors/validation-error",
+  "title": "Errores de validación",
+  "status": 400,
+  "detail": "Se encontraron 2 errores de validación en la solicitud",
+  "instance": "/api/orders",
+  "service": "order-service",
+  "timestamp": "2026-03-28T12:00:00.000"
+}
+```
+
+**Campos de la respuesta:**
+
+| Campo       | Tipo   | Descripción                                             |
+|-------------|--------|---------------------------------------------------------|
+| `type`      | URI    | Identificador del tipo de error (extensible)            |
+| `title`     | string | Título corto y legible del error                        |
+| `status`    | number | Código HTTP de la respuesta (400, 401, 403, etc.)       |
+| `detail`    | string | Descripción detallada del error                         |
+| `instance`  | string | Path del endpoint que generó el error                   |
+| `service`   | string | Nombre del microservicio que respondió                  |
+| `timestamp` | string | Timestamp en formato ISO 8601 (truncado a milisegundos) |
+
+**Tipos de errores comunes:**
+
+| Tipo                                        | HTTP | Descripción                    |
+|---------------------------------------------|------|--------------------------------|
+| `https://vento.app/errors/validation-error` | 400  | Errores de validación de datos |
+| `https://vento.app/errors/unauthorized`     | 401  | Error de autenticación         |
+| `https://vento.app/errors/forbidden`        | 403  | Error de autorización          |
+| `https://vento.app/errors/not-found`        | 404  | Recurso no encontrado          |
+| `https://vento.app/errors/conflict`         | 409  | Conflicto de negocio           |
+| `https://vento.app/errors/internal-error`   | 500  | Error interno del servidor     |
+| `https://vento.app/errors/bad-gateway`      | 502  | Error en servicio externo      |
+
+> **Nota:** Este formato es consistente en todos los microservicios (API Gateway, Event Service, Order Service).
 
 ## 👤 Autor
 
