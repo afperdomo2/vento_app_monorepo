@@ -1,5 +1,8 @@
 package com.vento.gateway.config;
 
+import com.vento.gateway.exception.CustomAccessDeniedHandler;
+import com.vento.gateway.exception.CustomAuthenticationEntryPoint;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,10 +34,14 @@ import java.util.stream.Stream;
  * - El JWT validado es disponible para filtros downstream (JwtHeaderFilter)
  */
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuerUri;
+
+    private final CustomAuthenticationEntryPoint authEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
@@ -49,10 +56,10 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/events/**").permitAll()
 
                         // Eventos - Mutaciones solo para ADMIN
-                        .pathMatchers(HttpMethod.POST, "/api/events/**").hasRole("USER")
-                        .pathMatchers(HttpMethod.PUT, "/api/events/**").hasRole("USER")
-                        .pathMatchers(HttpMethod.PATCH, "/api/events/**").hasRole("USER")
-                        .pathMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("USER")
+                        .pathMatchers(HttpMethod.POST, "/api/events/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/events/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/api/events/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
 
                         // Orders requieren rol USER
                         .pathMatchers("/api/orders/**").hasRole("USER")
@@ -68,6 +75,11 @@ public class SecurityConfig {
                                     return Mono.just(new JwtAuthenticationToken(token, authorities, token.getSubject()));
                                 })
                         )
+                        .authenticationEntryPoint(authEntryPoint)
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 );
 
         return http.build();
