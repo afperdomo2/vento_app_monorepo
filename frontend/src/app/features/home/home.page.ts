@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { TopNavBar } from '../shared/top-nav-bar/top-nav-bar';
-import { BottomNavBar } from '../shared/bottom-nav-bar/bottom-nav-bar';
-import { EventCard } from '../shared/event-card/event-card';
+import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
+import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
+import { EventCard } from '../../shared/components/event-card/event-card';
 
 interface Event {
   id: string;
@@ -18,7 +18,7 @@ interface Event {
 }
 
 @Component({
-  selector: 'app-landing',
+  selector: 'app-home',
   standalone: true,
   imports: [TopNavBar, BottomNavBar, EventCard],
   template: `
@@ -241,7 +241,7 @@ interface Event {
     }
   `]
 })
-export class Landing {
+export class HomePage {
   events: Event[] = [
     {
       id: '1',

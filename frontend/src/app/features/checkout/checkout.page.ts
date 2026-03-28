@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { TopNavBar } from '../shared/top-nav-bar/top-nav-bar';
-import { BottomNavBar } from '../shared/bottom-nav-bar/bottom-nav-bar';
+import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
+import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -178,4 +178,4 @@ import { FormsModule } from '@angular/forms';
     }
   `]
 })
-export class Checkout { }
+export class CheckoutPage { }

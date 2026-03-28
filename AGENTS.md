@@ -60,108 +60,51 @@ pnpm test              # Ejecutar tests
 pnpm ng <comando>      # Angular CLI commands
 ```
 
-**Generar componentes/servicios:**
+**Generar componentes/servicios (Feature-First Architecture):**
 
 ```bash
-pnpm ng generate component components/my-component
-pnpm ng generate service services/my-service
-pnpm ng generate interceptor interceptors/my-interceptor
-pnpm ng generate guard guards/my-guard
+# Componente en un feature específico
+pnpm ng generate component features/home/components/my-component
+
+# Servicio en core (global) o en un feature
+pnpm ng generate service core/services/my-service
+pnpm ng generate service features/home/services/my-service
+
+# Guard, interceptor, pipe, directiva
+pnpm ng generate guard core/guards/my-guard
+pnpm ng generate interceptor core/interceptors/my-interceptor
+pnpm ng generate pipe shared/pipes/my-pipe
+pnpm ng generate directive shared/directives/my-directive
 ```
 
-## Convenciones de Codigo
-
-### Backend (Java/Spring)
-
-### Estructura de Paquetes
-
-```
-com.vento.<modulo>/
-├── controller/   # REST endpoints (usar @RestController)
-├── service/      # Logica de negocio (interfaz + impl)
-├── repository/   # Acceso a datos (usar @Repository)
-├── model/        # Entidades JPA
-├── dto/          # Data Transfer Objects
-├── config/       # Configuracion (@Configuration, @ConfigurationProperties)
-├── exception/    # Excepciones personalizadas
-├── util/         # Utilidades
-└── mapper/       # Mappers (MapStruct o manually)
-```
-
-### Nombres
-
-- Clases: PascalCase (`UserService`, `EventController`)
-- Interfaces: Prefijo con I o sufijo `Service`, `Repository` (`IUserService`, `UserRepository`)
-- Metodos: camelCase (`getUserById`, `saveEvent`)
-- Constantes: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
-- Paquetes: minusculas, singular (`com.vento.event`)
-- Variables: camelCase (`userList`, `maxItems`)
-- Archivos de test: `*Test.java`, `*IntegrationTest.java`
-
-### Imports
-
-- Imports explicitos (nunca `.*`)
-- Orden: static > java > javax > org.springframework > otros org > com > terceros
-- Agrupar con lineas en blanco entre grupos
-- No usar wildcard imports
-
-### Tipos y Anotaciones
-
-- Usar interfaces para servicios siempre que sea posible
-- Preferir inmutables (`@Value`, records de Java 17+) para DTOs
-- Usar `Optional` para valores que pueden ser nulos
-- `@Autowired` en constructores (nunca en campos)
-- Usar `@Valid` en DTOs de entrada en controladores
-- Usar `@Builder` (Lombok) para objetos complejos
-- Usar `@Service`, `@Repository`, `@Controller`, `@RestController` apropiadamente
-- Usar `@Transactional` en metodos de servicio que modifican datos
-
-### Manejo de Errores
-
-- Excepciones personalizadas extienden `RuntimeException`
-- Usar `BusinessException` o similar para errores de dominio
-- Usar `GlobalExceptionHandler` con `@ControllerAdvice` para manejo global
-- Codigos HTTP apropiados (4xx para errores de cliente, 5xx para servidor)
-- Usar `@Slf4j` (Lombok) para logging
-- Registrar en niveles apropiados: ERROR (excepciones), WARN (warnings), INFO (informacion)
-- No loggear datos sensibles (contraseñas, tokens, PII)
-
-### Configuracion
-
-- `application.yml` base + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`)
-- Usar `@ConfigurationProperties` para configuration tipada
-- No hardcodear secrets (usar variables de entorno)
-- Perfiles: local (dev rapido), dev (docker), prod (produccion)
-- Properties: usar kebab-case (`my-property` no `myProperty`)
-
-### Pruebas
-
-- Ubicacion: `src/test/java` reflejando estructura de `src/main`
-- JUnit 5 (`org.junit.jupiter.api`)
-- Mockito para unit tests
-- `@SpringBootTest` para tests de integracion
-- `@MockBean` para dependencias externas
-- `@DataJpaTest` para repositorios
-- Seguir patron AAA (Arrange, Act, Assert)
-- Nombre: `*Test.java` para unit, `*IntegrationTest.java` para integracion
-
-### Documentacion
-
-- Javadoc para APIs publicas y clases importantes
-- Codigo autodocumentado con nombres significativos
-- No documentar lo obvio
-
-### Frontend (Angular)
+### Frontend (Angular) - Feature-First Architecture
 
 #### Estructura de Carpetas
 
 ```
 src/app/
-├── components/   # Componentes standalone
-├── services/     # Servicios (@injectable)
-├── models/       # Interfaces/Types
-├── config/       # Configuración de la app
-└── guards/       # Guards de rutas
+├── core/                     # Lógica global (singleton services)
+│   ├── auth/                 # Autenticación, JWT
+│   ├── guards/               # Route guards (canActivate)
+│   ├── interceptors/         # HTTP interceptors
+│   ├── providers/            # Signal/State providers globales
+│   └── services/             # Servicios globales
+│
+├── shared/                   # Reutilizable en toda la app
+│   ├── components/           # UI components puros (event-card, speaker-card)
+│   ├── directives/           # Directivas personalizadas
+│   ├── pipes/                # Transformadores de datos
+│   └── ui/                   # Layout components (navbars, footer)
+│
+└── features/                 # Módulos de negocio (lazy-loaded)
+    ├── home/                 # Feature: Home page
+    │   ├── components/       # Componentes específicos
+    │   ├── services/         # Servicios del feature
+    │   └── home.page.ts      # Página principal
+    ├── event-detail/         # Feature: Event detail
+    ├── checkout/             # Feature: Checkout
+    ├── login/                # Feature: Login
+    └── organizer/            # Feature: Organizer dashboard
 ```
 
 #### Convenciones
@@ -171,6 +114,7 @@ src/app/
 - **SCSS** para estilos
 - Inmutabilidad preferida (usar `readonly` en señales cuando sea posible)
 - Inyección de dependencias con `inject()` (no constructor injection)
+- **Nomenclatura**: `*.page.ts` para páginas, `*.component.ts` para componentes
 
 #### Ejemplo Componente con Signals
 
@@ -187,6 +131,95 @@ export class ExampleComponent {
   count = signal(0);
 }
 ```
+
+#### Crear Nuevo Feature
+
+1. Crear carpeta: `features/<nombre-feature>/`
+2. Generar página: `pnpm ng generate component features/<nombre>/<nombre>.page --standalone`
+3. Renombrar a `.page.ts`
+4. Agregar ruta en `app.routes.ts`
+
+## Convenciones de Codigo
+
+### Backend (Java/Spring)
+
+#### Estructura de Paquetes
+
+```
+com.vento.<modulo>/
+├── controller/   # REST endpoints (usar @RestController)
+├── service/      # Logica de negocio (interfaz + impl)
+├── repository/   # Acceso a datos (usar @Repository)
+├── model/        # Entidades JPA
+├── dto/          # Data Transfer Objects
+├── config/       # Configuracion (@Configuration, @ConfigurationProperties)
+├── exception/    # Excepciones personalizadas
+├── util/         # Utilidades
+└── mapper/       # Mappers (MapStruct o manually)
+```
+
+#### Nombres
+
+- Clases: PascalCase (`UserService`, `EventController`)
+- Interfaces: Prefijo con I o sufijo `Service`, `Repository` (`IUserService`, `UserRepository`)
+- Metodos: camelCase (`getUserById`, `saveEvent`)
+- Constantes: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
+- Paquetes: minusculas, singular (`com.vento.event`)
+- Variables: camelCase (`userList`, `maxItems`)
+- Archivos de test: `*Test.java`, `*IntegrationTest.java`
+
+#### Imports
+
+- Imports explicitos (nunca `.*`)
+- Orden: static > java > javax > org.springframework > otros org > com > terceros
+- Agrupar con lineas en blanco entre grupos
+- No usar wildcard imports
+
+#### Tipos y Anotaciones
+
+- Usar interfaces para servicios siempre que sea posible
+- Preferir inmutables (`@Value`, records de Java 17+) para DTOs
+- Usar `Optional` para valores que pueden ser nulos
+- `@Autowired` en constructores (nunca en campos)
+- Usar `@Valid` en DTOs de entrada en controladores
+- Usar `@Builder` (Lombok) para objetos complejos
+- Usar `@Service`, `@Repository`, `@Controller`, `@RestController` apropiadamente
+- Usar `@Transactional` en metodos de servicio que modifican datos
+
+#### Manejo de Errores
+
+- Excepciones personalizadas extienden `RuntimeException`
+- Usar `BusinessException` o similar para errores de dominio
+- Usar `GlobalExceptionHandler` con `@ControllerAdvice` para manejo global
+- Codigos HTTP apropiados (4xx para errores de cliente, 5xx para servidor)
+- Usar `@Slf4j` (Lombok) para logging
+- Registrar en niveles apropiados: ERROR (excepciones), WARN (warnings), INFO (informacion)
+- No loggear datos sensibles (contraseñas, tokens, PII)
+
+#### Configuracion
+
+- `application.yml` base + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`)
+- Usar `@ConfigurationProperties` para configuration tipada
+- No hardcodear secrets (usar variables de entorno)
+- Perfiles: local (dev rapido), dev (docker), prod (produccion)
+- Properties: usar kebab-case (`my-property` no `myProperty`)
+
+#### Pruebas
+
+- Ubicacion: `src/test/java` reflejando estructura de `src/main`
+- JUnit 5 (`org.junit.jupiter.api`)
+- Mockito para unit tests
+- `@SpringBootTest` para tests de integracion
+- `@MockBean` para dependencias externas
+- `@DataJpaTest` para repositorios
+- Seguir patron AAA (Arrange, Act, Assert)
+- Nombre: `*Test.java` para unit, `*IntegrationTest.java` para integracion
+
+#### Documentacion
+
+- Javadoc para APIs publicas y clases importantes
+- Codigo autodocumentado con nombres significativos
+- No documentar lo obvio
 
 ## Agregar Nuevo Microservicio
 

@@ -197,7 +197,7 @@ import { FormsModule } from '@angular/forms';
     }
   `]
 })
-export class Login {
+export class LoginPage {
   showPassword = false;
 
   togglePasswordVisibility() {

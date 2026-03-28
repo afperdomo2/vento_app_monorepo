@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { BottomNavBar } from '../shared/bottom-nav-bar/bottom-nav-bar';
+import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { CommonModule } from '@angular/common';
 
 interface Event {
@@ -283,7 +283,7 @@ interface Notification {
     }
   `]
 })
-export class OrganizerDashboard {
+export class OrganizerPage {
   events: Event[] = [
     {
       id: '1',

@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TopNavBar } from '../shared/top-nav-bar/top-nav-bar';
-import { BottomNavBar } from '../shared/bottom-nav-bar/bottom-nav-bar';
-import { SpeakerCard } from '../shared/speaker-card/speaker-card';
+import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
+import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
+import { SpeakerCard } from '../../shared/components/speaker-card/speaker-card';
 
 interface Speaker {
   name: string;
@@ -238,7 +238,7 @@ interface Speaker {
     }
   `]
 })
-export class EventDetail {
+export class EventDetailPage {
   selectedTicket = signal<'general' | 'vip'>('general');
   quantity = signal(1);
 

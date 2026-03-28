@@ -1,16 +1,16 @@
 import { Routes } from '@angular/router';
-import { Landing } from './components/landing/landing';
-import { EventDetail } from './components/event-detail/event-detail';
-import { Login } from './components/login/login';
-import { Checkout } from './components/checkout/checkout';
-import { OrganizerDashboard } from './components/organizer-dashboard/organizer-dashboard';
+import { HomePage } from './features/home/home.page';
+import { EventDetailPage } from './features/event-detail/event-detail.page';
+import { LoginPage } from './features/login/login.page';
+import { CheckoutPage } from './features/checkout/checkout.page';
+import { OrganizerPage } from './features/organizer/organizer.page';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
-  { path: 'home', component: Landing },
-  { path: 'events/:id', component: EventDetail },
-  { path: 'login', component: Login },
-  { path: 'checkout', component: Checkout },
-  { path: 'organizer', component: OrganizerDashboard },
+  { path: 'home', component: HomePage },
+  { path: 'events/:id', component: EventDetailPage },
+  { path: 'login', component: LoginPage },
+  { path: 'checkout', component: CheckoutPage },
+  { path: 'organizer', component: OrganizerPage },
   { path: '**', redirectTo: '/home' }
 ];

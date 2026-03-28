@@ -44,24 +44,69 @@ La aplicación estará disponible en: **http://localhost:4200**
 
 ## 🏗️ Estructura del Proyecto
 
+### Arquitectura Feature-First
+
+El frontend sigue una arquitectura **feature-first**, organizando el código por funcionalidades de negocio en lugar de por tipo técnico.
+
 ```
 frontend/
 ├── src/
-│   ├── app/                    # Código principal de la aplicación
-│   │   ├── app.ts              # Componente raíz
-│   │   ├── app.html            # Template del componente raíz
-│   │   ├── app.scss            # Estilos del componente raíz
-│   │   ├── app.config.ts       # Configuración de la aplicación
-│   │   └── app.routes.ts       # Definición de rutas
-│   ├── index.html              # HTML principal
-│   ├── main.ts                 # Punto de entrada
-│   └── styles.scss             # Estilos globales
-├── public/                     # Archivos estáticos (favicon, assets)
-├── angular.json                # Configuración de Angular
-├── package.json                # Dependencias y scripts
-├── tsconfig.json               # Configuración de TypeScript
-└── .npmrc                      # Configuración de pnpm
+│   ├── app/                        # Código principal de la aplicación
+│   │   ├── core/                   # Lógica global (singleton services)
+│   │   │   ├── auth/               # Servicios de autenticación, JWT
+│   │   │   ├── guards/             # Protecciones de rutas (canActivate)
+│   │   │   ├── interceptors/       # Transformación de peticiones HTTP
+│   │   │   ├── providers/          # Configuraciones de Signals/Estado global
+│   │   │   └── services/           # Servicios globales (API, Notificaciones)
+│   │   │
+│   │   ├── shared/                 # Reutilizable en toda la app
+│   │   │   ├── components/         # UI components puros (event-card, speaker-card)
+│   │   │   ├── directives/         # Directivas personalizadas
+│   │   │   ├── pipes/              # Transformadores de datos
+│   │   │   └── ui/                 # Layout components (navbars, footer)
+│   │   │
+│   │   ├── features/               # Módulos de negocio (lazy-loaded)
+│   │   │   ├── home/               # Feature: Página principal
+│   │   │   │   ├── components/     # Componentes específicos de home
+│   │   │   │   ├── services/       # Lógica específica de home
+│   │   │   │   └── home.page.ts    # Componente página
+│   │   │   ├── event-detail/       # Feature: Detalle de evento
+│   │   │   ├── checkout/           # Feature: Checkout/pago
+│   │   │   ├── login/              # Feature: Autenticación
+│   │   │   └── organizer/          # Feature: Dashboard organizador
+│   │   │
+│   │   ├── app.ts                  # Componente raíz
+│   │   ├── app.html                # Template del componente raíz
+│   │   ├── app.scss                # Estilos del componente raíz
+│   │   ├── app.config.ts           # Configuración de la aplicación
+│   │   └── app.routes.ts           # Definición de rutas
+│   │
+│   ├── index.html                  # HTML principal
+│   ├── main.ts                     # Punto de entrada
+│   └── styles.scss                 # Estilos globales
+│
+├── public/                         # Archivos estáticos (favicon, assets)
+├── angular.json                    # Configuración de Angular
+├── package.json                    # Dependencias y scripts
+├── tsconfig.json                   # Configuración de TypeScript
+└── .npmrc                          # Configuración de pnpm
 ```
+
+### Convenciones de Nomenclatura
+
+| Tipo | Convención | Ejemplo |
+|------|------------|---------|
+| **Pages** | `*.page.ts` | `home.page.ts`, `login.page.ts` |
+| **Components** | `*.component.ts` | `event-card.component.ts` |
+| **Services** | `*.service.ts` | `auth.service.ts` |
+| **Guards** | `*.guard.ts` | `auth.guard.ts` |
+| **Interceptors** | `*.interceptor.ts` | `jwt.interceptor.ts` |
+
+### ¿Cuándo usar cada carpeta?
+
+- **`features/`**: Código específico de una funcionalidad de negocio. Solo se usa en ese feature.
+- **`shared/`**: Componentes, directivas o pipes reutilizables en múltiples features.
+- **`core/`**: Servicios singleton, interceptores HTTP, guards de rutas, configuración global.
 
 ## 🎯 Características
 
@@ -217,20 +262,40 @@ const authInterceptor = (req: HttpHandlerFn, next: HttpHandlerFn) => {
 ## 🛠️ Comandos Útiles de Angular CLI
 
 ```bash
-# Generar un componente
-pnpm ng generate component components/my-component
+# Generar un componente (en un feature específico)
+pnpm ng generate component features/home/components/my-component
 
-# Generar un servicio
-pnpm ng generate service services/my-service
-
-# Generar un módulo (si lo necesitas)
-pnpm ng generate module modules/my-module
+# Generar un servicio (en core o en un feature)
+pnpm ng generate service core/services/my-service
+pnpm ng generate service features/home/services/my-service
 
 # Generar un guard
-pnpm ng generate guard guards/my-guard
+pnpm ng generate guard core/guards/my-guard
 
 # Generar un interceptor
-pnpm ng generate interceptor interceptors/my-interceptor
+pnpm ng generate interceptor core/interceptors/my-interceptor
+
+# Generar un pipe
+pnpm ng generate pipe shared/pipes/my-pipe
+
+# Generar una directiva
+pnpm ng generate directive shared/directives/my-directive
+```
+
+### Ejemplo: Crear un Nuevo Feature
+
+```bash
+# 1. Crear estructura de carpetas manualmente o con:
+mkdir -p src/app/features/my-feature/{components,services}
+
+# 2. Generar página principal
+pnpm ng generate component features/my-feature/my-feature-page --standalone
+
+# 3. Renombrar a convención .page.ts
+mv src/app/features/my-feature/my-feature-page.component.ts \
+   src/app/features/my-feature/my-feature.page.ts
+
+# 4. Agregar ruta en app.routes.ts
 ```
 
 ## 📚 Recursos y Documentación

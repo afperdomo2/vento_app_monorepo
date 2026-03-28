@@ -81,14 +81,29 @@ vento_app_monorepo/
 │       ├── Dockerfile.dev           # Debug remoto
 │       ├── Dockerfile.prod          # Producción
 │       └── build.gradle
-├── frontend/                        # Aplicación Angular 21
+├── frontend/                        # Aplicación Angular 21 (Feature-First Architecture)
 │   ├── src/
 │   │   ├── app/                     # Código principal
+│   │   │   ├── core/                # Lógica global (singleton services)
+│   │   │   │   ├── auth/            # Autenticación, JWT
+│   │   │   │   ├── guards/          # Route guards
+│   │   │   │   ├── interceptors/    # HTTP interceptors
+│   │   │   │   ├── providers/       # Signal/State providers
+│   │   │   │   └── services/        # Servicios globales
+│   │   │   ├── shared/              # Reutilizable en toda la app
+│   │   │   │   ├── components/      # UI components puros
+│   │   │   │   ├── directives/      # Directivas personalizadas
+│   │   │   │   ├── pipes/           # Transformadores de datos
+│   │   │   │   └── ui/              # Layout components (navbars)
+│   │   │   ├── features/            # Módulos de negocio
+│   │   │   │   ├── home/            # Feature: Home page
+│   │   │   │   ├── event-detail/    # Feature: Event detail
+│   │   │   │   ├── checkout/        # Feature: Checkout
+│   │   │   │   ├── login/           # Feature: Login
+│   │   │   │   └── organizer/       # Feature: Organizer dashboard
 │   │   │   ├── app.ts               # Componente raíz
 │   │   │   ├── app.config.ts        # Configuración
-│   │   │   ├── app.routes.ts        # Rutas
-│   │   │   ├── components/          # Componentes standalone
-│   │   │   └── services/            # Servicios
+│   │   │   └── app.routes.ts        # Rutas
 │   │   ├── main.ts                  # Entry point
 │   │   ├── styles.scss              # Estilos globales
 │   │   └── index.html
@@ -243,7 +258,15 @@ El API Gateway tiene configuraciones de rutas específicas por perfil:
 
 ## Convenciones de Desarrollo
 
-### Frontend (Angular 21)
+### Frontend (Angular 21) - Feature-First Architecture
+
+#### Arquitectura
+
+El frontend sigue una arquitectura **feature-first**, organizando el código por funcionalidades de negocio:
+
+- **`features/`**: Código específico de una funcionalidad de negocio (páginas, componentes, servicios del feature)
+- **`shared/`**: Componentes, directivas y pipes reutilizables en múltiples features
+- **`core/`**: Servicios singleton, interceptores HTTP, guards, configuración global
 
 #### Signals (Reactividad Moderna)
 
@@ -263,10 +286,10 @@ import { Component, signal, computed, effect } from '@angular/core';
 export class ExampleComponent {
   // Signal mutable
   count = signal(0);
-  
+
   // Signal computado (read-only)
   doubleCount = computed(() => this.count() * 2);
-  
+
   increment() {
     this.count.update(value => value + 1);
   }
@@ -308,19 +331,52 @@ export class MyComponent {
 
 ```
 src/app/
-├── components/          # Componentes standalone
-├── services/            # Servicios (@injectable)
-├── models/              # Interfaces y types
-├── config/              # Configuración de la app
-├── guards/              # Route guards
-└── interceptors/        # HTTP interceptors
+├── core/                     # Lógica global (singleton services)
+│   ├── auth/                 # Autenticación, JWT
+│   ├── guards/               # Route guards (canActivate)
+│   ├── interceptors/         # HTTP interceptors
+│   ├── providers/            # Signal/State providers globales
+│   └── services/             # Servicios globales
+│
+├── shared/                   # Reutilizable en toda la app
+│   ├── components/           # UI components puros (event-card, speaker-card)
+│   ├── directives/           # Directivas personalizadas
+│   ├── pipes/                # Transformadores de datos
+│   └── ui/                   # Layout components (navbars, footer)
+│
+└── features/                 # Módulos de negocio (lazy-loaded)
+    ├── home/                 # Feature: Home page
+    │   ├── components/       # Componentes específicos
+    │   ├── services/         # Servicios del feature
+    │   └── home.page.ts      # Página principal (*.page.ts)
+    ├── event-detail/         # Feature: Event detail
+    ├── checkout/             # Feature: Checkout
+    ├── login/                # Feature: Login
+    └── organizer/            # Feature: Organizer dashboard
 ```
+
+#### Convenciones de Nomenclatura
+
+| Tipo | Convención | Ejemplo |
+|------|------------|---------|
+| **Pages** | `*.page.ts` | `home.page.ts`, `login.page.ts` |
+| **Components** | `*.component.ts` | `event-card.component.ts` |
+| **Services** | `*.service.ts` | `auth.service.ts` |
+| **Guards** | `*.guard.ts` | `auth.guard.ts` |
+| **Interceptors** | `*.interceptor.ts` | `jwt.interceptor.ts` |
 
 #### Estilos
 
 - Usar **SCSS** para todos los estilos
 - Estilos específicos de componente en archivos `.scss` junto al componente
 - Estilos globales en `styles.scss`
+
+#### Crear Nuevo Feature
+
+1. Crear carpeta: `features/<nombre-feature>/`
+2. Generar página: `pnpm ng generate component features/<nombre>/<nombre>.page --standalone`
+3. Renombrar a `.page.ts`
+4. Agregar ruta en `app.routes.ts`
 
 ### Dependencias entre Módulos
 
