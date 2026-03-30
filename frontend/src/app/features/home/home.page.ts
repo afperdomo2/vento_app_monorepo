@@ -1,21 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { EventCard } from '../../shared/components/event-card/event-card';
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  price: string | number;
-  imageUrl: string;
-  category: string;
-  isSoldOut?: boolean;
-  ticketsLeft?: number;
-}
+import { EventService, Event } from '../../core/services/event.service';
 
 @Component({
   selector: 'app-home',
@@ -23,20 +10,20 @@ interface Event {
   imports: [TopNavBar, BottomNavBar, EventCard],
   template: `
     <app-top-nav-bar />
-    
+
     <main class="pt-20 pb-24 md:pb-12">
       <!-- Hero Section -->
       <section class="px-6 py-12 max-w-7xl mx-auto">
         <div class="relative rounded-xl overflow-hidden min-h-[500px] flex items-center p-8 md:p-16">
           <div class="absolute inset-0 z-0">
-            <img 
-              src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=900&fit=crop" 
+            <img
+              src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=900&fit=crop"
               alt="Hero Background"
               class="w-full h-full object-cover"
             />
             <div class="absolute inset-0 bg-gradient-to-r from-inverse-surface/90 via-inverse-surface/40 to-transparent"></div>
           </div>
-          
+
           <div class="relative z-10 max-w-2xl">
             <span class="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary-fixed font-label text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
               Featured This Month
@@ -50,7 +37,7 @@ interface Event {
             </p>
             <div class="flex flex-wrap gap-4">
               <button class="kinetic-gradient text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2">
-                Explorar Eventos 
+                Explorar Eventos
                 <span class="material-symbols-outlined">arrow_forward</span>
               </button>
               <button class="bg-surface/10 backdrop-blur-md text-surface border border-surface/20 px-8 py-4 rounded-full font-bold hover:bg-surface/20 transition-all">
@@ -83,9 +70,9 @@ interface Event {
               <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider px-1">Fecha</label>
               <div class="relative">
                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-sm">calendar_today</span>
-                <input 
-                  type="text" 
-                  placeholder="Próximos 7 días" 
+                <input
+                  type="text"
+                  placeholder="Próximos 7 días"
                   class="w-full bg-surface-container-lowest border-none rounded-xl py-3 pl-10 pr-4 focus:ring-2 ring-primary-container font-body text-sm"
                 />
               </div>
@@ -101,7 +88,7 @@ interface Event {
             </div>
           </div>
         </div>
-        
+
         <div class="md:col-span-4 bg-primary text-on-primary rounded-xl p-8 relative overflow-hidden flex flex-col justify-center">
           <div class="relative z-10">
             <h3 class="text-xl font-headline font-bold mb-2">Sugerencias locales</h3>
@@ -154,12 +141,57 @@ interface Event {
             Ver todos <span class="material-symbols-outlined text-sm">arrow_outward</span>
           </a>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          @for (event of events; track event.id) {
-            <app-event-card [event]="event" />
-          }
-        </div>
+
+        <!-- Loading State -->
+        @if (isLoading()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            @for (item of [1, 2, 3]; track item) {
+              <div class="bg-surface-container-lowest rounded-xl overflow-hidden animate-pulse">
+                <div class="aspect-[4/3] bg-surface-container-high"></div>
+                <div class="p-6 space-y-4">
+                  <div class="h-4 bg-surface-container-high rounded w-1/3"></div>
+                  <div class="h-6 bg-surface-container-high rounded w-3/4"></div>
+                  <div class="h-4 bg-surface-container-high rounded w-full"></div>
+                  <div class="h-4 bg-surface-container-high rounded w-2/3"></div>
+                  <div class="flex justify-between pt-4 border-t border-outline-variant/10">
+                    <div class="h-4 bg-surface-container-high rounded w-1/4"></div>
+                    <div class="h-6 bg-surface-container-high rounded w-1/4"></div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Error State -->
+        @if (error(); as errorMessage) {
+          <div class="bg-error-container border border-error border-opacity-20 rounded-xl p-8 text-center">
+            <span class="material-symbols-outlined text-error text-4xl mb-4">error</span>
+            <h3 class="text-xl font-bold text-on-surface mb-2">Error al cargar eventos</h3>
+            <p class="text-on-surface-variant mb-4">{{ errorMessage }}</p>
+            <button
+              (click)="loadEvents()"
+              class="kinetic-gradient text-white px-6 py-3 rounded-full font-bold hover:scale-105 transition-transform"
+            >
+              Intentar nuevamente
+            </button>
+          </div>
+        }
+
+        <!-- Events Grid -->
+        @if (!isLoading() && !error()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            @for (event of events(); track event.id) {
+              <app-event-card [event]="event" />
+            } @empty {
+              <div class="col-span-full text-center py-12">
+                <span class="material-symbols-outlined text-outline text-6xl mb-4">event_busy</span>
+                <h3 class="text-xl font-bold text-on-surface mb-2">No hay eventos destacados</h3>
+                <p class="text-on-surface-variant">Vuelve pronto para ver nuevos eventos</p>
+              </div>
+            }
+          </div>
+        }
       </section>
 
       <!-- Dynamic Map/Location Section -->
@@ -192,8 +224,8 @@ interface Event {
             </div>
           </div>
           <div class="lg:w-1/2 w-full h-[400px] rounded-xl overflow-hidden relative shadow-2xl">
-            <img 
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=600&fit=crop" 
+            <img
+              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=600&fit=crop"
               alt="Map Location"
               class="w-full h-full object-cover grayscale opacity-50"
             />
@@ -217,9 +249,9 @@ interface Event {
             Suscríbete para recibir recomendaciones personalizadas y acceso anticipado a tickets exclusivos.
           </p>
           <div class="flex flex-col sm:flex-row gap-4">
-            <input 
-              type="email" 
-              placeholder="Tu correo electrónico" 
+            <input
+              type="email"
+              placeholder="Tu correo electrónico"
               class="flex-grow bg-surface-container border-none rounded-full px-8 py-4 focus:ring-2 ring-primary"
             />
             <button class="kinetic-gradient text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
@@ -241,45 +273,39 @@ interface Event {
     }
   `]
 })
-export class HomePage {
-  events: Event[] = [
-    {
-      id: '1',
-      title: 'Global AI Summit: The Future of Neural Networks',
-      description: 'Únete a los líderes de la industria para discutir el impacto de la IA generativa en el diseño y la ingeniería moderna.',
-      date: '15 Oct, 2023',
-      time: '09:00',
-      location: 'Palacio de Congresos',
-      price: '$120.00',
-      imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-      category: 'Tecnología',
-      isSoldOut: false,
-      ticketsLeft: 25
-    },
-    {
-      id: '2',
-      title: 'Jazz Under The Stars: Autumn Sessions',
-      description: 'Una noche íntima con los mejores exponentes del jazz contemporáneo en un rooftop exclusivo de la ciudad.',
-      date: '18 Oct, 2023',
-      time: '21:00',
-      location: 'Sky Lounge Madrid',
-      price: '$45.00',
-      imageUrl: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=600&fit=crop',
-      category: 'Música',
-      isSoldOut: false,
-      ticketsLeft: 4
-    },
-    {
-      id: '3',
-      title: 'Digital Renaissance: NFTs & The Future of Art',
-      description: 'Exposición inmersiva que explora la intersección entre las bellas artes tradicionales y el ecosistema blockchain.',
-      date: '22 Oct, 2023',
-      time: '10:00',
-      location: 'Centro Cultural Digital',
-      price: 'Gratis',
-      imageUrl: 'https://images.unsplash.com/photo-1545989253-02cc26577f88?w=800&h=600&fit=crop',
-      category: 'Arte',
-      isSoldOut: false
-    }
-  ];
+export class HomePage implements OnInit {
+  private eventService = inject(EventService);
+
+  // Signal-based state management
+  events = signal<Event[]>([]);
+  isLoading = signal(false);
+  error = signal<string | null>(null);
+
+  constructor() {
+    // Log when events change (for debugging)
+    effect(() => {
+      console.log('Events updated:', this.events().length);
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadEvents();
+  }
+
+  loadEvents(): void {
+    this.isLoading.set(true);
+    this.error.set(null);
+
+    this.eventService.getFeaturedEvents(6).subscribe({
+      next: (events) => {
+        this.events.set(events);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        this.error.set(error.message);
+        this.isLoading.set(false);
+        console.error('Error loading events:', error);
+      },
+    });
+  }
 }

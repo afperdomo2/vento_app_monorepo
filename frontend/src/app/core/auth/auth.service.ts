@@ -3,6 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 
+import { getEnvValue } from '../../../environments/env.config';
+
 import {
   User,
   LoginRequest,
@@ -12,23 +14,12 @@ import {
 
 /**
  * Environment configuration
- * Uses global variables set from .env file during build
+ * Uses environment variables from window.__env (injected via index.html)
  */
-const API_URL = typeof window !== 'undefined' 
-  ? (window as any).__env?.API_URL || 'http://localhost:8080'
-  : 'http://localhost:8080';
-
-const KEYCLOAK_URL = typeof window !== 'undefined'
-  ? (window as any).__env?.KEYCLOAK_URL || 'http://localhost:8180'
-  : 'http://localhost:8180';
-
-const KEYCLOAK_REALM = typeof window !== 'undefined'
-  ? (window as any).__env?.KEYCLOAK_REALM || 'vento-realm'
-  : 'vento-realm';
-
-const KEYCLOAK_CLIENT_ID = typeof window !== 'undefined'
-  ? (window as any).__env?.KEYCLOAK_CLIENT_ID || 'vento-frontend'
-  : 'vento-frontend';
+const API_URL = getEnvValue('API_URL');
+const KEYCLOAK_URL = getEnvValue('KEYCLOAK_URL');
+const KEYCLOAK_REALM = getEnvValue('KEYCLOAK_REALM');
+const KEYCLOAK_CLIENT_ID = getEnvValue('KEYCLOAK_CLIENT_ID');
 
 @Injectable({
   providedIn: 'root',

@@ -2,10 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>VentoFrontend</title>
+  <title>Vento - Experiencias que cobran vida</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Environment Variables Injection -->
+  <!-- These values can be overridden in production builds -->
+  <script>
+    (function(window) {
+      window.__env = window.__env || {
+        // API Gateway base URL
+        API_URL: 'http://localhost:8080',
+        
+        // Keycloak configuration
+        KEYCLOAK_URL: 'http://localhost:8180',
+        KEYCLOAK_REALM: 'vento-realm',
+        KEYCLOAK_CLIENT_ID: 'vento-frontend',
+      };
+    })(this);
+  </script>
 </head>
 <body>
   <app-root></app-root>

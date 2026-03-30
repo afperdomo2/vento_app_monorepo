@@ -21,31 +21,49 @@ npm install -g pnpm
 
 El frontend usa variables de entorno para configurar las conexiones con el API Gateway y Keycloak.
 
-**Opción 1: Usar script de inicialización (Recomendado)**
-```bash
-cd frontend
-pnpm setup:env
+> ⚠️ **Importante:** Las variables de entorno se configuran en `src/index.html` y se acceden desde el código TypeScript mediante la función `getEnvValue()`.
+
+**Para desarrollo local:**
+
+Los valores por defecto en `src/index.html` son suficientes para desarrollo local. No necesitas modificar nada.
+
+**Para producción o diferentes entornos:**
+
+1. Edita `src/index.html`
+2. Modifica los valores en el script de `window.__env`:
+
+```html
+<script>
+  (function(window) {
+    window.__env = window.__env || {
+      API_URL: 'https://api.tuapp.com',
+      KEYCLOAK_URL: 'https://auth.tuapp.com',
+      KEYCLOAK_REALM: 'vento-realm',
+      KEYCLOAK_CLIENT_ID: 'vento-frontend',
+    };
+  })(this);
+</script>
 ```
 
-**Opción 2: Comando manual**
-```bash
-cd frontend
-cp .env.example .env
+**Variables disponibles:**
+
+| Variable | Descripción | Default |
+|----------|-------------|---------|
+| `API_URL` | URL del API Gateway | `http://localhost:8080` |
+| `KEYCLOAK_URL` | URL de Keycloak | `http://localhost:8180` |
+| `KEYCLOAK_REALM` | Realm de Keycloak | `vento-realm` |
+| `KEYCLOAK_CLIENT_ID` | Client ID para el frontend | `vento-frontend` |
+
+**Uso en el código TypeScript:**
+
+```typescript
+import { getEnvValue } from './environments/env.config';
+
+const apiUrl = getEnvValue('API_URL');
+const keycloakUrl = getEnvValue('KEYCLOAK_URL');
 ```
 
-**Opción 3: Crear manualmente**
-1. Copia el archivo `.env.example` a `.env`
-2. Ajusta los valores según tu entorno
-
-```bash
-# Variables principales (valores por defecto para desarrollo local)
-API_URL=http://localhost:8080
-KEYCLOAK_URL=http://localhost:8180
-KEYCLOAK_REALM=vento-realm
-KEYCLOAK_CLIENT_ID=vento-frontend
-```
-
-> 📝 **Nota:** El archivo `.env` está ignorado en git. Cada desarrollador debe crear su propio archivo local.
+> 📝 **Nota:** El archivo `.env` en la raíz del frontend es solo como referencia. Las variables reales se configuran en `src/index.html`.
 
 ### Instalar dependencias
 

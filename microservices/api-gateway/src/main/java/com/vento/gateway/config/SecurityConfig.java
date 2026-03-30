@@ -15,6 +15,9 @@ import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
@@ -46,6 +49,7 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges
                         // Rutas públicas
                         .pathMatchers("/actuator/**").permitAll()
@@ -83,6 +87,54 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    /**
+     * Configuración CORS para permitir requests desde el frontend.
+     * Permite que el frontend en localhost:4200 acceda a la API.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Orígenes permitidos (frontend)
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200",      // Frontend Angular (desarrollo)
+                "http://localhost:3000",      // Frontend (producción/otro)
+                "http://127.0.0.1:4200"       // Alternativa IPv4
+        ));
+
+        // Métodos HTTP permitidos
+        configuration.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        // Headers permitidos
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+                "Origin"
+        ));
+
+        // Headers expuestos (para que el frontend pueda leerlos)
+        configuration.setExposedHeaders(List.of(
+                "X-User-Id",
+                "X-User-Roles"
+        ));
+
+        // Permitir credenciales (cookies, authorization headers)
+        configuration.setAllowCredentials(true);
+
+        // Max age para preflight caching (1 hora)
+        configuration.setMaxAge(3600L);
+
+        // Fuente de configuración
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 
     @Bean
