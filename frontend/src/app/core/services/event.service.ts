@@ -124,6 +124,19 @@ export class EventService {
   }
 
   /**
+   * Get event by ID
+   * @param id Event UUID
+   */
+  getEventById(id: string): Observable<Event> {
+    return this.http.get<ApiResponse<BackendEvent>>(
+      `${this.apiUrl}/${id}`
+    ).pipe(
+      map(response => this.mapEvents([response.data])[0]),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Map backend events to frontend format
    */
   private mapEvents(backendEvents: BackendEvent[]): Event[] {
