@@ -2,6 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { EventsListService } from '../../../features/events-list/services/events-list.service';
 
 interface EventCardData {
   id: string;
@@ -24,7 +25,11 @@ interface EventCardData {
   template: `
     <div class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
       <!-- Clickable Area for Event Detail -->
-      <a [routerLink]="'/events/' + event.id" class="block">
+      <a
+        [routerLink]="'/events/' + event.id"
+        (click)="saveScrollPosition()"
+        class="block"
+      >
         <!-- Image Section -->
         <div class="aspect-[4/3] overflow-hidden relative">
           <img
@@ -113,6 +118,7 @@ export class EventCard {
   @Input({ required: true }) event!: EventCardData;
 
   private authService = inject(AuthService);
+  private eventsListService = inject(EventsListService);
   private router = inject(Router);
 
   handleReserve() {
@@ -130,5 +136,9 @@ export class EventCard {
     this.router.navigate(['/checkout'], {
       queryParams: { eventId: this.event.id }
     });
+  }
+
+  saveScrollPosition() {
+    this.eventsListService.saveScrollPosition();
   }
 }

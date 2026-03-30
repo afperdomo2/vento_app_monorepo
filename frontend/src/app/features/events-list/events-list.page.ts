@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, HostListener, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, HostListener, signal, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -160,7 +160,7 @@ import { FiltersBarComponent } from './components/filters-bar';
     <app-bottom-nav-bar />
   `
 })
-export class EventsListPage implements OnInit, OnDestroy {
+export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
   private eventsService = inject(EventsListService);
   private destroy$ = new Subject<void>();
 
@@ -178,6 +178,11 @@ export class EventsListPage implements OnInit, OnDestroy {
     this.eventsService.loadEvents();
   }
 
+  ngAfterViewInit(): void {
+    // Restore scroll position when coming back from event detail
+    this.eventsService.restoreScrollPosition();
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -192,6 +197,11 @@ export class EventsListPage implements OnInit, OnDestroy {
     if (pos >= threshold && !this.loading() && !this.loadingMore() && this.hasMore()) {
       this.eventsService.loadMore();
     }
+  }
+
+  // Save scroll position before navigating to event detail
+  saveScrollPosition(): void {
+    this.eventsService.saveScrollPosition();
   }
 
   loadEvents(): void {

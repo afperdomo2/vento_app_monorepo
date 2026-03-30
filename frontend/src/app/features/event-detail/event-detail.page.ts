@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
@@ -54,6 +54,15 @@ import { EventService, Event } from '../../core/services/event.service';
                 <span class="material-symbols-outlined">arrow_back</span>
                 <span class="font-bold hidden md:inline">Volver</span>
               </button>
+              
+              <!-- Breadcrumbs -->
+              <div class="absolute top-16 left-4 z-10 text-sm text-white/80 hidden md:block">
+                <a routerLink="/home" class="hover:text-white transition-colors">Inicio</a>
+                <span class="mx-2">›</span>
+                <a routerLink="/events" class="hover:text-white transition-colors">Eventos</a>
+                <span class="mx-2">›</span>
+                <span class="text-white font-medium truncate max-w-xs inline-block">{{ event()?.title }}</span>
+              </div>
               
               <img
                 [src]="event()!.imageUrl"
@@ -264,7 +273,20 @@ export class EventDetailPage implements OnInit {
   }
 
   goBack(): void {
+    // Confirm if user has selected more than 1 ticket
+    if (this.quantity() > 1) {
+      const confirmed = confirm(
+        `Tienes ${this.quantity()} entrada(s) seleccionada(s). ¿Seguro que quieres salir?`
+      );
+      if (!confirmed) return;
+    }
+    
     this.location.back();
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    this.goBack();
   }
 
   incrementQuantity() {

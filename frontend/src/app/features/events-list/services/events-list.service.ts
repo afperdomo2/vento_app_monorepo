@@ -54,6 +54,24 @@ export class EventsListService {
   private eventService = inject(EventService);
 
   private state = signal<EventsState>(initialState);
+  private scrollPosition = 0;
+
+  // Save scroll position before navigating away
+  saveScrollPosition(): void {
+    this.scrollPosition = window.scrollY;
+  }
+
+  // Restore scroll position when coming back
+  restoreScrollPosition(): void {
+    if (this.scrollPosition > 0) {
+      window.scrollTo(0, this.scrollPosition);
+    }
+  }
+
+  // Clear scroll position (when loading new events)
+  clearScrollPosition(): void {
+    this.scrollPosition = 0;
+  }
 
   // Public signals for components
   readonly events = computed(() => this.state().events);
