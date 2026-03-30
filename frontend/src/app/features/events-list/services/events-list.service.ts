@@ -64,7 +64,11 @@ export class EventsListService {
   // Restore scroll position when coming back
   restoreScrollPosition(): void {
     if (this.scrollPosition > 0) {
-      window.scrollTo(0, this.scrollPosition);
+      // Use smooth scrolling for better UX
+      window.scrollTo({
+        top: this.scrollPosition,
+        behavior: 'smooth'
+      });
     }
   }
 
