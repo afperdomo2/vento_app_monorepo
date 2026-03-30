@@ -111,7 +111,7 @@ interface EventCardData {
 })
 export class EventCard {
   @Input({ required: true }) event!: EventCardData;
-  
+
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -127,8 +127,8 @@ export class EventCard {
 
     // User is authenticated, proceed to checkout
     // In a real implementation, this would navigate to checkout with event data
-    this.router.navigate(['/checkout'], { 
-      queryParams: { eventId: this.event.id } 
+    this.router.navigate(['/checkout'], {
+      queryParams: { eventId: this.event.id }
     });
   }
 }

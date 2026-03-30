@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit, effect } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { EventCard } from '../../shared/components/event-card/event-card';
@@ -7,7 +8,7 @@ import { EventService, Event } from '../../core/services/event.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [TopNavBar, BottomNavBar, EventCard],
+  imports: [TopNavBar, BottomNavBar, EventCard, RouterLink],
   template: `
     <app-top-nav-bar />
 
@@ -48,88 +49,6 @@ import { EventService, Event } from '../../core/services/event.service';
         </div>
       </section>
 
-      <!-- Search & Filter Bento -->
-      <section class="px-6 py-8 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div class="md:col-span-8 bg-surface-container-low rounded-xl p-8">
-          <h2 class="text-2xl font-headline font-bold mb-6 flex items-center gap-3">
-            <span class="material-symbols-outlined text-primary">tune</span>
-            Filtros Inteligentes
-          </h2>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider px-1">Categoría</label>
-              <select class="w-full bg-surface-container-lowest border-none rounded-xl py-3 px-4 focus:ring-2 ring-primary-container font-body text-sm">
-                <option>Todas las categorías</option>
-                <option>Tecnología</option>
-                <option>Música</option>
-                <option>Arte & Diseño</option>
-                <option>Gastronomía</option>
-              </select>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider px-1">Fecha</label>
-              <div class="relative">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-sm">calendar_today</span>
-                <input
-                  type="text"
-                  placeholder="Próximos 7 días"
-                  class="w-full bg-surface-container-lowest border-none rounded-xl py-3 pl-10 pr-4 focus:ring-2 ring-primary-container font-body text-sm"
-                />
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider px-1">Precio</label>
-              <select class="w-full bg-surface-container-lowest border-none rounded-xl py-3 px-4 focus:ring-2 ring-primary-container font-body text-sm">
-                <option>Cualquier precio</option>
-                <option>Gratuitos</option>
-                <option>Menos de $50</option>
-                <option>$50 - $150</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="md:col-span-4 bg-primary text-on-primary rounded-xl p-8 relative overflow-hidden flex flex-col justify-center">
-          <div class="relative z-10">
-            <h3 class="text-xl font-headline font-bold mb-2">Sugerencias locales</h3>
-            <p class="text-on-primary/80 text-sm mb-6 leading-relaxed">
-              Basado en tu ubicación actual en Madrid, hay 12 eventos cerca de ti hoy.
-            </p>
-            <button class="bg-white text-primary px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 hover:scale-105 transition-transform">
-              <span class="material-symbols-outlined text-sm">near_me</span> Ver mapa local
-            </button>
-          </div>
-          <div class="absolute -right-4 -bottom-4 opacity-20">
-            <span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Category Pills -->
-      <section class="px-6 py-12 max-w-7xl mx-auto overflow-x-auto whitespace-nowrap no-scrollbar flex gap-4">
-        <button class="px-8 py-3 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/20 transition-transform hover:scale-105">
-          Todo
-        </button>
-        <button class="px-8 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-semibold hover:bg-primary-container/20 transition-colors">
-          Tecnología
-        </button>
-        <button class="px-8 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-semibold hover:bg-primary-container/20 transition-colors">
-          Música
-        </button>
-        <button class="px-8 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-semibold hover:bg-primary-container/20 transition-colors">
-          Arte y Museos
-        </button>
-        <button class="px-8 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-semibold hover:bg-primary-container/20 transition-colors">
-          Cine
-        </button>
-        <button class="px-8 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-semibold hover:bg-primary-container/20 transition-colors">
-          Deportes
-        </button>
-        <button class="px-8 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-semibold hover:bg-primary-container/20 transition-colors">
-          Networking
-        </button>
-      </section>
-
       <!-- Upcoming Events Grid -->
       <section class="px-6 py-8 max-w-7xl mx-auto">
         <div class="flex justify-between items-end mb-10">
@@ -137,7 +56,7 @@ import { EventService, Event } from '../../core/services/event.service';
             <h2 class="text-4xl font-headline font-extrabold tracking-tight">Eventos destacados</h2>
             <p class="text-on-surface-variant mt-2">Selección editorial de las mejores experiencias.</p>
           </div>
-          <a href="#" class="text-primary font-bold flex items-center gap-2 hover:underline">
+          <a routerLink="/events" class="text-primary font-bold flex items-center gap-2 hover:underline">
             Ver todos <span class="material-symbols-outlined text-sm">arrow_outward</span>
           </a>
         </div>

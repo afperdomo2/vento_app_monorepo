@@ -53,6 +53,29 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
+/**
+ * Paginated response from API
+ */
+export interface PagedResponse<T> {
+  content: T[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+}
+
+/**
+ * Query parameters for listing events
+ */
+interface ListEventsParams {
+  page: number;
+  size: number;
+  sortBy?: string;
+  sortDir?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -72,6 +95,30 @@ export class EventService {
       `${this.apiUrl}/featured?limit=${safeLimit}`
     ).pipe(
       map(response => this.mapEvents(response.data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * List all events with pagination
+   * @param params Query parameters (page, size, sortBy, sortDir)
+   */
+  listEvents(params: ListEventsParams): Observable<PagedResponse<Event>> {
+    const queryParams: Record<string, string | number> = {
+      page: params.page,
+      size: params.size,
+      sortBy: params.sortBy || 'eventDate',
+      sortDir: params.sortDir || 'ASC',
+    };
+
+    return this.http.get<ApiResponse<PagedResponse<BackendEvent>>>(
+      this.apiUrl,
+      { params: queryParams }
+    ).pipe(
+      map(response => ({
+        ...response.data,
+        content: this.mapEvents(response.data.content),
+      })),
       catchError(this.handleError)
     );
   }

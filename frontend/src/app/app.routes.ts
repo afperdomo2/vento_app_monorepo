@@ -4,6 +4,7 @@ import { EventDetailPage } from './features/event-detail/event-detail.page';
 import { LoginPage } from './features/login/login.page';
 import { CheckoutPage } from './features/checkout/checkout.page';
 import { OrganizerPage } from './features/organizer/organizer.page';
+import { EventsListPage } from './features/events-list/events-list.page';
 
 import { authGuard } from './core/guards/auth.guard';
 import { publicGuard } from './core/guards/public.guard';
@@ -11,19 +12,20 @@ import { publicGuard } from './core/guards/public.guard';
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomePage },
+  { path: 'events', component: EventsListPage },
   { path: 'events/:id', component: EventDetailPage },
-  { 
-    path: 'login', 
+  {
+    path: 'login',
     component: LoginPage,
     canActivate: [publicGuard]
   },
-  { 
-    path: 'checkout', 
+  {
+    path: 'checkout',
     component: CheckoutPage,
     canActivate: [authGuard]
   },
-  { 
-    path: 'organizer', 
+  {
+    path: 'organizer',
     component: OrganizerPage,
     canActivate: [authGuard]
   },

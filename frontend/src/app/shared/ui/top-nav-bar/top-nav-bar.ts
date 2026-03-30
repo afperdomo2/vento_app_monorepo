@@ -23,16 +23,11 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
           <div class="hidden md:flex items-center space-x-6 font-manrope text-sm font-semibold tracking-tight">
             <a routerLink="/home" routerLinkActive="active"
                class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
-              Explore
+              Inicio
             </a>
-            <a href="#" class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
-              Categories
-            </a>
-            <a href="#" class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
-              Venues
-            </a>
-            <a href="#" class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
-              Schedule
+            <a routerLink="/events" routerLinkActive="active"
+               class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
+              Eventos
             </a>
           </div>
         </div>
