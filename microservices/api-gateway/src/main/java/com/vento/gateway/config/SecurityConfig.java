@@ -35,6 +35,7 @@ import java.util.stream.Stream;
  * - Define rutas públicas vs protegidas
  * - Extrae roles de Keycloak (realm_access.roles) y los mapea a autoridades Spring Security
  * - El JWT validado es disponible para filtros downstream (JwtHeaderFilter)
+ * - Configura CORS para permitir requests desde el frontend
  */
 @Configuration
 @RequiredArgsConstructor
@@ -42,6 +43,25 @@ public class SecurityConfig {
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuerUri;
+
+    // CORS Configuration - Externalized via environment variables
+    @Value("${app.cors.allowed-origins}")
+    private List<String> allowedOrigins;
+
+    @Value("${app.cors.allowed-methods}")
+    private List<String> allowedMethods;
+
+    @Value("${app.cors.allowed-headers}")
+    private List<String> allowedHeaders;
+
+    @Value("${app.cors.exposed-headers}")
+    private List<String> exposedHeaders;
+
+    @Value("${app.cors.allow-credentials:true}")
+    private Boolean allowCredentials;
+
+    @Value("${app.cors.max-age:3600}")
+    private Long maxAge;
 
     private final CustomAuthenticationEntryPoint authEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
@@ -91,44 +111,22 @@ public class SecurityConfig {
 
     /**
      * Configuración CORS para permitir requests desde el frontend.
-     * Permite que el frontend en localhost:4200 acceda a la API.
+     * Los orígenes permitidos se configuran vía variables de entorno para flexibilidad.
+     * 
+     * Para desarrollo: http://localhost:4200,http://localhost:3000
+     * Para producción: https://tuapp.com,https://www.tuapp.com
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Orígenes permitidos (frontend)
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200",      // Frontend Angular (desarrollo)
-                "http://localhost:3000",      // Frontend (producción/otro)
-                "http://127.0.0.1:4200"       // Alternativa IPv4
-        ));
-
-        // Métodos HTTP permitidos
-        configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-        ));
-
-        // Headers permitidos
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "X-Requested-With",
-                "Origin"
-        ));
-
-        // Headers expuestos (para que el frontend pueda leerlos)
-        configuration.setExposedHeaders(List.of(
-                "X-User-Id",
-                "X-User-Roles"
-        ));
-
-        // Permitir credenciales (cookies, authorization headers)
-        configuration.setAllowCredentials(true);
-
-        // Max age para preflight caching (1 hora)
-        configuration.setMaxAge(3600L);
+        // Usar configuración externalizada
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(allowedMethods);
+        configuration.setAllowedHeaders(allowedHeaders);
+        configuration.setExposedHeaders(exposedHeaders);
+        configuration.setAllowCredentials(allowCredentials);
+        configuration.setMaxAge(maxAge);
 
         // Fuente de configuración
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

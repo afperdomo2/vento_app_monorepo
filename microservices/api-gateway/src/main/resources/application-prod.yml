@@ -25,6 +25,21 @@ spring:
           filters:
             - StripPrefix=1
 
+# CORS Configuration for Production
+# In production, these should be set via environment variables in docker-compose.prod.yml
+app:
+  cors:
+    # IMPORTANT: Set these via environment variables in production!
+    # Example in docker-compose.prod.yml:
+    #   environment:
+    #     - CORS_ALLOWED_ORIGINS=https://vento.app,https://www.vento.app
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,X-Requested-With,Origin}
+    exposed-headers: ${CORS_EXPOSED_HEADERS:X-User-Id,X-User-Roles}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+    max-age: ${CORS_MAX_AGE:86400}  # 24 hours for production
+
 logging:
   level:
     org.springframework.cloud.gateway: INFO
