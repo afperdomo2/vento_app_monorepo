@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "setup:env": "cp .env.example .env"
   },
   "private": true,
   "packageManager": "pnpm@10.30.3",

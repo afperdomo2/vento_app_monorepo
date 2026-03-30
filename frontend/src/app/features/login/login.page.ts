@@ -1,10 +1,21 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Router } from '@angular/router';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  Validators,
+  FormGroup,
+  ValidationErrors,
+} from '@angular/forms';
+
+import { AuthService } from '../../core/auth/auth.service';
+import { AuthStateService, injectAuthState } from '../../core/auth/auth.provider';
+import { getAndClearReturnUrl } from '../../core/guards/auth.guard';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [ReactiveFormsModule],
   template: `
     <main class="min-h-screen flex items-center justify-center p-4">
       <!-- Container: Using Layering Principle (Surface-Container over Surface) -->
@@ -14,11 +25,11 @@ import { FormsModule } from '@angular/forms';
           <!-- Decorative Elements -->
           <div class="absolute top-0 right-0 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div class="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl -ml-48 -mb-48"></div>
-          
+
           <div class="relative z-10">
             <span class="text-3xl font-black tracking-tighter text-on-primary font-headline">Evento</span>
           </div>
-          
+
           <div class="relative z-10 space-y-6">
             <h1 class="headline-lg text-5xl text-on-primary leading-tight">
               Descubre experiencias <br/> que cobran vida.
@@ -27,15 +38,15 @@ import { FormsModule } from '@angular/forms';
               La plataforma editorial para los eventos más exclusivos. Gestiona, descubre y vive momentos únicos.
             </p>
           </div>
-          
+
           <!-- Kinetic Image Card Overlay -->
           <div class="relative z-10 mt-8 group">
             <div class="absolute -inset-2 bg-white/10 blur-xl rounded-xl opacity-50 group-hover:opacity-100 transition duration-500"></div>
             <div class="relative bg-surface-container-lowest/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
               <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-container">
-                  <img 
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop" 
+                  <img
+                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop"
                     alt="Testimonial"
                     class="w-full h-full object-cover"
                   />
@@ -58,24 +69,52 @@ import { FormsModule } from '@angular/forms';
               <p class="text-on-surface-variant font-body">Ingresa tus credenciales para acceder a tu cuenta.</p>
             </header>
 
+            <!-- Error Message -->
+            @if (errorMessage()) {
+              <div class="bg-error-container border border-error border-opacity-20 rounded-xl p-4 flex items-start gap-3">
+                <span class="material-symbols-outlined text-error text-xl">error</span>
+                <div class="flex-1">
+                  <p class="text-error font-bold text-sm">Error de autenticación</p>
+                  <p class="text-error/80 text-sm mt-1">{{ errorMessage() }}</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="clearError()"
+                  class="text-error/60 hover:text-error transition-colors"
+                >
+                  <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+            }
+
             <!-- Form -->
-            <form class="space-y-6" (ngSubmit)="onSubmit()" #loginForm="ngForm">
-              <!-- Email Field -->
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+              <!-- Email/Username Field -->
               <div class="space-y-2 group">
-                <label class="block text-sm font-bold text-on-surface-variant ml-1 font-label" for="email">
-                  Correo Electrónico
+                <label class="block text-sm font-bold text-on-surface-variant ml-1 font-label" for="username">
+                  Correo Electrónico o Usuario
                 </label>
                 <div class="relative flex items-center input-focus-effect">
-                  <span class="material-symbols-outlined absolute left-4 text-outline-variant">mail</span>
-                  <input 
-                    type="email" 
-                    id="email"
-                    name="email"
-                    ngModel
-                    placeholder="nombre@ejemplo.com" 
+                  <span class="material-symbols-outlined absolute left-4 text-outline-variant">person</span>
+                  <input
+                    type="text"
+                    id="username"
+                    formControlName="username"
+                    placeholder="nombre@ejemplo.com o usuario"
                     class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-outline-variant font-body transition-all"
+                    [class.ring-2]="usernameField?.invalid && usernameField?.touched ? 'ring-error' : ''"
                   />
                 </div>
+                
+                <!-- Validation Errors -->
+                @if (usernameField?.invalid && usernameField?.touched) {
+                  <div class="flex items-center gap-2 text-error text-sm ml-1">
+                    <span class="material-symbols-outlined text-xs">error</span>
+                    @if (usernameField?.errors?.['required']) {
+                      <span>El correo o usuario es requerido</span>
+                    }
+                  </div>
+                }
               </div>
 
               <!-- Password Field -->
@@ -90,31 +129,44 @@ import { FormsModule } from '@angular/forms';
                 </div>
                 <div class="relative flex items-center input-focus-effect">
                   <span class="material-symbols-outlined absolute left-4 text-outline-variant">lock</span>
-                  <input 
-                    type="password" 
+                  <input
+                    [type]="showPassword() ? 'text' : 'password'"
                     id="password"
-                    name="password"
-                    ngModel
-                    placeholder="••••••••" 
-                    class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-outline-variant font-body transition-all"
+                    formControlName="password"
+                    placeholder="••••••••"
+                    class="w-full pl-12 pr-12 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-outline-variant font-body transition-all"
+                    [class.ring-2]="passwordField?.invalid && passwordField?.touched ? 'ring-error' : ''"
                   />
-                  <button 
+                  <button
                     type="button"
                     (click)="togglePasswordVisibility()"
                     class="absolute right-4 text-outline-variant hover:text-on-surface transition-colors"
+                    [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                   >
-                    <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+                    <span class="material-symbols-outlined">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
                   </button>
                 </div>
+                
+                <!-- Validation Errors -->
+                @if (passwordField?.invalid && passwordField?.touched) {
+                  <div class="flex items-center gap-2 text-error text-sm ml-1">
+                    <span class="material-symbols-outlined text-xs">error</span>
+                    @if (passwordField?.errors?.['required']) {
+                      <span>La contraseña es requerida</span>
+                    }
+                    @if (passwordField?.errors?.['minlength']) {
+                      <span>La contraseña debe tener al menos 6 caracteres</span>
+                    }
+                  </div>
+                }
               </div>
 
-              <!-- Options -->
+              <!-- Remember Me -->
               <div class="flex items-center space-x-2 ml-1">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="remember"
-                  name="remember"
-                  ngModel
+                  formControlName="remember"
                   class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 bg-surface-container-low"
                 />
                 <label class="text-sm text-on-surface-variant font-body" for="remember">
@@ -123,12 +175,18 @@ import { FormsModule } from '@angular/forms';
               </div>
 
               <!-- Submit Button (Kinetic CTA) -->
-              <button 
+              <button
                 type="submit"
-                class="w-full kinetic-gradient text-on-primary py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+                [disabled]="isLoading() || loginForm.invalid"
+                class="w-full kinetic-gradient text-on-primary py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                <span>Iniciar Sesión</span>
-                <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                @if (isLoading()) {
+                  <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                  <span>Iniciando sesión...</span>
+                } @else {
+                  <span>Iniciar Sesión</span>
+                  <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                }
               </button>
             </form>
 
@@ -184,13 +242,13 @@ import { FormsModule } from '@angular/forms';
     :host {
       display: block;
     }
-    
+
     .headline-lg {
       font-family: 'Manrope', sans-serif;
       font-weight: 800;
       letter-spacing: -0.02em;
     }
-    
+
     .input-focus-effect:focus-within {
       transform: scale(1.01);
       transition: transform 0.2s ease;
@@ -198,14 +256,70 @@ import { FormsModule } from '@angular/forms';
   `]
 })
 export class LoginPage {
-  showPassword = false;
+  private authService = inject(AuthService);
+  private authState = injectAuthState();
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
+
+  showPassword = signal(false);
+
+  loginForm: FormGroup = this.fb.nonNullable.group({
+    username: ['', [Validators.required]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    remember: [false],
+  });
+
+  isLoading = signal(false);
+  errorMessage = signal<string | null>(null);
+
+  usernameField = this.loginForm.get('username');
+  passwordField = this.loginForm.get('password');
+
+  constructor() {
+    // Clear error when user starts typing
+    effect(() => {
+      this.loginForm.valueChanges.subscribe(() => {
+        this.errorMessage.set(null);
+      });
+    });
+  }
 
   togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
+    this.showPassword.update(value => !value);
+  }
+
+  clearError() {
+    this.errorMessage.set(null);
   }
 
   onSubmit() {
-    // Stub - no business logic as requested
-    console.log('Login form submitted (stub)');
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    const { username, password } = this.loginForm.getRawValue();
+
+    this.authService.login(username, password).subscribe({
+      next: (user) => {
+        this.isLoading.set(false);
+        this.redirectAfterLogin();
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(error.message);
+      },
+    });
+  }
+
+  private redirectAfterLogin() {
+    // Get return URL from sessionStorage (set by authGuard)
+    const returnUrl = getAndClearReturnUrl();
+    
+    // Redirect to return URL or home page
+    this.router.navigateByUrl(returnUrl || '/home');
   }
 }

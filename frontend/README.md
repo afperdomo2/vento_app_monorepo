@@ -17,6 +17,36 @@ npm install -g pnpm
 
 ## 🚀 Inicio Rápido
 
+### Configurar Variables de Entorno
+
+El frontend usa variables de entorno para configurar las conexiones con el API Gateway y Keycloak.
+
+**Opción 1: Usar script de inicialización (Recomendado)**
+```bash
+cd frontend
+pnpm setup:env
+```
+
+**Opción 2: Comando manual**
+```bash
+cd frontend
+cp .env.example .env
+```
+
+**Opción 3: Crear manualmente**
+1. Copia el archivo `.env.example` a `.env`
+2. Ajusta los valores según tu entorno
+
+```bash
+# Variables principales (valores por defecto para desarrollo local)
+API_URL=http://localhost:8080
+KEYCLOAK_URL=http://localhost:8180
+KEYCLOAK_REALM=vento-realm
+KEYCLOAK_CLIENT_ID=vento-frontend
+```
+
+> 📝 **Nota:** El archivo `.env` está ignorado en git. Cada desarrollador debe crear su propio archivo local.
+
 ### Instalar dependencias
 
 ```bash
