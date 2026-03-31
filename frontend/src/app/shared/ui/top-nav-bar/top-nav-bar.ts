@@ -97,7 +97,7 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
                   <!-- Menu Items -->
                   <div class="py-2">
                     <a
-                      href="#"
+                      routerLink="/profile"
                       class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
                     >
                       <span class="material-symbols-outlined text-lg">person</span>

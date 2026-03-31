@@ -5,6 +5,7 @@ import { LoginPage } from './features/login/login.page';
 import { CheckoutPage } from './features/checkout/checkout.page';
 import { OrganizerPage } from './features/organizer/organizer.page';
 import { EventsListPage } from './features/events-list/events-list.page';
+import { ProfilePage } from './features/profile/profile.page';
 
 import { authGuard } from './core/guards/auth.guard';
 import { publicGuard } from './core/guards/public.guard';
@@ -27,6 +28,11 @@ export const routes: Routes = [
   {
     path: 'organizer',
     component: OrganizerPage,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'profile',
+    component: ProfilePage,
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: '/home' }
