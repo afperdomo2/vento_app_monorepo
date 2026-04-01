@@ -33,14 +33,14 @@ public class FeignConfig implements RequestInterceptor {
             String userId = request.getHeader(X_USER_ID_HEADER);
             if (userId != null) {
                 template.header(X_USER_ID_HEADER, userId);
-                log.debug("Propagando X-User-Id: {}", userId);
+                log.debug("🐞 Propagando X-User-Id: {}", userId);
             }
 
             // Propagar X-User-Roles
             String roles = request.getHeader(X_USER_ROLES_HEADER);
             if (roles != null) {
                 template.header(X_USER_ROLES_HEADER, roles);
-                log.debug("Propagando X-User-Roles: {}", roles);
+                log.debug("🐞 Propagando X-User-Roles: {}", roles);
             }
         }
     }

@@ -31,7 +31,7 @@ public class EventService {
 
     @Transactional
     public EventDto createEvent(CreateEventRequest request) {
-        log.info("Creando nuevo evento: {}", request.getName());
+        log.info("✅ Creando nuevo evento: {}", request.getName());
 
         Event event = Event.builder()
                 .name(request.getName())
@@ -44,7 +44,7 @@ public class EventService {
                 .build();
 
         Event savedEvent = eventRepository.save(event);
-        log.info("Evento creado con ID: {}", savedEvent.getId());
+        log.info("✅ Evento creado con ID: {}", savedEvent.getId());
 
         inventoryService.initializeInventory(savedEvent.getId(), savedEvent.getAvailableTickets());
 
@@ -53,14 +53,14 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public Optional<EventDto> getEventById(UUID id) {
-        log.info("Obteniendo evento por ID: {}", id);
+        log.info("✅ Obteniendo evento por ID: {}", id);
         return eventRepository.findById(id)
                 .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public Page<EventDto> listEvents(String searchTerm, Pageable pageable) {
-        log.info("Listando eventos - Página: {}, Tamaño: {}, Búsqueda: {}",
+        log.info("✅ Listando eventos - Página: {}, Tamaño: {}, Búsqueda: {}",
                 pageable.getPageNumber(), pageable.getPageSize(), searchTerm != null ? searchTerm : "sin filtro");
         
         if (searchTerm != null && !searchTerm.trim().isEmpty()) {
@@ -83,7 +83,7 @@ public class EventService {
     public List<EventDto> getFeaturedEvents(int limit) {
         // Validar límites: mínimo 6, máximo 20
         int effectiveLimit = Math.max(6, Math.min(20, limit));
-        log.info("Obteniendo eventos destacados - Límite: {}", effectiveLimit);
+        log.info("✅ Obteniendo eventos destacados - Límite: {}", effectiveLimit);
 
         LocalDateTime now = LocalDateTime.now();
         Pageable pageable = PageRequest.of(0, effectiveLimit);
@@ -96,7 +96,7 @@ public class EventService {
 
     @Transactional
     public Optional<EventDto> updateEvent(UUID id, UpdateEventRequest request) {
-        log.info("Actualizando evento ID: {}", id);
+        log.info("✅ Actualizando evento ID: {}", id);
 
         return eventRepository.findById(id)
                 .map(event -> {
@@ -120,14 +120,14 @@ public class EventService {
                     }
 
                     Event updatedEvent = eventRepository.save(event);
-                    log.info("Evento actualizado: {}", updatedEvent.getId());
+                    log.info("✅ Evento actualizado: {}", updatedEvent.getId());
                     return mapToDto(updatedEvent);
                 });
     }
 
     @Transactional(readOnly = true)
     public EventAvailabilityDto getEventAvailability(UUID eventId) {
-        log.info("Obteniendo disponibilidad del evento: {}", eventId);
+        log.info("✅ Obteniendo disponibilidad del evento: {}", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
         return EventAvailabilityDto.builder()
@@ -138,13 +138,13 @@ public class EventService {
 
     @Transactional
     public void decrementAvailableTickets(UUID eventId, int quantity) {
-        log.info("Descontando {} tickets en DB para el evento: {}", quantity, eventId);
+        log.info("✅ Descontando {} tickets en DB para el evento: {}", quantity, eventId);
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
 
         if (event.getAvailableTickets() < quantity) {
-            log.error("No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
+            log.error("❌ No hay suficientes tickets. Disponibles: {}, Solicitados: {}",
                     event.getAvailableTickets(), quantity);
             throw new BusinessException(
                     "No hay suficientes tickets disponibles. Disponibles: " + event.getAvailableTickets() +
@@ -153,19 +153,19 @@ public class EventService {
 
         event.setAvailableTickets(event.getAvailableTickets() - quantity);
         eventRepository.save(event);
-        log.info("Tickets descontados en DB. Nuevos disponibles: {}", event.getAvailableTickets());
+        log.info("✅ Tickets descontados en DB. Nuevos disponibles: {}", event.getAvailableTickets());
     }
 
     @Transactional
     public void incrementAvailableTickets(UUID eventId, int quantity) {
-        log.info("Incrementando {} tickets en DB para el evento: {}", quantity, eventId);
+        log.info("✅ Incrementando {} tickets en DB para el evento: {}", quantity, eventId);
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
 
         event.setAvailableTickets(event.getAvailableTickets() + quantity);
         eventRepository.save(event);
-        log.info("Tickets incrementados en DB. Nuevos disponibles: {}", event.getAvailableTickets());
+        log.info("✅ Tickets incrementados en DB. Nuevos disponibles: {}", event.getAvailableTickets());
     }
 
     @Transactional
@@ -174,7 +174,7 @@ public class EventService {
                 .map(event -> {
                     eventRepository.delete(event);
                     inventoryService.removeInventory(id);
-                    log.info("Evento eliminado: {}", id);
+                    log.info("✅ Evento eliminado: {}", id);
                     return true;
                 })
                 .orElse(false);

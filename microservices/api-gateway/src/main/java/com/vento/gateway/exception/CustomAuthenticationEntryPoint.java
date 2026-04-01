@@ -18,7 +18,7 @@ public class CustomAuthenticationEntryPoint implements ServerAuthenticationEntry
 
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
-        log.debug("Error de autenticación en {}: {}",
+        log.debug("🐞 Error de autenticación en {}: {}",
                 exchange.getRequest().getPath(), ex.getMessage());
 
         return writer.write(

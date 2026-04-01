@@ -41,23 +41,23 @@ public class OrderExpirationJob {
                initialDelayString = "${vento.expiration.initial-delay-ms:30000}")
     public void expireStaleReservations() {
         LocalDateTime expirationThreshold = LocalDateTime.now().minusMinutes(ttlMinutes);
-        log.debug("Buscando órdenes PENDING vencidas antes de: {}", expirationThreshold);
+        log.debug("🐞 Buscando órdenes PENDING vencidas antes de: {}", expirationThreshold);
 
         List<Order> expiredOrders = orderRepository.findByStatusAndCreatedAtBefore(
                 OrderStatus.PENDING, expirationThreshold);
 
         if (expiredOrders.isEmpty()) {
-            log.debug("No hay órdenes expiradas en esta revisión.");
+            log.debug("🐞 No hay órdenes expiradas en esta revisión.");
             return;
         }
 
-        log.info("Expirando {} órdenes vencidas.", expiredOrders.size());
+        log.info("✅ Expirando {} órdenes vencidas.", expiredOrders.size());
         for (Order order : expiredOrders) {
             try {
                 orderService.expireOrder(order);
-                log.info("Orden {} expirada exitosamente.", order.getId());
+                log.info("✅ Orden {} expirada exitosamente.", order.getId());
             } catch (Exception e) {
-                log.error("Error al expirar la orden {}: {}", order.getId(), e.getMessage(), e);
+                log.error("❌ Error al expirar la orden {}: {}", order.getId(), e.getMessage(), e);
             }
         }
     }

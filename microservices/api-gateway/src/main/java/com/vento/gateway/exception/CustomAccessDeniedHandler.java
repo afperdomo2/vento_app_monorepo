@@ -18,7 +18,7 @@ public class CustomAccessDeniedHandler implements ServerAccessDeniedHandler {
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, AccessDeniedException ex) {
-        log.debug("Acceso denegado en {}: {}",
+        log.debug("🐞 Acceso denegado en {}: {}",
                 exchange.getRequest().getPath(), ex.getMessage());
 
         return writer.write(

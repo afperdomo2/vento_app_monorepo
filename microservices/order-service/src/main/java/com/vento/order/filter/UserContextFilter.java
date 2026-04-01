@@ -43,7 +43,7 @@ public class UserContextFilter extends OncePerRequestFilter {
             String userId = request.getHeader(X_USER_ID_HEADER);
             String roles = request.getHeader(X_USER_ROLES_HEADER);
 
-            log.debug("Headers recibidos - X-User-Id: {}, X-User-Roles: {}", userId, roles);
+            log.debug("🐞 Headers recibidos - X-User-Id: {}, X-User-Roles: {}", userId, roles);
 
             // Almacenar en el contexto
             if (userId != null) {

@@ -51,7 +51,7 @@ public class OrderService {
      */
     @Transactional
     public OrderDto createOrder(CreateOrderRequest request, UUID userId) {
-        log.info("Creando nuevo pedido para el usuario: {}, evento: {}, cantidad: {}",
+        log.info("✅ Creando nuevo pedido para el usuario: {}, evento: {}, cantidad: {}",
                 userId, request.getEventId(), request.getQuantity());
 
         // 1. Obtener precio del evento (y verificar que existe)
@@ -59,13 +59,13 @@ public class OrderService {
         try {
             ApiResponse<EventAvailabilityDto> response = eventClient.getEventAvailability(request.getEventId());
             availability = response.getData();
-            log.info("Disponibilidad del evento {}: tickets={}, precio={}",
+            log.info("✅ Disponibilidad del evento {}: tickets={}, precio={}",
                     request.getEventId(), availability.getAvailableTickets(), availability.getPrice());
         } catch (FeignException.NotFound e) {
-            log.error("Evento no encontrado: {}", request.getEventId());
+            log.error("❌ Evento no encontrado: {}", request.getEventId());
             throw new ResourceNotFoundException("Evento", request.getEventId());
         } catch (FeignException e) {
-            log.error("Error al consultar disponibilidad del evento: {}", e.getMessage());
+            log.error("❌ Error al consultar disponibilidad del evento: {}", e.getMessage());
             throw new ExternalServiceException("Error al verificar disponibilidad del evento", e);
         }
 
@@ -85,7 +85,7 @@ public class OrderService {
                 .build();
 
         Order savedOrder = orderRepository.save(order);
-        log.info("Pedido creado con ID: {}", savedOrder.getId());
+        log.info("✅ Pedido creado con ID: {}", savedOrder.getId());
 
         // 4. Crear reserva temporal en Redis con TTL
         reservationService.createReservation(savedOrder.getId());
@@ -94,10 +94,10 @@ public class OrderService {
         // Si falla, Redis ya restará los tickets correctamente; la DB quedará desincronizada temporalmente
         try {
             eventClient.decrementAvailableTickets(request.getEventId(), request.getQuantity());
-            log.info("Tickets sincronizados en event-service DB. Evento: {}, Cantidad: {}",
+            log.info("✅ Tickets sincronizados en event-service DB. Evento: {}, Cantidad: {}",
                     request.getEventId(), request.getQuantity());
         } catch (FeignException e) {
-            log.error("Error al sincronizar tickets en event-service. Orden {} creada pero DB de event-service desincronizada: {}",
+            log.error("❌ Error al sincronizar tickets en event-service. Orden {} creada pero DB de event-service desincronizada: {}",
                     savedOrder.getId(), e.getMessage());
             // No revertimos: Redis es la fuente de verdad del inventario
         }
@@ -107,14 +107,14 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Optional<OrderDto> getOrderById(UUID id) {
-        log.info("Obteniendo pedido por ID: {}", id);
+        log.info("✅ Obteniendo pedido por ID: {}", id);
         return orderRepository.findById(id)
                 .map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
     public List<OrderDto> getOrdersByUserId(UUID userId) {
-        log.info("Obteniendo pedidos para el usuario: {}", userId);
+        log.info("✅ Obteniendo pedidos para el usuario: {}", userId);
         return orderRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToDto)
@@ -136,7 +136,7 @@ public class OrderService {
      */
     @Transactional
     public Optional<OrderDto> cancelOrder(UUID id, UUID userId) {
-        log.info("Cancelando pedido ID: {} por usuario: {}", id, userId);
+        log.info("✅ Cancelando pedido ID: {} por usuario: {}", id, userId);
 
         return orderRepository.findById(id)
                 .map(order -> {
@@ -145,14 +145,14 @@ public class OrderService {
                                 "No tienes permiso para cancelar este pedido");
                     }
                     if (order.getStatus() != OrderStatus.PENDING) {
-                        log.warn("El pedido {} no puede ser cancelado. Estado actual: {}", id, order.getStatus());
+                        log.warn("⚠️ El pedido {} no puede ser cancelado. Estado actual: {}", id, order.getStatus());
                         throw new BusinessException(
                                 "Solo se pueden cancelar pedidos en estado PENDING. Estado actual: " + order.getStatus());
                     }
 
                     order.setStatus(OrderStatus.CANCELLED);
                     Order cancelledOrder = orderRepository.save(order);
-                    log.info("Pedido cancelado en DB: {}", cancelledOrder.getId());
+                    log.info("✅ Pedido cancelado en DB: {}", cancelledOrder.getId());
 
                     // Liberar tickets en Redis
                     ticketInventoryService.releaseTickets(order.getEventId(), order.getQuantity());
@@ -163,10 +163,10 @@ public class OrderService {
                     // Sincronizar DB del event-service (best-effort)
                     try {
                         eventClient.releaseAvailableTickets(order.getEventId(), order.getQuantity());
-                        log.info("Tickets liberados en event-service DB. Evento: {}, Cantidad: {}",
+                        log.info("✅ Tickets liberados en event-service DB. Evento: {}, Cantidad: {}",
                                 order.getEventId(), order.getQuantity());
                     } catch (FeignException e) {
-                        log.error("Error al liberar tickets en event-service DB: {}", e.getMessage());
+                        log.error("❌ Error al liberar tickets en event-service DB: {}", e.getMessage());
                     }
 
                     return mapToDto(cancelledOrder);
@@ -182,7 +182,7 @@ public class OrderService {
      */
     @Transactional
     public Optional<OrderDto> confirmOrder(UUID id) {
-        log.info("Confirmando pedido ID: {}", id);
+        log.info("✅ Confirmando pedido ID: {}", id);
 
         return orderRepository.findById(id)
                 .map(order -> {
@@ -193,7 +193,7 @@ public class OrderService {
 
                     order.setStatus(OrderStatus.CONFIRMED);
                     Order confirmedOrder = orderRepository.save(order);
-                    log.info("Pedido confirmado: {}", confirmedOrder.getId());
+                    log.info("✅ Pedido confirmado: {}", confirmedOrder.getId());
 
                     // Eliminar reserva temporal en Redis
                     reservationService.removeReservation(order.getId());
@@ -218,12 +218,12 @@ public class OrderService {
         // Re-cargar la orden para obtener la versión más reciente
         Order freshOrder = orderRepository.findById(order.getId()).orElse(null);
         if (freshOrder == null || freshOrder.getStatus() != OrderStatus.PENDING) {
-            log.info("Orden {} ya no está en PENDING al intentar expirar (estado: {}). Skipping.",
+            log.info("✅ Orden {} ya no está en PENDING al intentar expirar (estado: {}). Skipping.",
                     order.getId(), freshOrder != null ? freshOrder.getStatus() : "no encontrada");
             return;
         }
 
-        log.info("Expirando pedido ID: {}", freshOrder.getId());
+        log.info("✅ Expirando pedido ID: {}", freshOrder.getId());
         freshOrder.setStatus(OrderStatus.EXPIRED);
         orderRepository.save(freshOrder);
 
@@ -236,10 +236,10 @@ public class OrderService {
         // Sincronizar DB del event-service (best-effort)
         try {
             eventClient.releaseAvailableTickets(freshOrder.getEventId(), freshOrder.getQuantity());
-            log.info("Tickets liberados en event-service DB al expirar. Evento: {}, Cantidad: {}",
+            log.info("✅ Tickets liberados en event-service DB al expirar. Evento: {}, Cantidad: {}",
                     freshOrder.getEventId(), freshOrder.getQuantity());
         } catch (FeignException e) {
-            log.error("Error al liberar tickets en event-service al expirar orden {}: {}",
+            log.error("❌ Error al liberar tickets en event-service al expirar orden {}: {}",
                     freshOrder.getId(), e.getMessage());
         }
     }

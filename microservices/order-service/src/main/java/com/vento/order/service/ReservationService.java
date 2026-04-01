@@ -43,7 +43,7 @@ public class ReservationService {
     public void createReservation(UUID orderId) {
         String key = buildReservationKey(orderId);
         redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(ttlMinutes));
-        log.info("Reserva temporal creada. Key: {}, TTL: {} minutos", key, ttlMinutes);
+        log.info("✅ Reserva temporal creada. Key: {}, TTL: {} minutos", key, ttlMinutes);
     }
 
     /**
@@ -54,7 +54,7 @@ public class ReservationService {
     public void removeReservation(UUID orderId) {
         String key = buildReservationKey(orderId);
         Boolean deleted = redisTemplate.delete(key);
-        log.info("Reserva temporal eliminada. Key: {}, Eliminada: {}", key, deleted);
+        log.info("✅ Reserva temporal eliminada. Key: {}, Eliminada: {}", key, deleted);
     }
 
     /**

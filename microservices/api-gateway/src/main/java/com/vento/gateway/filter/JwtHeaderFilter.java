@@ -46,7 +46,7 @@ public class JwtHeaderFilter implements GlobalFilter, Ordered {
                         List<String> roles = extractRoles(jwt);
                         String rolesHeader = String.join(",", roles);
 
-                        log.debug("Propagando headers - UserId: {}, Roles: {}", userId, rolesHeader);
+                        log.debug("🐞 Propagando headers - UserId: {}, Roles: {}", userId, rolesHeader);
 
                         // Agregar headers a la request hacia el microservicio
                         return exchange.mutate()
@@ -60,7 +60,7 @@ public class JwtHeaderFilter implements GlobalFilter, Ordered {
                 })
                 .defaultIfEmpty(exchange)
                 .flatMap(modifiedExchange -> {
-                    log.debug("No hay autenticación JWT, continuando sin headers de usuario");
+                    log.debug("🐞 No hay autenticación JWT, continuando sin headers de usuario");
                     return chain.filter(modifiedExchange);
                 });
     }

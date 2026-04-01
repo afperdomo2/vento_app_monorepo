@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
         );
         problem.setProperty("errors", errors);
 
-        log.warn("[{}] Validación fallida en {}: {}", serviceName, request.getRequestURI(), errors);
+        log.warn("⚠️ [{}] Validación fallida en {}: {}", serviceName, request.getRequestURI(), errors);
         return ResponseEntity.badRequest()
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -142,7 +142,7 @@ public class GlobalExceptionHandler {
         );
         problem.setProperty("errors", errors);
 
-        log.warn("[{}] JSON inválido en {}: {}", serviceName, request.getRequestURI(), errors);
+        log.warn("⚠️ [{}] JSON inválido en {}: {}", serviceName, request.getRequestURI(), errors);
         return ResponseEntity.badRequest()
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -164,7 +164,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.warn("[{}] Recurso no encontrado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        log.warn("⚠️ [{}] Recurso no encontrado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -186,7 +186,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.warn("[{}] Conflicto de Optimistic Locking agotado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        log.warn("⚠️ [{}] Conflicto de Optimistic Locking agotado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -208,7 +208,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.warn("[{}] ObjectOptimisticLockingFailureException en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        log.warn("⚠️ [{}] ObjectOptimisticLockingFailureException en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -232,7 +232,7 @@ public class GlobalExceptionHandler {
         problem.setProperty("available", ex.getAvailable());
         problem.setProperty("requested", ex.getRequested());
 
-        log.warn("[{}] Tickets insuficientes en {}: disponibles={}, solicitados={}",
+        log.warn("⚠️ [{}] Tickets insuficientes en {}: disponibles={}, solicitados={}",
                 serviceName, request.getRequestURI(), ex.getAvailable(), ex.getRequested());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
@@ -255,7 +255,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.warn("[{}] Conflicto de negocio en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        log.warn("⚠️ [{}] Conflicto de negocio en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -277,7 +277,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.warn("[{}] Acceso denegado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        log.warn("⚠️ [{}] Acceso denegado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -302,7 +302,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.warn("[{}] Header requerido faltante en {}: {}", serviceName, request.getRequestURI(), headerName);
+        log.warn("⚠️ [{}] Header requerido faltante en {}: {}", serviceName, request.getRequestURI(), headerName);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -324,7 +324,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.error("[{}] Error de servicio externo en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
+        log.error("❌ [{}] Error de servicio externo en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
@@ -352,7 +352,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        log.error("[{}] Error inesperado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
+        log.error("❌ [{}] Error inesperado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);

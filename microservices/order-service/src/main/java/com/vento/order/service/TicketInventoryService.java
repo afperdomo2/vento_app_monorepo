@@ -55,13 +55,13 @@ public class TicketInventoryService {
      */
     public void reserveTickets(UUID eventId, int quantity) {
         String key = buildTicketsKey(eventId);
-        log.info("Reservando {} tickets para evento {} usando DECRBY atómico. Key: {}", quantity, eventId, key);
+        log.info("✅ Reservando {} tickets para evento {} usando DECRBY atómico. Key: {}", quantity, eventId, key);
 
         Long result = redisTemplate.opsForValue().decrement(key, quantity);
 
         if (result == null) {
             // La key no existe en Redis — no podemos operar de forma segura sin inicializar
-            log.error("Key {} no encontrada en Redis. El event-service debe inicializar el inventario primero.", key);
+            log.error("❌ Key {} no encontrada en Redis. El event-service debe inicializar el inventario primero.", key);
             throw new InsufficientTicketsException(0, quantity);
         }
 
@@ -69,12 +69,12 @@ public class TicketInventoryService {
             // Rollback atómico: revertir el DECRBY que nos dejó en negativo
             Long restored = redisTemplate.opsForValue().increment(key, quantity);
             int currentAvailable = (int) Math.max(0, result + quantity); // disponible antes del decr
-            log.warn("Tickets insuficientes para evento {}. Resultado tras DECRBY: {}, restaurando a: {}",
+            log.warn("⚠️ Tickets insuficientes para evento {}. Resultado tras DECRBY: {}, restaurando a: {}",
                     eventId, result, restored);
             throw new InsufficientTicketsException(currentAvailable, quantity);
         }
 
-        log.info("Tickets reservados exitosamente para evento {}. Restantes en Redis: {}", eventId, result);
+        log.info("✅ Tickets reservados exitosamente para evento {}. Restantes en Redis: {}", eventId, result);
     }
 
     /**
@@ -87,6 +87,6 @@ public class TicketInventoryService {
     public void releaseTickets(UUID eventId, int quantity) {
         String key = buildTicketsKey(eventId);
         Long newValue = redisTemplate.opsForValue().increment(key, quantity);
-        log.info("Tickets liberados para evento {}. Cantidad: {}, Nuevo total Redis: {}", eventId, quantity, newValue);
+        log.info("✅ Tickets liberados para evento {}. Cantidad: {}, Nuevo total Redis: {}", eventId, quantity, newValue);
     }
 }

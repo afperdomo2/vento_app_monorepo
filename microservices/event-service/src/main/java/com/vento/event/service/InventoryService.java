@@ -56,7 +56,7 @@ public class InventoryService {
     public void initializeInventory(UUID eventId, int availableTickets) {
         String key = buildTicketsKey(eventId);
         redisTemplate.opsForValue().set(key, String.valueOf(availableTickets));
-        log.info("Inventario inicializado en Redis. Key: {}, Tickets: {}", key, availableTickets);
+        log.info("✅ Inventario inicializado en Redis. Key: {}, Tickets: {}", key, availableTickets);
     }
 
     /**
@@ -74,7 +74,7 @@ public class InventoryService {
         } else if (delta < 0) {
             redisTemplate.opsForValue().decrement(key, Math.abs(delta));
         }
-        log.info("Inventario ajustado en Redis. Key: {}, Delta: {}", key, delta);
+        log.info("✅ Inventario ajustado en Redis. Key: {}, Delta: {}", key, delta);
     }
 
     /**
@@ -85,7 +85,7 @@ public class InventoryService {
     public void removeInventory(UUID eventId) {
         String key = buildTicketsKey(eventId);
         Boolean deleted = redisTemplate.delete(key);
-        log.info("Inventario eliminado de Redis. Key: {}, Eliminado: {}", key, deleted);
+        log.info("✅ Inventario eliminado de Redis. Key: {}, Eliminado: {}", key, deleted);
     }
 
     // -----------------------------------------------------------------------
@@ -114,7 +114,7 @@ public class InventoryService {
         String key = buildTicketsKey(eventId);
         ensureKeyExists(eventId, key);
         Long newValue = redisTemplate.opsForValue().increment(key, quantity);
-        log.info("Tickets liberados en Redis. Key: {}, Cantidad: {}, Nuevo total: {}", key, quantity, newValue);
+        log.info("✅ Tickets liberados en Redis. Key: {}, Cantidad: {}, Nuevo total: {}", key, quantity, newValue);
     }
 
     // -----------------------------------------------------------------------
@@ -131,12 +131,12 @@ public class InventoryService {
     private int ensureKeyExists(UUID eventId, String key) {
         String value = redisTemplate.opsForValue().get(key);
         if (value == null) {
-            log.warn("Key {} no encontrada en Redis. Cargando desde PostgreSQL.", key);
+            log.warn("⚠️ Key {} no encontrada en Redis. Cargando desde PostgreSQL.", key);
             int availableTickets = eventRepository.findById(eventId)
                     .map(event -> event.getAvailableTickets())
                     .orElse(0);
             redisTemplate.opsForValue().set(key, String.valueOf(availableTickets));
-            log.info("Inventario recargado desde PostgreSQL. Key: {}, Tickets: {}", key, availableTickets);
+            log.info("✅ Inventario recargado desde PostgreSQL. Key: {}, Tickets: {}", key, availableTickets);
             return availableTickets;
         }
         return Integer.parseInt(value);

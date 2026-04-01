@@ -46,13 +46,13 @@ public final class ConflictResolutionService {
             } catch (ObjectOptimisticLockingFailureException e) {
                 attempt++;
                 if (attempt > maxRetries) {
-                    log.error("Conflicto de versión JPA agotó {} reintentos. Lanzando excepción.", maxRetries);
+                    log.error("❌ Conflicto de versión JPA agotó {} reintentos. Lanzando excepción.", maxRetries);
                     throw new OptimisticLockConflictException(
                             "Conflicto de concurrencia persistente después de " + maxRetries + " intentos. " +
                             "Por favor intente nuevamente.");
                 }
                 long delay = BASE_DELAY_MS * (1L << (attempt - 1)); // exponential: 100, 200, 400...
-                log.warn("Conflicto de versión JPA en intento {}. Reintentando en {}ms...", attempt, delay);
+                log.warn("⚠️ Conflicto de versión JPA en intento {}. Reintentando en {}ms...", attempt, delay);
                 try {
                     Thread.sleep(delay);
                 } catch (InterruptedException ie) {
