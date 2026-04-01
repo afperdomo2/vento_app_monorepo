@@ -2,10 +2,14 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 
 import { UserProfile } from '../models/profile.model';
+import { getEnvValue } from '../../../../environments/env.config';
+
+const KEYCLOAK_URL = getEnvValue('KEYCLOAK_URL');
+const KEYCLOAK_REALM = getEnvValue('KEYCLOAK_REALM');
 
 /**
  * Profile Service
- * 
+ *
  * Provides user profile information extracted from JWT token.
  * Does NOT make HTTP requests to Keycloak - uses token claims directly.
  */
@@ -13,6 +17,12 @@ import { UserProfile } from '../models/profile.model';
   providedIn: 'root',
 })
 export class ProfileService {
+
+  private readonly accountConsoleUrl: string;
+
+  constructor() {
+    this.accountConsoleUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/account/`;
+  }
 
   /**
    * Get user profile from JWT token
@@ -22,7 +32,7 @@ export class ProfileService {
     return new Observable<UserProfile>(observer => {
       try {
         const token = localStorage.getItem('access_token');
-        
+
         if (!token) {
           observer.error(new Error('No token available'));
           return;
@@ -35,6 +45,14 @@ export class ProfileService {
         observer.error(error);
       }
     });
+  }
+
+  /**
+   * Get Keycloak Account Console URL for account management
+   * Users will be redirected here to manage password, profile, email, and security settings
+   */
+  getAccountConsoleUrl(): string {
+    return this.accountConsoleUrl;
   }
 
   /**

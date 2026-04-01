@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { UserProfile } from '../../models/profile.model';
@@ -75,6 +75,21 @@ import { UserProfile } from '../../models/profile.model';
           </div>
         </div>
 
+        <!-- Security Section -->
+        <div>
+          <h3 class="text-lg font-bold text-on-surface mb-4">Seguridad</h3>
+          <div class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10 hover:bg-surface-container-high/50 transition-colors cursor-pointer" (click)="onManageAccount()">
+            <span class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error">
+              <span class="material-symbols-outlined">manage_accounts</span>
+            </span>
+            <div class="flex-1">
+              <p class="text-on-surface font-bold">Gestionar Cuenta</p>
+              <p class="text-sm text-on-surface-variant mt-1">Gestiona tu contraseña y datos personales de forma segura</p>
+            </div>
+            <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+          </div>
+        </div>
+
         <!-- Roles -->
         <div>
           <h3 class="text-lg font-bold text-on-surface mb-4">Roles y Permisos</h3>
@@ -97,6 +112,7 @@ import { UserProfile } from '../../models/profile.model';
 })
 export class ProfileOverviewComponent {
   profile = input.required<UserProfile | null>();
+  manageAccount = output<void>();
 
   /**
    * Get user-friendly roles (filter out technical roles)
@@ -105,5 +121,12 @@ export class ProfileOverviewComponent {
     const roles = this.profile()?.roles || [];
     const technicalRoles = ['default-roles-ventoapp', 'offline_access', 'uma_authorization'];
     return roles.filter(role => !technicalRoles.includes(role));
+  }
+
+  /**
+   * Emit manage account event
+   */
+  onManageAccount(): void {
+    this.manageAccount.emit();
   }
 }

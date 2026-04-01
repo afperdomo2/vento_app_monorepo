@@ -81,6 +81,7 @@ import { ProfileTab, ProfileState, initialProfileState } from './models/profile.
                 @case ('overview') {
                   <app-profile-overview
                     [profile]="profile()"
+                    (manageAccount)="manageAccount()"
                   />
                 }
               }
@@ -137,5 +138,14 @@ export class ProfilePage implements OnInit {
         }));
       },
     });
+  }
+
+  /**
+   * Redirect user to Keycloak Account Console for account management
+   * Opens in a new tab to maintain the current session
+   */
+  manageAccount(): void {
+    const accountUrl = this.profileService.getAccountConsoleUrl();
+    window.open(accountUrl, '_blank');
   }
 }
