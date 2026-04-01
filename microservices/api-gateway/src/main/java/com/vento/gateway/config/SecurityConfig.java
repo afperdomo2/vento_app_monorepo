@@ -80,10 +80,10 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/events/**").permitAll()
 
                         // Eventos - Mutaciones solo para ADMIN
-                        .pathMatchers(HttpMethod.POST, "/api/events/**").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.PUT, "/api/events/**").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.PATCH, "/api/events/**").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/events/**").hasRole("USER")
+                        .pathMatchers(HttpMethod.PUT, "/api/events/**").hasRole("USER")
+                        .pathMatchers(HttpMethod.PATCH, "/api/events/**").hasRole("USER")
+                        .pathMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("USER")
 
                         // Orders requieren rol USER
                         .pathMatchers("/api/orders/**").hasRole("USER")

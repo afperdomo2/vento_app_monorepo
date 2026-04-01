@@ -129,6 +129,12 @@ Si no hay eventos en la base de datos:
 1. Ejecuta **"Get Order by ID"** para ver la reserva creada
 2. O ejecuta **"Get My Orders"** para ver todas tus órdenes
 
+### Paso 6: Confirmar la Reserva (Opcional)
+
+1. Ejecuta **"Confirm Order"** dentro de los **5 minutos** de creada la reserva
+2. El estado cambiará de `PENDING` a `CONFIRMED`
+3. Si no confirmas dentro del plazo, el job de expiración cambia el estado a `EXPIRED` y libera los tickets automáticamente
+
 ---
 
 ## 📡 Endpoints
@@ -416,6 +422,29 @@ Elimina un evento.
 
 ---
 
+#### Release Tickets
+
+Libera manualmente tickets en Redis para un evento (por ejemplo, tras una cancelación masiva).
+
+- **Método:** `PUT`
+- **URL:** `{{base_url}}/api/events/{{event_id}}/tickets/release`
+- **Headers:**
+  ```
+  Authorization: Bearer {{access_token}}
+  Content-Type: application/json
+  Accept: application/json
+  ```
+- **Body (JSON):**
+  ```json
+  {
+    "quantity": 2
+  }
+  ```
+- **Respuesta exitosa:** `200 OK`
+- **Nota:** Incrementa el contador de tickets disponibles en Redis con `INCRBY`.
+
+---
+
 ### 🎫 Orders
 
 #### Create Order (Reserve Tickets)
@@ -443,6 +472,7 @@ Crea una reserva de entradas.
   | `eventId` | string (UUID) | ID del evento |
   | `quantity` | integer | Cantidad de entradas |
 - **Nota:** El `userId` se extrae automáticamente del token JWT por el API Gateway.
+- **Comportamiento de reserva (TTL):** La orden se crea en estado `PENDING` y se registra una reserva temporal en Redis con TTL de **5 minutos**. Si no se confirma dentro de ese plazo, el job de expiración cambia el estado a `EXPIRED` y libera los tickets automáticamente.
 - **Respuesta exitosa:** `201 Created`
   ```json
   {
@@ -519,6 +549,7 @@ Cancela una orden existente. **Solo el dueño de la orden puede cancelarla.**
   Authorization: Bearer {{access_token}}
   Accept: application/json
   ```
+- **Comportamiento Redis:** Al cancelar, se ejecuta `INCRBY` en Redis para devolver los tickets al inventario y se elimina la reserva temporal.
 - **Respuesta exitosa:** `200 OK`
   ```json
   {
@@ -531,6 +562,34 @@ Cancela una orden existente. **Solo el dueño de la orden puede cancelarla.**
   }
   ```
 - **Respuesta 403 Forbidden:** Si intentas cancelar una orden que no es tuya.
+
+---
+
+#### Confirm Order
+
+Confirma una orden en estado `PENDING`, pasándola a `CONFIRMED`. Elimina la reserva temporal en Redis.
+
+- **Método:** `PUT`
+- **URL:** `{{base_url}}/api/orders/{{order_id}}/confirm`
+- **Headers:**
+  ```
+  Authorization: Bearer {{access_token}}
+  Accept: application/json
+  ```
+- **Comportamiento Redis:** Elimina la clave de reserva temporal (`vento:reservation:{orderId}`) de Redis. Los tickets ya habían sido decrementados al crear la orden.
+- **Respuesta exitosa:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "id": "abc12345-e89b-12d3-a456-426614174999",
+      "status": "CONFIRMED",
+      ...
+    }
+  }
+  ```
+- **Respuesta 409 Conflict:** Si la orden no está en estado `PENDING`.
+- **Respuesta 403 Forbidden:** Si intentas confirmar una orden que no es tuya.
 
 ---
 

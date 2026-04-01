@@ -250,3 +250,42 @@ com.vento.<modulo>/
 - postgres-orders: 5433
 - redis: 6379
 - keycloak: 8180
+
+## Redis — Esquema de Claves
+
+| Clave                                       | Tipo   | TTL       | Descripción                          |
+|---------------------------------------------|--------|-----------|--------------------------------------|
+| `vento:event:{eventId}:available_tickets`   | String | Sin TTL   | Tickets disponibles (INCR/DECR)      |
+| `vento:reservation:{orderId}`               | String | 5 minutos | Reserva temporal asociada a la orden |
+
+- El prefijo `vento:` se configura con `vento.redis.key-prefix`
+- El TTL de reservas se configura con `vento.reservation.ttl-minutes` (default: 5)
+- Si Redis no tiene la clave de inventario, `InventoryService` hace fallback a PostgreSQL
+
+## Endpoints por Servicio
+
+### Event Service (8082)
+
+| Método | Endpoint                          | Descripción                        |
+|--------|-----------------------------------|------------------------------------|
+| POST   | `/api/events`                     | Crear evento (init Redis key)      |
+| GET    | `/api/events`                     | Listar eventos (paginado)          |
+| GET    | `/api/events/featured`            | Eventos destacados                 |
+| GET    | `/api/events/{id}`                | Obtener evento por ID              |
+| PUT    | `/api/events/{id}`                | Actualizar evento (adjust Redis)   |
+| DELETE | `/api/events/{id}`                | Eliminar evento (remove Redis key) |
+| PUT    | `/api/events/{id}/tickets/release`| Liberar tickets en Redis           |
+
+### Order Service (8083)
+
+| Método | Endpoint                   | Descripción                                      |
+|--------|----------------------------|--------------------------------------------------|
+| POST   | `/api/orders`              | Crear reserva (DECRBY Redis + TTL 5 min)         |
+| GET    | `/api/orders/{id}`         | Obtener pedido por ID                            |
+| GET    | `/api/orders/my-orders`    | Pedidos del usuario autenticado                  |
+| PUT    | `/api/orders/{id}/cancel`  | Cancelar (INCRBY Redis + eliminar reserva)       |
+| PUT    | `/api/orders/{id}/confirm` | Confirmar → CONFIRMED (eliminar reserva Redis)   |
+
+### Estados de Orden (OrderStatus)
+
+`PENDING` → `CONFIRMED` (confirm) | `CANCELLED` (cancel) | `EXPIRED` (TTL job)

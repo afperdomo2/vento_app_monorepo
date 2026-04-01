@@ -5,12 +5,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Estado de un pedido")
 public enum OrderStatus {
 
-    @Schema(description = "Pedido pendiente de confirmación")
+    @Schema(description = "Pedido pendiente de confirmación y pago")
     PENDING,
 
-    @Schema(description = "Pedido confirmado")
+    @Schema(description = "Pago aprobado, ticket entregado")
     CONFIRMED,
 
-    @Schema(description = "Pedido cancelado")
-    CANCELLED
+    @Schema(description = "Cancelado por el usuario")
+    CANCELLED,
+
+    @Schema(description = "Expirado por timeout de pago (TTL Redis)")
+    EXPIRED
 }

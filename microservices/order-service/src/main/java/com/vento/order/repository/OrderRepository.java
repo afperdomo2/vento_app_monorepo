@@ -1,9 +1,13 @@
 package com.vento.order.repository;
 
+import com.vento.common.dto.order.OrderStatus;
 import com.vento.order.model.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,4 +15,18 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     List<Order> findByUserId(UUID userId);
+
+    /**
+     * Encuentra órdenes en estado PENDING creadas antes de un momento dado.
+     * Usado por el job de expiración para detectar reservas vencidas.
+     *
+     * @param status    estado a buscar (PENDING)
+     * @param createdBefore umbral de tiempo
+     * @return lista de órdenes expiradas candidatas
+     */
+    @Query("SELECT o FROM Order o WHERE o.status = :status AND o.createdAt <= :createdBefore")
+    List<Order> findByStatusAndCreatedAtBefore(
+            @Param("status") OrderStatus status,
+            @Param("createdBefore") LocalDateTime createdBefore
+    );
 }

@@ -13,8 +13,8 @@ import java.util.UUID;
 /**
  * Cliente Feign para comunicar con el Event Service.
  * <p>
- * Permite al Order Service verificar y descontar tickets disponibles
- * al crear una reserva.
+ * Permite al Order Service verificar disponibilidad y sincronizar el conteo
+ * de tickets disponibles en la base de datos del event-service.
  */
 @FeignClient(name = "event-service", url = "${event.service.url}")
 public interface EventClient {
@@ -29,13 +29,27 @@ public interface EventClient {
     ApiResponse<EventAvailabilityDto> getEventAvailability(@PathVariable("eventId") UUID eventId);
 
     /**
-     * Descuenta la cantidad de tickets disponibles para un evento.
+     * Descuenta tickets en la base de datos del event-service.
+     * Se llama después de que Redis ya confirmó la reserva atómica.
      *
      * @param eventId  ID del evento
      * @param quantity Cantidad de tickets a descontar
      */
     @PutMapping("/api/events/{eventId}/tickets")
     void decrementAvailableTickets(
+            @PathVariable("eventId") UUID eventId,
+            @RequestParam("quantity") int quantity
+    );
+
+    /**
+     * Libera tickets en la base de datos del event-service.
+     * Se llama al cancelar o expirar una orden.
+     *
+     * @param eventId  ID del evento
+     * @param quantity Cantidad de tickets a liberar
+     */
+    @PutMapping("/api/events/{eventId}/tickets/release")
+    void releaseAvailableTickets(
             @PathVariable("eventId") UUID eventId,
             @RequestParam("quantity") int quantity
     );

@@ -8,6 +8,7 @@ import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.event.model.Event;
 import com.vento.event.repository.EventRepository;
+import com.vento.event.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private InventoryService inventoryService;
 
     @InjectMocks
     private EventService eventService;

@@ -36,11 +36,35 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @Operation(summary = "Crear un nuevo pedido", description = "Crea un nuevo pedido para reservar entradas a un evento")
+    @Operation(
+            summary = "Crear un nuevo pedido",
+            description = """
+                    Crea un nuevo pedido y reserva los tickets de forma atómica en Redis (DECRBY).
+
+                    **Reserva temporal con TTL:**
+                    Al crear la orden se genera automáticamente una reserva temporal en Redis con una \
+                    duración de **5 minutos** (configurable via `vento.reservation.ttl-minutes`).
+                    Durante ese tiempo los tickets quedan bloqueados para este pedido.
+
+                    **Estados posibles tras la creación:**
+                    - `PENDING` → estado inicial. El usuario tiene 5 minutos para confirmar o cancelar.
+
+                    **¿Qué ocurre si no se confirma a tiempo?**
+                    Un job programado detecta las órdenes `PENDING` vencidas y las mueve a `EXPIRED`, \
+                    liberando los tickets de vuelta al inventario de Redis automáticamente.
+
+                    **Flujo recomendado:**
+                    1. `POST /api/orders` → orden en estado `PENDING`
+                    2. (Procesar pago en los próximos 5 minutos)
+                    3. `PUT /api/orders/{id}/confirm` → orden pasa a `CONFIRMED`
+
+                    Si el pago falla o el usuario desiste: `PUT /api/orders/{id}/cancel`.
+                    """
+    )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "201",
-                    description = "Pedido creado exitosamente",
+                    description = "Pedido creado exitosamente en estado PENDING. La reserva expira en 5 minutos.",
                     content = @Content(schema = @Schema(implementation = OrderDto.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -50,7 +74,7 @@ public class OrderController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description = "No hay tickets disponibles",
+                    description = "No hay suficientes tickets disponibles (Redis rechazó el DECRBY)",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))
             )
     })
@@ -146,17 +170,42 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderDto>> cancelOrder(
             @Parameter(description = "ID del pedido") @PathVariable UUID id,
             @RequestHeader("X-User-Id") UUID authenticatedUserId) {
-        OrderDto order = orderService.getOrderById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
-
-        // Validar que el usuario autenticado es el dueño del pedido
-        if (!order.getUserId().equals(authenticatedUserId)) {
-            throw new AccessDeniedException("No tienes permiso para cancelar este pedido");
-        }
-
-        OrderDto cancelledOrder = orderService.cancelOrder(id)
+        OrderDto cancelledOrder = orderService.cancelOrder(id, authenticatedUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
         return ResponseEntity.ok(ApiResponse.success("Pedido cancelado exitosamente", cancelledOrder));
+    }
+
+    @Operation(
+            summary = "Confirmar pedido",
+            description = """
+                    Confirma un pedido en estado `PENDING`, simulando un pago exitoso.
+                    Cambia el estado a `CONFIRMED` y elimina la reserva temporal de Redis.
+
+                    **Importante:** solo se pueden confirmar pedidos en estado `PENDING`. \
+                    Si la reserva ya expiró (estado `EXPIRED`) no es posible confirmarla.
+                    """
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Pedido confirmado exitosamente",
+                    content = @Content(schema = @Schema(implementation = OrderDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "Pedido no encontrado"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "El pedido no puede ser confirmado en su estado actual"
+            )
+    })
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<ApiResponse<OrderDto>> confirmOrder(
+            @Parameter(description = "ID del pedido") @PathVariable UUID id) {
+        OrderDto confirmedOrder = orderService.confirmOrder(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
+        return ResponseEntity.ok(ApiResponse.success("Pedido confirmado exitosamente", confirmedOrder));
     }
 }
 

@@ -632,7 +632,7 @@
                 "orders"
               ]
             },
-            "description": "Crea una nueva reserva de entradas para un evento.\n\nCampos requeridos:\n- eventId: ID del evento (UUID)\n- quantity: Cantidad de entradas\n\nEl userId se extrae automáticamente del token JWT por el API Gateway.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+            "description": "Crea una nueva reserva de entradas para un evento.\n\nCampos requeridos:\n- eventId: ID del evento (UUID)\n- quantity: Cantidad de entradas\n\nEl userId se extrae automáticamente del token JWT por el API Gateway.\n\n⚠️ IMPORTANTE - TTL de reserva: La orden se crea en estado PENDING y se registra una reserva temporal en Redis con TTL de 5 minutos. Si no se confirma con PUT /api/orders/{id}/confirm dentro de ese plazo, el job de expiración cambia el estado a EXPIRED y libera los tickets automáticamente.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
           },
           "response": []
         },
@@ -777,7 +777,56 @@
                 "cancel"
               ]
             },
-            "description": "Cancela una orden existente.\n\nSolo se pueden cancelar órdenes en estado PENDING.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+            "description": "Cancela una orden existente.\n\nSolo se pueden cancelar órdenes en estado PENDING.\n\nAl cancelar, se ejecuta INCRBY en Redis para devolver los tickets al inventario y se elimina la reserva temporal.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Orden confirmada correctamente');",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.error('❌ Conflict: La orden no está en estado PENDING (ya fue confirmada, cancelada o expirada)');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}",
+                "confirm"
+              ]
+            },
+            "description": "Confirma una orden en estado PENDING, cambiando su estado a CONFIRMED.\n\nDebe ejecutarse dentro de los 5 minutos posteriores a la creación de la reserva, antes de que expire el TTL en Redis.\n\nAl confirmar, se elimina la clave de reserva temporal (vento:reservation:{orderId}) de Redis. Los tickets permanecen decrementados.\n\nRequiere: Token JWT válido con rol USER o ADMIN."
           },
           "response": []
         }

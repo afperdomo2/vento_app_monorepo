@@ -195,5 +195,45 @@ public class EventController {
         eventService.decrementAvailableTickets(id, quantity);
         return ResponseEntity.ok().build();
     }
+
+    @Operation(summary = "Liberar tickets", description = "Incrementa la cantidad de tickets disponibles (usado al cancelar o expirar una reserva)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Tickets liberados exitosamente"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "Evento no encontrado"
+            )
+    })
+    @PutMapping("/{id}/tickets/release")
+    public ResponseEntity<Void> releaseTickets(
+            @Parameter(description = "ID del evento") @PathVariable UUID id,
+            @Parameter(description = "Cantidad de tickets a liberar") @RequestParam int quantity) {
+        eventService.incrementAvailableTickets(id, quantity);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Eliminar evento", description = "Elimina un evento y limpia su inventario en Redis")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "204",
+                    description = "Evento eliminado exitosamente"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "Evento no encontrado"
+            )
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEvent(
+            @Parameter(description = "ID del evento") @PathVariable UUID id) {
+        boolean deleted = eventService.deleteEvent(id);
+        if (!deleted) {
+            throw new ResourceNotFoundException("Evento", id);
+        }
+        return ResponseEntity.noContent().build();
+    }
 }
 

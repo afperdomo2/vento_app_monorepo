@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -165,6 +166,75 @@ public class GlobalExceptionHandler {
 
         log.warn("[{}] Recurso no encontrado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 409 — Conflicto de Optimistic Locking agotado (ConflictResolutionService)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(OptimisticLockConflictException.class)
+    public ResponseEntity<ProblemDetail> handleOptimisticLockConflict(
+            OptimisticLockConflictException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.CONFLICT,
+                "optimistic-lock-conflict",
+                "Conflicto de concurrencia",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("[{}] Conflicto de Optimistic Locking agotado en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 409 — ObjectOptimisticLockingFailureException directa (sin retry)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ProblemDetail> handleJpaOptimisticLock(
+            ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.CONFLICT,
+                "optimistic-lock-conflict",
+                "Conflicto de concurrencia",
+                "La entidad fue modificada por otro proceso. Por favor intente nuevamente.",
+                request.getRequestURI()
+        );
+
+        log.warn("[{}] ObjectOptimisticLockingFailureException en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 409 — Tickets insuficientes (sobreventa)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(InsufficientTicketsException.class)
+    public ResponseEntity<ProblemDetail> handleInsufficientTickets(
+            InsufficientTicketsException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.CONFLICT,
+                "insufficient-tickets",
+                "Tickets insuficientes",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        problem.setProperty("available", ex.getAvailable());
+        problem.setProperty("requested", ex.getRequested());
+
+        log.warn("[{}] Tickets insuficientes en {}: disponibles={}, solicitados={}",
+                serviceName, request.getRequestURI(), ex.getAvailable(), ex.getRequested());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
     }

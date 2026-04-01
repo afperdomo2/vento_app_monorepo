@@ -27,6 +27,7 @@ import java.util.UUID;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final InventoryService inventoryService;
 
     @Transactional
     public EventDto createEvent(CreateEventRequest request) {
@@ -44,6 +45,8 @@ public class EventService {
 
         Event savedEvent = eventRepository.save(event);
         log.info("Evento creado con ID: {}", savedEvent.getId());
+
+        inventoryService.initializeInventory(savedEvent.getId(), savedEvent.getAvailableTickets());
 
         return mapToDto(savedEvent);
     }
@@ -110,6 +113,7 @@ public class EventService {
                         int diferencia = request.getTotalCapacity() - event.getTotalCapacity();
                         event.setTotalCapacity(request.getTotalCapacity());
                         event.setAvailableTickets(event.getAvailableTickets() + diferencia);
+                        inventoryService.adjustInventory(event.getId(), diferencia);
                     }
                     if (request.getPrice() != null) {
                         event.setPrice(request.getPrice());
@@ -134,7 +138,7 @@ public class EventService {
 
     @Transactional
     public void decrementAvailableTickets(UUID eventId, int quantity) {
-        log.info("Descontando {} tickets para el evento: {}", quantity, eventId);
+        log.info("Descontando {} tickets en DB para el evento: {}", quantity, eventId);
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
@@ -149,7 +153,31 @@ public class EventService {
 
         event.setAvailableTickets(event.getAvailableTickets() - quantity);
         eventRepository.save(event);
-        log.info("Tickets descontados exitosamente. Nuevos disponibles: {}", event.getAvailableTickets());
+        log.info("Tickets descontados en DB. Nuevos disponibles: {}", event.getAvailableTickets());
+    }
+
+    @Transactional
+    public void incrementAvailableTickets(UUID eventId, int quantity) {
+        log.info("Incrementando {} tickets en DB para el evento: {}", quantity, eventId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento", eventId));
+
+        event.setAvailableTickets(event.getAvailableTickets() + quantity);
+        eventRepository.save(event);
+        log.info("Tickets incrementados en DB. Nuevos disponibles: {}", event.getAvailableTickets());
+    }
+
+    @Transactional
+    public boolean deleteEvent(UUID id) {
+        return eventRepository.findById(id)
+                .map(event -> {
+                    eventRepository.delete(event);
+                    inventoryService.removeInventory(id);
+                    log.info("Evento eliminado: {}", id);
+                    return true;
+                })
+                .orElse(false);
     }
 
     private EventDto mapToDto(Event event) {

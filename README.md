@@ -228,16 +228,20 @@ docker compose stop order-service
 
 ### A través del API Gateway (Puerto 8080)
 
-| Método | Endpoint                    | Descripción                  |
-|--------|-----------------------------|------------------------------|
-| POST   | `/api/events`               | Crear evento                 |
-| GET    | `/api/events/{id}`          | Obtener evento por ID (UUID) |
-| GET    | `/api/events`               | Listar eventos (paginación)  |
-| PUT    | `/api/events/{id}`          | Actualizar evento            |
-| POST   | `/api/orders`               | Crear reserva                |
-| GET    | `/api/orders/{id}`          | Obtener pedido por ID        |
-| GET    | `/api/orders/user/{userId}` | Pedidos por usuario          |
-| PUT    | `/api/orders/{id}/cancel`   | Cancelar pedido              |
+| Método | Endpoint                          | Descripción                         |
+|--------|-----------------------------------|-------------------------------------|
+| POST   | `/api/events`                     | Crear evento                        |
+| GET    | `/api/events/{id}`                | Obtener evento por ID (UUID)        |
+| GET    | `/api/events`                     | Listar eventos (paginación)         |
+| GET    | `/api/events/featured`            | Eventos destacados                  |
+| PUT    | `/api/events/{id}`                | Actualizar evento                   |
+| DELETE | `/api/events/{id}`                | Eliminar evento                     |
+| PUT    | `/api/events/{id}/tickets/release`| Liberar tickets en Redis            |
+| POST   | `/api/orders`                     | Crear reserva (TTL 5 min en Redis)  |
+| GET    | `/api/orders/{id}`                | Obtener pedido por ID               |
+| GET    | `/api/orders/my-orders`           | Pedidos del usuario autenticado     |
+| PUT    | `/api/orders/{id}/cancel`         | Cancelar pedido                     |
+| PUT    | `/api/orders/{id}/confirm`        | Confirmar pedido (simula pago)      |
 
 ----
 
@@ -247,23 +251,31 @@ docker compose stop order-service
 
 **Swagger UI:** http://localhost:8082/swagger-ui.html
 
-| Método | Endpoint       | Descripción                  |
-|--------|----------------|------------------------------|
-| POST   | `/events`      | Crear evento                 |
-| GET    | `/events/{id}` | Obtener evento por ID (UUID) |
-| GET    | `/events`      | Listar eventos (paginación)  |
-| PUT    | `/events/{id}` | Actualizar evento            |
+| Método | Endpoint                    | Descripción                  |
+|--------|-----------------------------|------------------------------|
+| POST   | `/api/events`               | Crear evento                 |
+| GET    | `/api/events/{id}`          | Obtener evento por ID (UUID) |
+| GET    | `/api/events`               | Listar eventos (paginación)  |
+| GET    | `/api/events/featured`      | Eventos destacados           |
+| PUT    | `/api/events/{id}`          | Actualizar evento            |
+| DELETE | `/api/events/{id}`          | Eliminar evento              |
+| PUT    | `/api/events/{id}/tickets/release` | Liberar tickets en Redis |
 
 ### Order Service (Puerto 8083)
 
 **Swagger UI:** http://localhost:8083/swagger-ui.html
 
-| Método | Endpoint                | Descripción           |
-|--------|-------------------------|-----------------------|
-| POST   | `/orders`               | Crear reserva         |
-| GET    | `/orders/{id}`          | Obtener pedido por ID |
-| GET    | `/orders/user/{userId}` | Pedidos por usuario   |
-| PUT    | `/orders/{id}/cancel`   | Cancelar pedido       |
+| Método | Endpoint                   | Descripción                                        |
+|--------|----------------------------|----------------------------------------------------|
+| POST   | `/api/orders`              | Crear reserva (**reserva temporal de 5 min en Redis**) |
+| GET    | `/api/orders/{id}`         | Obtener pedido por ID                              |
+| GET    | `/api/orders/my-orders`    | Pedidos del usuario autenticado                    |
+| PUT    | `/api/orders/{id}/cancel`  | Cancelar pedido (libera tickets en Redis)          |
+| PUT    | `/api/orders/{id}/confirm` | Confirmar pedido → estado CONFIRMED                |
+
+> **Reserva temporal:** Al crear una orden queda en estado `PENDING` con una reserva en Redis que expira a los
+> **5 minutos** (configurable con `vento.reservation.ttl-minutes`). Si no se confirma o cancela antes, la orden
+> pasa automáticamente a `EXPIRED` y los tickets se liberan. Ver Swagger para el flujo completo.
 
 ## 🔐 Seguridad (Keycloak)
 
@@ -421,10 +433,12 @@ cd frontend && pnpm start
 
 ### Cobertura Actual
 
-| Servicio     | Tests | Estado |
-|--------------|-------|--------|
-| EventService | 6     | ✅      |
-| OrderService | 10    | ✅      |
+| Servicio                  | Tests | Estado |
+|---------------------------|-------|--------|
+| EventService              | 6     | ✅      |
+| OrderService              | 9     | ✅      |
+| TicketInventoryService    | 3     | ✅      |
+| ConflictResolutionService | 3     | ✅      |
 
 ### Reportes
 

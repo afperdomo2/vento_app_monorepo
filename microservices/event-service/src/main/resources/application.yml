@@ -5,9 +5,24 @@ spring:
     import: optional:file:./config/event-service.yml
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
 
 server:
   port: ${SERVER_PORT:8082}
+
+vento:
+  redis:
+    key-prefix: "vento:"
 
 spring-doc:
   api-docs:
