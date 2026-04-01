@@ -74,6 +74,7 @@ interface ListEventsParams {
   size: number;
   sortBy?: string;
   sortDir?: string;
+  search?: string;
 }
 
 @Injectable({
@@ -101,7 +102,7 @@ export class EventService {
 
   /**
    * List all events with pagination
-   * @param params Query parameters (page, size, sortBy, sortDir)
+   * @param params Query parameters (page, size, sortBy, sortDir, search)
    */
   listEvents(params: ListEventsParams): Observable<PagedResponse<Event>> {
     const queryParams: Record<string, string | number> = {
@@ -110,6 +111,11 @@ export class EventService {
       sortBy: params.sortBy || 'eventDate',
       sortDir: params.sortDir || 'ASC',
     };
+
+    // Add search parameter if present
+    if (params.search && params.search.trim()) {
+      queryParams['search'] = params.search.trim();
+    }
 
     return this.http.get<ApiResponse<PagedResponse<BackendEvent>>>(
       this.apiUrl,

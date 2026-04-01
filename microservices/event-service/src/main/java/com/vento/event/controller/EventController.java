@@ -99,14 +99,16 @@ public class EventController {
             @Parameter(description = "Campo de ordenamiento")
             @RequestParam(defaultValue = "eventDate") String sortBy,
             @Parameter(description = "Dirección de ordenamiento")
-            @RequestParam(defaultValue = "ASC") String sortDir) {
+            @RequestParam(defaultValue = "ASC") String sortDir,
+            @Parameter(description = "Término de búsqueda (nombre, descripción o ubicación)")
+            @RequestParam(required = false) String search) {
 
         Sort sort = sortDir.equalsIgnoreCase("DESC")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-        Page<EventDto> events = eventService.listEvents(pageRequest);
+        Page<EventDto> events = eventService.listEvents(search, pageRequest);
         return ResponseEntity.ok(ApiResponse.success(events));
     }
 

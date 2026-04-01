@@ -34,16 +34,6 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
 
         <!-- Right Side Actions -->
         <div class="flex items-center space-x-4">
-          <!-- Search Bar (Desktop) -->
-          <div class="hidden lg:flex items-center bg-surface-container-low rounded-full px-4 py-1.5 focus-within:ring-2 ring-primary transition-all">
-            <span class="material-symbols-outlined text-outline text-lg">search</span>
-            <input
-              type="text"
-              placeholder="Buscar eventos..."
-              class="bg-transparent border-none focus:ring-0 text-sm w-48 font-body"
-            />
-          </div>
-
           <!-- Notifications -->
           <button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full relative">
             <span class="material-symbols-outlined">notifications</span>

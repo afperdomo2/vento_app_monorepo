@@ -8,11 +8,12 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { EventCard } from '../../shared/components/event-card/event-card';
 import { EventsListService } from './services/events-list.service';
 import { FiltersBarComponent } from './components/filters-bar';
+import { SearchBarComponent } from './components/search-bar';
 
 @Component({
   selector: 'app-events-list',
   standalone: true,
-  imports: [TopNavBar, BottomNavBar, EventCard, FiltersBarComponent],
+  imports: [TopNavBar, BottomNavBar, EventCard, FiltersBarComponent, SearchBarComponent],
   template: `
     <app-top-nav-bar />
 
@@ -25,7 +26,11 @@ import { FiltersBarComponent } from './components/filters-bar';
               Todos los Eventos
             </h1>
             <p class="text-on-surface-variant mt-2">
-              {{ totalEvents() }} eventos disponibles
+              @if (isSearching() && searchTerm()) {
+                {{ totalEvents() }} resultados para "<strong class="text-on-surface">{{ searchTerm() }}</strong>"
+              } @else {
+                {{ totalEvents() }} eventos disponibles
+              }
             </p>
           </div>
 
@@ -39,6 +44,11 @@ import { FiltersBarComponent } from './components/filters-bar';
           </button>
         </div>
       </header>
+
+      <!-- Search Bar -->
+      <section class="px-6 pb-6 max-w-7xl mx-auto">
+        <app-search-bar />
+      </section>
 
       <!-- Filters Bar (Desktop) -->
       <section class="px-6 pb-6 max-w-7xl mx-auto hidden md:block">
@@ -161,26 +171,28 @@ import { FiltersBarComponent } from './components/filters-bar';
   `
 })
 export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
-  private eventsService = inject(EventsListService);
+  private eventsListService = inject(EventsListService);
   private destroy$ = new Subject<void>();
 
-  // Signals from service
-  events = this.eventsService.events;
-  loading = this.eventsService.loading;
-  loadingMore = this.eventsService.loadingMore;
-  hasMore = this.eventsService.hasMore;
-  totalElements = this.eventsService.totalElements;
-  error = this.eventsService.error;
+  // Signals from service (public for template access)
+  events = this.eventsListService.events;
+  loading = this.eventsListService.loading;
+  loadingMore = this.eventsListService.loadingMore;
+  hasMore = this.eventsListService.hasMore;
+  totalElements = this.eventsListService.totalElements;
+  error = this.eventsListService.error;
+  isSearching = this.eventsListService.isSearching;
+  searchTerm = this.eventsListService.searchTerm;
 
   showMobileFilters = signal(false);
 
   ngOnInit(): void {
-    this.eventsService.loadEvents();
+    this.eventsListService.loadEvents();
   }
 
   ngAfterViewInit(): void {
     // Restore scroll position when coming back from event detail
-    this.eventsService.restoreScrollPosition();
+    this.eventsListService.restoreScrollPosition();
   }
 
   ngOnDestroy(): void {
@@ -195,17 +207,17 @@ export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
     const threshold = document.body.offsetHeight - 800; // 800px before end
 
     if (pos >= threshold && !this.loading() && !this.loadingMore() && this.hasMore()) {
-      this.eventsService.loadMore();
+      this.eventsListService.loadMore();
     }
   }
 
   // Save scroll position before navigating to event detail
   saveScrollPosition(): void {
-    this.eventsService.saveScrollPosition();
+    this.eventsListService.saveScrollPosition();
   }
 
   loadEvents(): void {
-    this.eventsService.loadEvents();
+    this.eventsListService.loadEvents();
   }
 
   toggleFilters(): void {
@@ -213,18 +225,18 @@ export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
   }
 
   applySort(sortConfig: { sortBy: string; sortDir: string }): void {
-    this.eventsService.applyFilters({
+    this.eventsListService.applyFilters({
       sortBy: sortConfig.sortBy,
       sortDir: sortConfig.sortDir,
     });
   }
 
   resetFilters(): void {
-    this.eventsService.resetFilters();
+    this.eventsListService.resetFilters();
   }
 
   hasActiveFilters(): boolean {
-    const filters = this.eventsService.getFilters();
+    const filters = this.eventsListService.getFilters();
     return (filters.sortBy !== 'eventDate') || (filters.sortDir !== 'ASC');
   }
 

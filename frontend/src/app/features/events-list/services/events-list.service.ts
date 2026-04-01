@@ -15,6 +15,7 @@ interface EventsQuery {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
+  search?: string;
 }
 
 /**
@@ -29,6 +30,7 @@ interface EventsState {
   totalElements: number;
   error: string | null;
   filters: EventsQuery;
+  searchTerm: string;
 }
 
 const initialState: EventsState = {
@@ -45,6 +47,7 @@ const initialState: EventsState = {
     sortBy: 'eventDate',
     sortDir: 'ASC',
   },
+  searchTerm: '',
 };
 
 @Injectable({
@@ -85,6 +88,11 @@ export class EventsListService {
   readonly totalElements = computed(() => this.state().totalElements);
   readonly error = computed(() => this.state().error);
   readonly currentPage = computed(() => this.state().currentPage);
+  readonly searchTerm = computed(() => this.state().searchTerm);
+  // isSearching is true only when there's a search term AND currently loading
+  readonly isSearching = computed(() =>
+    this.state().searchTerm.trim().length > 0 && this.state().loading
+  );
 
   // Load initial events (resets existing list)
   loadEvents(): void {
@@ -153,8 +161,32 @@ export class EventsListService {
         sortBy: 'eventDate',
         sortDir: 'ASC',
       },
+      searchTerm: '',
     }));
 
+    this.loadEvents();
+  }
+
+  // Update search term and reload events
+  updateSearchTerm(term: string): void {
+    this.state.update(s => ({
+      ...s,
+      searchTerm: term,
+    }));
+
+    // Reset to first page and reload
+    this.loadEvents();
+  }
+
+  // Clear search term
+  clearSearch(): void {
+    this.state.update(s => ({
+      ...s,
+      searchTerm: '',
+      isSearching: false,
+    }));
+
+    // Reload events without search
     this.loadEvents();
   }
 
@@ -166,12 +198,18 @@ export class EventsListService {
   // Build query parameters
   private buildQuery(page: number): EventsQuery {
     const filters = this.state().filters;
+    const searchTerm = this.state().searchTerm;
     const query: EventsQuery = {
       page,
       size: filters.size,
       sortBy: filters.sortBy || 'eventDate',
       sortDir: filters.sortDir || 'ASC',
     };
+
+    // Add search term if present
+    if (searchTerm && searchTerm.trim()) {
+      query.search = searchTerm.trim();
+    }
 
     // Add category filter if present (for future implementation)
     if (filters.category && filters.category !== 'all') {
