@@ -11,7 +11,19 @@ const KEYCLOAK_REALM = getEnvValue('KEYCLOAK_REALM');
  * Profile Service
  *
  * Provides user profile information extracted from JWT token.
- * Does NOT make HTTP requests to Keycloak - uses token claims directly.
+ *
+ * **Why no HTTP calls?**
+ * This service intentionally reads the JWT token from localStorage and extracts
+ * profile claims directly instead of making HTTP requests to Keycloak. This is the
+ * recommended pattern for Keycloak integration because:
+ *
+ * 1. The access token is already stored by the auth service after login
+ * 2. All profile information is embedded in the JWT claims (sub, email, preferred_username, etc.)
+ * 3. No additional network round-trip is needed
+ * 4. The token is refreshed automatically by the auth interceptor when needed
+ *
+ * For account management (change password, update email, etc.), users are redirected
+ * to Keycloak's Account Console via `getAccountConsoleUrl()`.
  */
 @Injectable({
   providedIn: 'root',

@@ -3,7 +3,8 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
-import { EventService, Event } from '../../core/services/event.service';
+import { EventService } from '../../core/services/event.service';
+import { Event } from '../../core/models/event.models';
 
 @Component({
   selector: 'app-event-detail',

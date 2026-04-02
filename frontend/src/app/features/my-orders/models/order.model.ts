@@ -1,5 +1,4 @@
 import { Order, OrderStatus } from '../../../core/models/order.models';
-import { PagedResponse } from '../../../core/models/api.models';
 
 export type { Order, OrderStatus };
 

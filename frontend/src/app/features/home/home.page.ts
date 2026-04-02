@@ -3,7 +3,8 @@ import { RouterLink } from '@angular/router';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { EventCard } from '../../shared/components/event-card/event-card';
-import { EventService, Event } from '../../core/services/event.service';
+import { EventService } from '../../core/services/event.service';
+import { Event } from '../../core/models/event.models';
 
 @Component({
   selector: 'app-home',

@@ -1,25 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { CommonModule } from '@angular/common';
-
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  imageUrl: string;
-  status: 'sold-out' | 'selling' | 'draft';
-  percentageSold?: number;
-}
-
-interface Notification {
-  id: string;
-  type: 'alert' | 'sale' | 'registration';
-  title: string;
-  message: string;
-  time: string;
-}
+import { OrganizerService } from './services/organizer.service';
 
 @Component({
   selector: 'app-organizer-dashboard',
@@ -186,7 +169,7 @@ interface Notification {
               </div>
 
               <div class="space-y-4">
-                @for (event of events; track event.id) {
+                @for (event of events(); track event.id) {
                   <div class="bg-surface-container-lowest rounded-xl p-4 flex items-center justify-between shadow-sm ghost-border hover:shadow-md transition-shadow">
                     <div class="flex items-center space-x-4">
                       <div class="w-16 h-16 rounded-lg bg-surface-container overflow-hidden">
@@ -227,7 +210,7 @@ interface Notification {
               </h3>
 
               <div class="space-y-6">
-                @for (notification of notifications; track notification.id; let first = $first) {
+                @for (notification of notifications(); track notification.id; let first = $first) {
                   <div class="flex space-x-3 relative">
                     @if (!first) {
                       <div class="absolute left-3 top-8 bottom-0 w-[1px] bg-outline-variant/20"></div>
@@ -283,50 +266,16 @@ interface Notification {
     }
   `]
 })
-export class OrganizerPage {
-  events: Event[] = [
-    {
-      id: '1',
-      title: 'Summer Jazz Night',
-      date: '24 June, 2024',
-      location: 'Marina Bay',
-      imageUrl: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=200&h=200&fit=crop',
-      status: 'sold-out'
-    },
-    {
-      id: '2',
-      title: 'Tech Summit 2024',
-      date: '12 July, 2024',
-      location: 'Convention Hall',
-      imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=200&h=200&fit=crop',
-      status: 'selling',
-      percentageSold: 85
-    }
-  ];
+export class OrganizerPage implements OnInit {
+  private organizerService = inject(OrganizerService);
 
-  notifications: Notification[] = [
-    {
-      id: '1',
-      type: 'alert',
-      title: 'Cambio de Horario',
-      message: 'El evento "Jazz Night" ha sido retrasado 30 minutos por condiciones climáticas.',
-      time: 'Hace 5 min'
-    },
-    {
-      id: '2',
-      type: 'sale',
-      title: 'Nueva Venta',
-      message: 'Se han vendido 5 entradas VIP para "Tech Summit 2024".',
-      time: 'Hace 12 min'
-    },
-    {
-      id: '3',
-      type: 'registration',
-      title: 'Registro de Expositor',
-      message: 'Marina Soler ha completado su registro para el área de prensa.',
-      time: 'Hace 1 hora'
-    }
-  ];
+  readonly events = this.organizerService.events;
+  readonly notifications = this.organizerService.notifications;
+  readonly kpis = this.organizerService.kpis;
+
+  ngOnInit(): void {
+    this.organizerService.loadDashboardData();
+  }
 
   getNotificationClasses(type: string): string {
     const classes: Record<string, string> = {
