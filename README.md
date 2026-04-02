@@ -118,10 +118,29 @@ La aplicación estará disponible en: **http://localhost:4200**
 Todos los servicios corren en contenedores Docker con configuración de desarrollo.
 
 ```bash
-# Construir y ejecutar todo
+# 1. Opciones de despliegue
+
+# 1.1. Construir y levantar todos los contenedores (usa la última imagen contruida)
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-# Ver logs
+# 1.2. Reconstruir todas las imagenes y deplegar todos los contenedores del proyecto
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --build up -d 
+
+# 1.3. Recontruir una imagen individual (por si tiene cambios en el código) y desplegarla
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --build up -d event-service
+
+# 1.4. Separar el proceso en 2 (menos consumo recursos, más tiempo)
+
+# 1.4.1. Crear la imagen
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+
+# 1.4.2. Desplegar su contenedor
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# 2. Apaga y limpia los contenedores creados
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+# 3. Ver logs
 docker compose logs -f
 ```
 
@@ -157,19 +176,25 @@ export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
 
 ### Comandos por Entorno
 
+#### LOCAL
+
 ```bash
-# ===== LOCAL =====
 # Solo infraestructura (microservicios con Gradle)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.local.yml down
+```
 
-# ===== DEV =====
+#### DEV
+
+```bash
 # Todos los servicios en Docker
 docker compose -f docker-compose.yml -f docker-compose.dev.yml build
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+#### PROD
 
-# ===== PROD =====
+```bash
 # Todos los servicios en Docker (producción)
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d

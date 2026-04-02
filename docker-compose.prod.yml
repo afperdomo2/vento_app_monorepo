@@ -91,8 +91,12 @@ services:
       DATABASE_NAME: ${POSTGRES_EVENTS_DB:-events_db}
       DATABASE_USERNAME: ${POSTGRES_EVENTS_USER:-postgres}
       DATABASE_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres-events:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - vento-network
@@ -119,11 +123,15 @@ services:
       DATABASE_USERNAME: ${POSTGRES_ORDERS_USER:-postgres}
       DATABASE_PASSWORD: ${POSTGRES_ORDERS_PASSWORD:?Database password required}
       EVENT_SERVICE_URL: http://event-service:8082
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres-orders:
         condition: service_healthy
       event-service:
-        condition: service_started
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - vento-network
     restart: unless-stopped

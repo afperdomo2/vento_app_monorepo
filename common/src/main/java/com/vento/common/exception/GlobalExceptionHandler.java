@@ -3,6 +3,8 @@ package com.vento.common.exception;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -326,6 +328,50 @@ public class GlobalExceptionHandler {
 
         log.error("❌ [{}] Error de servicio externo en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 503 — Error de conexión con Redis
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(RedisConnectionFailureException.class)
+    public ResponseEntity<ProblemDetail> handleRedisConnectionFailure(
+            RedisConnectionFailureException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "redis-connection-error",
+                "Error de conexión con Redis",
+                "No se pudo conectar al servicio de caché. El sistema está intentando reconectar.",
+                request.getRequestURI()
+        );
+
+        log.error("❌ [{}] Redis Connection Failure en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    // -------------------------------------------------------------------------
+    // 503 — Error de conexión con Base de Datos
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ProblemDetail> handleDatabaseConnectionFailure(
+            DataAccessException ex, HttpServletRequest request) {
+
+        ProblemDetail problem = buildProblem(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "database-connection-error",
+                "Error de conexión con la base de datos",
+                "No se pudo conectar a la base de datos. El sistema está intentando reconectar.",
+                request.getRequestURI()
+        );
+
+        log.error("❌ [{}] Database Connection Failure en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
     }
