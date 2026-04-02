@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
+import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { ProfileService } from './services/profile.service';
 import { ProfileOverviewComponent } from './components/profile-overview/profile-overview.component';
 import { ProfileTab, ProfileState, initialProfileState } from './models/profile.model';
@@ -11,24 +11,17 @@ import { ProfileTab, ProfileState, initialProfileState } from './models/profile.
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
+    TopNavBar,
     ProfileOverviewComponent,
   ],
   template: `
-    <main class="min-h-screen bg-surface-container-lowest py-8 px-4">
+    <app-top-nav-bar />
+    <main class="pt-20 pb-8 px-4 bg-surface-container-lowest min-h-screen">
       <div class="max-w-4xl mx-auto">
         <!-- Header -->
         <header class="mb-8">
-          <div class="flex items-center gap-4 mb-4">
-            <a
-              routerLink="/home"
-              class="p-2 rounded-full hover:bg-surface-container-high transition-colors"
-            >
-              <span class="material-symbols-outlined text-on-surface-variant">arrow_back</span>
-            </a>
-            <h1 class="headline-lg text-3xl text-on-surface">Mi Perfil</h1>
-          </div>
-          <p class="text-on-surface-variant ml-12">
+          <h1 class="headline-lg text-3xl text-on-surface">Mi Perfil</h1>
+          <p class="text-on-surface-variant">
             Gestiona tu información personal
           </p>
         </header>

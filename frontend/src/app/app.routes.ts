@@ -7,7 +7,6 @@ import { OrganizerLayoutPage } from './features/organizer/organizer-layout.page'
 import { DashboardPage } from './features/organizer/dashboard/dashboard.page';
 import { AnalyticsPage } from './features/organizer/analytics/analytics.page';
 import { EventsPage } from './features/organizer/events/events.page';
-import { AttendeesPage } from './features/organizer/attendees/attendees.page';
 import { TicketingPage } from './features/organizer/ticketing/ticketing.page';
 import { SettingsPage } from './features/organizer/settings/settings.page';
 import { EventsListPage } from './features/events-list/events-list.page';
@@ -43,7 +42,6 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardPage },
       { path: 'analytics', component: AnalyticsPage },
       { path: 'events', component: EventsPage },
-      { path: 'attendees', component: AttendeesPage },
       { path: 'ticketing', component: TicketingPage },
       { path: 'settings', component: SettingsPage },
     ]

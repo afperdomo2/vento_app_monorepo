@@ -1,20 +1,17 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
+import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 
 @Component({
   selector: 'app-organizer-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, BottomNavBar],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, BottomNavBar, TopNavBar],
   template: `
-    <div class="flex min-h-screen bg-surface">
+    <app-top-nav-bar />
+    <div class="flex min-h-screen bg-surface pt-16">
       <!-- Sidebar - Desktop -->
-      <aside class="hidden md:flex flex-col h-screen w-64 bg-slate-50 dark:bg-slate-950 py-6 px-4 space-y-2 border-r-0 font-inter text-sm font-medium sticky top-0">
-        <div class="px-4 mb-8">
-          <h1 class="font-manrope font-bold text-indigo-700 text-2xl tracking-tighter">Evento</h1>
-          <p class="text-slate-400 text-xs mt-1">Hub de Organizadores</p>
-        </div>
-
+      <aside class="hidden md:flex flex-col h-[calc(100vh-4rem)] w-64 bg-slate-50 dark:bg-slate-950 py-6 px-4 space-y-2 border-r-0 font-inter text-sm font-medium sticky top-16">
         <nav class="flex-1 space-y-1">
           <a
             routerLink="/organizer/dashboard"
@@ -47,16 +44,6 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
           </a>
 
           <a
-            routerLink="/organizer/attendees"
-            routerLinkActive="active-nav"
-            class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
-            [class.active-nav]="isActive('/attendees')"
-          >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/attendees')">group</span>
-            <span>Asistentes</span>
-          </a>
-
-          <a
             routerLink="/organizer/ticketing"
             routerLinkActive="active-nav"
             class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
@@ -64,16 +51,6 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
           >
             <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')">confirmation_number</span>
             <span>Tickets</span>
-          </a>
-
-          <a
-            routerLink="/organizer/settings"
-            routerLinkActive="active-nav"
-            class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
-            [class.active-nav]="isActive('/settings')"
-          >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/settings')">settings</span>
-            <span>Configuración</span>
           </a>
         </nav>
 
@@ -104,13 +81,9 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
       >
         <div class="flex flex-col h-full py-6 px-4">
           <div class="flex justify-between items-center mb-8">
-            <div>
-              <h1 class="font-manrope font-bold text-indigo-700 text-2xl tracking-tighter">Evento</h1>
-              <p class="text-slate-400 text-xs mt-1">Hub de Organizadores</p>
-            </div>
             <button
               (click)="toggleMobileSidebar()"
-              class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-900"
+              class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-900 ml-auto"
               type="button"
               aria-label="Cerrar menú"
             >
@@ -153,17 +126,6 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
             </a>
 
             <a
-              routerLink="/organizer/attendees"
-              routerLinkActive="active-nav"
-              class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
-              [class.active-nav]="isActive('/attendees')"
-              (click)="toggleMobileSidebar()"
-            >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/attendees')">group</span>
-              <span>Asistentes</span>
-            </a>
-
-            <a
               routerLink="/organizer/ticketing"
               routerLinkActive="active-nav"
               class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
@@ -172,17 +134,6 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
             >
               <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')">confirmation_number</span>
               <span>Tickets</span>
-            </a>
-
-            <a
-              routerLink="/organizer/settings"
-              routerLinkActive="active-nav"
-              class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
-              [class.active-nav]="isActive('/settings')"
-              (click)="toggleMobileSidebar()"
-            >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/settings')">settings</span>
-              <span>Configuración</span>
             </a>
           </nav>
 

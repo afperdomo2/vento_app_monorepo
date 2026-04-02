@@ -18,14 +18,8 @@ import { OrderStatus, EnrichedOrder, OrdersState, initialOrdersState } from './m
 
         <!-- Header -->
         <header class="mb-6">
-          <div class="flex items-center gap-4 mb-2">
-            <a routerLink="/home"
-               class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
-              <span class="material-symbols-outlined text-on-surface-variant">arrow_back</span>
-            </a>
-            <h1 class="font-headline text-2xl font-bold text-on-surface">Mis Pedidos</h1>
-          </div>
-          <p class="text-on-surface-variant ml-12 text-sm">
+          <h1 class="font-headline text-2xl font-bold text-on-surface">Mis Pedidos</h1>
+          <p class="text-on-surface-variant text-sm">
             {{ totalElements() }} pedido{{ totalElements() !== 1 ? 's' : '' }} en total
           </p>
         </header>
