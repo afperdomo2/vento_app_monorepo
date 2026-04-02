@@ -8,284 +8,113 @@ Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0, Angular 21
 
 ## Comandos
 
-### Build
+### Backend (Gradle)
 
 ```bash
-./gradlew build                  # Compilar todo con tests
-./gradlew build -x test          # Compilar sin tests
-./gradlew :microservices:event-service:build   # Compilar modulo especifico
-./gradlew clean                  # Limpiar artefactos
-./gradlew dependencies           # Ver dependencias
-./gradlew dependencies --configuration runtimeClasspath  # Ver tree de dependencias
-```
-
-### Tests
-
-```bash
-./gradlew test                           # Ejecutar todos los tests
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest.testMethod"
-./gradlew :microservices:event-service:test --tests "*EventServiceTest*"
-./gradlew :microservices:order-service:test --tests "*OrderServiceTest*"
-./gradlew test --info                    # Tests con output detallado
-./gradlew test --continue                # No parar en primer fallo
-```
-
-### Ejecutar Servicios (Local)
-
-```bash
-# Infra: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-./gradlew :microservices:event-service:bootRun
-./gradlew :microservices:order-service:bootRun
-./gradlew :microservices:api-gateway:bootRun
-```
-
-### Docker
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-docker compose logs -f <servicio>
-docker compose exec <servicio> sh
+./gradlew build                              # Compilar todo con tests
+./gradlew build -x test                      # Compilar sin tests
+./gradlew :microservices:event-service:build # Modulo especifico
+./gradlew :common:build                      # Modulo common
+./gradlew test                               # Todos los tests
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"       # Test class completa
+./gradlew :microservices:event-service:test --tests "*EventServiceTest*"             # Test por nombre
+./gradlew :microservices:event-service:test --tests "*EventServiceTest.testCreate*"  # Test individual
+./gradlew test --info                        # Tests con output detallado
+./gradlew :microservices:event-service:bootRun  # Ejecutar servicio
+./gradlew clean                              # Limpiar builds
 ```
 
 ### Frontend (Angular 21)
 
 ```bash
 cd frontend
-pnpm install           # Instalar dependencias
-pnpm start             # Servidor desarrollo (localhost:4200)
-pnpm build             # Build producción
-pnpm watch             # Build en modo watch
-pnpm test              # Ejecutar tests
-pnpm ng <comando>      # Angular CLI commands
+pnpm install                                 # Instalar dependencias
+pnpm start                                   # Dev server (localhost:4200)
+pnpm build                                   # Build produccion
+pnpm test                                    # ng test (Karma/Jasmine)
+pnpm ng test -- --include='**/some.spec.ts'  # Test individual
+pnpm ng generate component features/<f>/components/<name>  # Generar componente
+pnpm exec prettier --write "src/**/*.{ts,html,scss}"       # Formatear codigo
 ```
 
-**Generar componentes/servicios (Feature-First Architecture):**
+### Docker
 
 ```bash
-# Componente en un feature específico
-pnpm ng generate component features/home/components/my-component
-
-# Servicio en core (global) o en un feature
-pnpm ng generate service core/services/my-service
-pnpm ng generate service features/home/services/my-service
-
-# Guard, interceptor, pipe, directiva
-pnpm ng generate guard core/guards/my-guard
-pnpm ng generate interceptor core/interceptors/my-interceptor
-pnpm ng generate pipe shared/pipes/my-pipe
-pnpm ng generate directive shared/directives/my-directive
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d   # Local
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d     # Dev
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d    # Prod
+docker compose logs -f <servicio>
+docker compose down
 ```
 
-### Frontend (Angular) - Feature-First Architecture
+## Code Style
 
-#### Estructura de Carpetas
+### Backend (Java/Spring Boot)
+
+- **Paquetes**: `com.vento.<modulo>/` con `controller/`, `service/`, `repository/`, `model/`, `dto/`, `config/`, `exception/`
+- **Nombres**: Clases PascalCase, metodos/variables camelCase, constantes UPPER_SNAKE_CASE, paquetes minusculas en singular
+- **Imports**: Explicitos (nunca `.*`), orden: static > java > javax > org.springframework > otros > terceros
+- **Inyeccion**: `@Autowired` en constructores (no en campos), preferir inyeccion por constructor
+- **Anotaciones**: `@Service`, `@Repository`, `@RestController`, `@Transactional` en metodos que modifican datos
+- **DTOs**: Inmutables con `@Value` o records, usar `@Builder` (Lombok) para objetos complejos
+- **Entidades JPA**: Usar Lombok `@Data`, `@Entity`, `@Table`, campos con `@Id`, `@GeneratedValue`
+- **Errores**: Excepciones extienden `RuntimeException`, usar `GlobalExceptionHandler` con `@ControllerAdvice`, codigos HTTP apropiados (400, 404, 409, 500)
+- **Logging**: `@Slf4j` (Lombok), niveles: ERROR (excepciones), WARN (warnings esperados), INFO (operaciones importantes), DEBUG (detalles), nunca loggear datos sensibles
+- **Config**: `application.yml` + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`), properties en kebab-case, secrets en variables de entorno
+- **Validacion**: Usar `jakarta.validation` annotations (`@NotNull`, `@NotBlank`, `@Size`, etc.) en DTOs
+- **API Docs**: `springdoc-openapi` con `@Operation`, `@ApiResponses` en controllers
+
+### Backend Tests
+
+- **Framework**: JUnit 5 (`@Test`, `@BeforeEach`, `@DisplayName`)
+- **Mocks**: Mockito (`@Mock`, `@InjectMocks`, `when().thenReturn()`, `verify()`)
+- **Integracion**: `@SpringBootTest`, `@DataJpaTest`, `@WebMvcTest` segun corresponda
+- **Patron**: AAA (Arrange, Act, Assert)
+- **Nombres**: `*Test.java`, metodos descriptivos: `shouldReturnEventWhenExists()`
+- **H2**: Usar H2 en memoria para tests de repositorio
+
+### Frontend (Angular 21)
+
+- **Arquitectura**: Feature-First con `core/` (global), `shared/` (reutilizable), `features/` (lazy-loaded)
+- **Estado**: Signals (`signal()`, `computed()`, `effect()`) para estado reactivo, NO RxJS BehaviorSubject
+- **Componentes**: Standalone (sin NgModules), usar `imports: []` en decorator
+- **Inyeccion**: `inject()` function (no constructor injection)
+- **HTTP**: Usar `httpResource()` o `inject(HttpClient)` con signals
+- **Estilos**: SCSS, Tailwind CSS v4 con utility classes
+- **Nomenclatura**: `*.page.ts` paginas principales, `*.component.ts` componentes hijos, `*.service.ts` servicios
+- **Templates**: Inline o archivos `.html` separados segun complejidad, usar `@if/@for/@switch` nativo (no `*ngIf/*ngFor`)
+
+### Frontend Formatting
+
+- **Prettier**: printWidth 100, single quotes, parser angular para HTML
+- **EditorConfig**: 2 spaces indent, UTF-8, final newline, trim trailing whitespace
+- **TypeScript**: strict mode, noImplicitOverride, noImplicitReturns, noFallthroughCasesInSwitch, strictTemplates
+- **Quotes**: Single quotes para strings y template literals
+
+## Estructura Frontend
 
 ```
 src/app/
-├── core/                     # Lógica global (singleton services)
-│   ├── auth/                 # Autenticación, JWT
-│   ├── guards/               # Route guards (canActivate)
-│   ├── interceptors/         # HTTP interceptors
-│   ├── providers/            # Signal/State providers globales
-│   └── services/             # Servicios globales
-│
-├── shared/                   # Reutilizable en toda la app
-│   ├── components/           # UI components puros (event-card, speaker-card)
-│   ├── directives/           # Directivas personalizadas
-│   ├── pipes/                # Transformadores de datos
-│   └── ui/                   # Layout components (navbars, footer)
-│
-└── features/                 # Módulos de negocio (lazy-loaded)
-    ├── home/                 # Feature: Home page
-    │   ├── components/       # Componentes específicos
-    │   ├── services/         # Servicios del feature
-    │   └── home.page.ts      # Página principal
-    ├── event-detail/         # Feature: Event detail
-    ├── checkout/             # Feature: Checkout
-    ├── login/                # Feature: Login
-    └── organizer/            # Feature: Organizer dashboard
+├── core/                     # Global singleton services (auth, guards, interceptors)
+├── shared/                   # Reusable components, directives, pipes, ui
+└── features/                 # Business modules (lazy-loaded)
+    └── <feature>/
+        ├── components/       # Feature-specific components
+        ├── services/         # Feature services
+        └── <feature>.page.ts # Main page
 ```
 
-#### Convenciones
+## Puertos & Redis
 
-- Usar **Signals** para estado reactivo (`signal()`, `computed()`, `effect()`)
-- Componentes **standalone** (sin NgModules, usar `imports: []` en el decorator)
-- **SCSS** para estilos
-- Inmutabilidad preferida (usar `readonly` en señales cuando sea posible)
-- Inyección de dependencias con `inject()` (no constructor injection)
-- **Nomenclatura**: `*.page.ts` para páginas, `*.component.ts` para componentes
+- **Puertos**: api-gateway:8080, event-service:8082, order-service:8083, frontend:4200, postgres:5432/5433, redis:6379, keycloak:8180
+- **Redis Keys**: `vento:event:{id}:available_tickets` (tickets), `vento:reservation:{orderId}` (5min TTL)
+- **Order States**: `PENDING` → `CONFIRMED` | `CANCELLED` | `EXPIRED`
 
-#### Ejemplo Componente con Signals
+## Agregar Microservicio
 
-```typescript
-import { Component, signal, inject } from '@angular/core';
-
-@Component({
-  selector: 'app-example',
-  standalone: true,
-  template: `<p>{{ count() }}</p>`
-})
-export class ExampleComponent {
-  private service = inject(MyService);
-  count = signal(0);
-}
-```
-
-#### Crear Nuevo Feature
-
-1. Crear carpeta: `features/<nombre-feature>/`
-2. Generar página: `pnpm ng generate component features/<nombre>/<nombre>.page --standalone`
-3. Renombrar a `.page.ts`
-4. Agregar ruta en `app.routes.ts`
-
-## Convenciones de Codigo
-
-### Backend (Java/Spring)
-
-#### Estructura de Paquetes
-
-```
-com.vento.<modulo>/
-├── controller/   # REST endpoints (usar @RestController)
-├── service/      # Logica de negocio (interfaz + impl)
-├── repository/   # Acceso a datos (usar @Repository)
-├── model/        # Entidades JPA
-├── dto/          # Data Transfer Objects
-├── config/       # Configuracion (@Configuration, @ConfigurationProperties)
-├── exception/    # Excepciones personalizadas
-├── util/         # Utilidades
-└── mapper/       # Mappers (MapStruct o manually)
-```
-
-#### Nombres
-
-- Clases: PascalCase (`UserService`, `EventController`)
-- Interfaces: Prefijo con I o sufijo `Service`, `Repository` (`IUserService`, `UserRepository`)
-- Metodos: camelCase (`getUserById`, `saveEvent`)
-- Constantes: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
-- Paquetes: minusculas, singular (`com.vento.event`)
-- Variables: camelCase (`userList`, `maxItems`)
-- Archivos de test: `*Test.java`, `*IntegrationTest.java`
-
-#### Imports
-
-- Imports explicitos (nunca `.*`)
-- Orden: static > java > javax > org.springframework > otros org > com > terceros
-- Agrupar con lineas en blanco entre grupos
-- No usar wildcard imports
-
-#### Tipos y Anotaciones
-
-- Usar interfaces para servicios siempre que sea posible
-- Preferir inmutables (`@Value`, records de Java 17+) para DTOs
-- Usar `Optional` para valores que pueden ser nulos
-- `@Autowired` en constructores (nunca en campos)
-- Usar `@Valid` en DTOs de entrada en controladores
-- Usar `@Builder` (Lombok) para objetos complejos
-- Usar `@Service`, `@Repository`, `@Controller`, `@RestController` apropiadamente
-- Usar `@Transactional` en metodos de servicio que modifican datos
-
-#### Manejo de Errores
-
-- Excepciones personalizadas extienden `RuntimeException`
-- Usar `BusinessException` o similar para errores de dominio
-- Usar `GlobalExceptionHandler` con `@ControllerAdvice` para manejo global
-- Codigos HTTP apropiados (4xx para errores de cliente, 5xx para servidor)
-- Usar `@Slf4j` (Lombok) para logging
-- Registrar en niveles apropiados: ERROR (excepciones), WARN (warnings), INFO (informacion)
-- No loggear datos sensibles (contraseñas, tokens, PII)
-
-#### Configuracion
-
-- `application.yml` base + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`)
-- Usar `@ConfigurationProperties` para configuration tipada
-- No hardcodear secrets (usar variables de entorno)
-- Perfiles: local (dev rapido), dev (docker), prod (produccion)
-- Properties: usar kebab-case (`my-property` no `myProperty`)
-
-#### Pruebas
-
-- Ubicacion: `src/test/java` reflejando estructura de `src/main`
-- JUnit 5 (`org.junit.jupiter.api`)
-- Mockito para unit tests
-- `@SpringBootTest` para tests de integracion
-- `@MockBean` para dependencias externas
-- `@DataJpaTest` para repositorios
-- Seguir patron AAA (Arrange, Act, Assert)
-- Nombre: `*Test.java` para unit, `*IntegrationTest.java` para integracion
-
-#### Documentacion
-
-- Javadoc para APIs publicas y clases importantes
-- Codigo autodocumentado con nombres significativos
-- No documentar lo obvio
-
-## Agregar Nuevo Microservicio
-
-1. Crear `microservices/<nombre>/` con estructura de paquetes
-2. Crear `build.gradle` basado en servicios existentes (copiar de event-service)
+1. Crear `microservices/<nombre>/` con estructura de paquetes estandar
+2. Copiar `build.gradle` de event-service, ajustar dependencias
 3. Agregar en `settings.gradle`: `include 'microservices:<nombre>'`
-4. Agregar dependencia en `api-gateway/build.gradle`
-5. Agregar ruta en `api-gateway/src/main/resources/application.yml`
-6. Crear `application.yml` con perfiles local/dev/prod en resources
-
-## Rutas Clave
-
-- Raiz: `/home/felipe/www/vento_app_monorepo`
-- Common: `common/`
-- Event service: `microservices/event-service/`
-- Order service: `microservices/order-service/`
-- API Gateway: `microservices/api-gateway/`
-- Frontend: `frontend/`
-- Docker compose: `docker-compose.yml`, `docker-compose.local.yml`
-
-## Puertos
-
-- api-gateway: 8080
-- event-service: 8082
-- order-service: 8083
-- frontend: 4200
-- postgres-events: 5432
-- postgres-orders: 5433
-- redis: 6379
-- keycloak: 8180
-
-## Redis — Esquema de Claves
-
-| Clave                                       | Tipo   | TTL       | Descripción                          |
-|---------------------------------------------|--------|-----------|--------------------------------------|
-| `vento:event:{eventId}:available_tickets`   | String | Sin TTL   | Tickets disponibles (INCR/DECR)      |
-| `vento:reservation:{orderId}`               | String | 5 minutos | Reserva temporal asociada a la orden |
-
-- El prefijo `vento:` se configura con `vento.redis.key-prefix`
-- El TTL de reservas se configura con `vento.reservation.ttl-minutes` (default: 5)
-- Si Redis no tiene la clave de inventario, `InventoryService` hace fallback a PostgreSQL
-
-## Endpoints por Servicio
-
-### Event Service (8082)
-
-| Método | Endpoint                          | Descripción                        |
-|--------|-----------------------------------|------------------------------------|
-| POST   | `/api/events`                     | Crear evento (init Redis key)      |
-| GET    | `/api/events`                     | Listar eventos (paginado)          |
-| GET    | `/api/events/featured`            | Eventos destacados                 |
-| GET    | `/api/events/{id}`                | Obtener evento por ID              |
-| PUT    | `/api/events/{id}`                | Actualizar evento (adjust Redis)   |
-| DELETE | `/api/events/{id}`                | Eliminar evento (remove Redis key) |
-| PUT    | `/api/events/{id}/tickets/release`| Liberar tickets en Redis           |
-
-### Order Service (8083)
-
-| Método | Endpoint                   | Descripción                                      |
-|--------|----------------------------|--------------------------------------------------|
-| POST   | `/api/orders`              | Crear reserva (DECRBY Redis + TTL 5 min)         |
-| GET    | `/api/orders/{id}`         | Obtener pedido por ID                            |
-| GET    | `/api/orders/my-orders`    | Pedidos del usuario autenticado                  |
-| PUT    | `/api/orders/{id}/cancel`  | Cancelar (INCRBY Redis + eliminar reserva)       |
-| PUT    | `/api/orders/{id}/confirm` | Confirmar → CONFIRMED (eliminar reserva Redis)   |
-
-### Estados de Orden (OrderStatus)
-
-`PENDING` → `CONFIRMED` (confirm) | `CANCELLED` (cancel) | `EXPIRED` (TTL job)
+4. Configurar ruta en `api-gateway` application.yml
+5. Crear `application.yml` con perfiles local/dev/prod
+6. Agregar en `docker-compose.local.yml` si necesita infraestructura

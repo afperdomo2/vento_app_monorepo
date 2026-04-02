@@ -1,675 +1,498 @@
-# Vento App Monorepo - Guía de Contexto
+# Vento App Monorepo - Contexto del Proyecto
 
 ## Resumen del Proyecto
 
-Este es un **monorepo de microservicios con Spring Boot** para el proyecto Vento App. Sigue una estructura de
-compilación Gradle multi-módulo con la siguiente arquitectura:
+**Vento App** es una plataforma de gestión de eventos basada en microservicios, construida con Spring Boot 3.5.0 y Angular 21. La aplicación permite crear eventos, gestionar inventario de tickets y procesar reservas con un sistema de reservas temporales.
 
-- **API Gateway** (Spring Cloud Gateway/WebFlux) - Punto de entrada único que enruta solicitudes a los servicios backend
-- **Event Service** - Microservicio Spring Boot para gestión de eventos
-- **Order Service** - Microservicio Spring Boot para gestión de pedidos
-- **Módulo Common** - Librería compartida con DTOs, excepciones y utilerías
-- **Frontend** - Aplicación Angular 21 con Signals y componentes standalone
-
-### Stack Tecnológico
-
-| Componente       | Tecnología                       |
-|------------------|----------------------------------|
-| Lenguaje         | Java 25                          |
-| Build Tool       | Gradle 9.4.0 (wrapper incluido)  |
-| Framework        | Spring Boot 3.5.0                |
-| API Gateway      | Spring Cloud Gateway (WebFlux)   |
-| Containerización | Docker y Docker Compose          |
-| Frontend         | Angular 21.2, TypeScript 5.9, pnpm 10 |
-
-## Entornos
-
-El proyecto soporta tres entornos de ejecución:
-
-| Entorno   | Base de Datos          | Microservicios      | Uso               |
-|-----------|------------------------|---------------------|-------------------|
-| **Local** | PostgreSQL en Docker   | Gradle (hot reload) | Desarrollo diario |
-| **Dev**   | PostgreSQL en Docker   | Docker              | Testing integrado |
-| **Prod**  | PostgreSQL persistente | Docker              | Producción        |
-
-## Estructura del Repositorio
+### Arquitectura
 
 ```
 vento_app_monorepo/
-├── common/                          # Módulo compartido (DTOs, utilerías)
-│   └── src/main/java/com/vento/common/dto/
-│       ├── ApiResponse.java         # Wrapper de respuesta
-│       ├── event/                   # DTOs de eventos
-│       └── order/                   # DTOs de pedidos
+├── common/                      # Módulo compartido (DTOs, excepciones, utilerías)
 ├── microservices/
-│   ├── api-gateway/                 # Spring Cloud Gateway (:8080)
-│   │   ├── src/main/java/com/vento/gateway/
-│   │   ├── src/main/resources/
-│   │   │   ├── application.yml          # Config base (default: local)
-│   │   │   ├── application-local.yml    # Rutas a localhost
-│   │   │   ├── application-dev.yml      # Rutas a contenedores
-│   │   │   └── application-prod.yml     # Rutas a contenedores (prod)
-│   │   ├── Dockerfile               # Legacy (usar dev/prod)
-│   │   ├── Dockerfile.dev           # Debug remoto habilitado
-│   │   ├── Dockerfile.prod          # Optimizado para producción
-│   │   └── build.gradle
-│   ├── event-service/               # Microservicio de eventos (:8082)
-│   │   ├── src/main/java/com/vento/event/
-│   │   │   ├── controller/          # Endpoints REST
-│   │   │   ├── service/             # Lógica de negocio
-│   │   │   ├── repository/          # Acceso a datos
-│   │   │   ├── model/               # Entidades JPA
-│   │   │   ├── config/              # Configuración
-│   │   │   └── filter/              # Filtros de seguridad
-│   │   ├── src/main/resources/
-│   │   │   ├── application.yml          # Config base
-│   │   │   ├── application-local.yml    # PostgreSQL localhost
-│   │   │   ├── application-dev.yml      # PostgreSQL Docker
-│   │   │   └── application-prod.yml     # PostgreSQL prod
-│   │   ├── Dockerfile               # Legacy
-│   │   ├── Dockerfile.dev           # Debug remoto
-│   │   ├── Dockerfile.prod          # Producción
-│   │   └── build.gradle
-│   └── order-service/               # Microservicio de pedidos (:8083)
-│       ├── src/main/java/com/vento/order/
-│       ├── src/main/resources/
-│       │   ├── application.yml          # Config base
-│       │   ├── application-local.yml    # PostgreSQL localhost
-│       │   ├── application-dev.yml      # PostgreSQL Docker
-│       │   └── application-prod.yml     # PostgreSQL prod
-│       ├── Dockerfile               # Legacy
-│       ├── Dockerfile.dev           # Debug remoto
-│       ├── Dockerfile.prod          # Producción
-│       └── build.gradle
-├── frontend/                        # Aplicación Angular 21 (Feature-First Architecture)
-│   ├── src/
-│   │   ├── app/                     # Código principal
-│   │   │   ├── core/                # Lógica global (singleton services)
-│   │   │   │   ├── auth/            # Autenticación, JWT
-│   │   │   │   ├── guards/          # Route guards
-│   │   │   │   ├── interceptors/    # HTTP interceptors
-│   │   │   │   ├── providers/       # Signal/State providers
-│   │   │   │   └── services/        # Servicios globales
-│   │   │   ├── shared/              # Reutilizable en toda la app
-│   │   │   │   ├── components/      # UI components puros
-│   │   │   │   ├── directives/      # Directivas personalizadas
-│   │   │   │   ├── pipes/           # Transformadores de datos
-│   │   │   │   └── ui/              # Layout components (navbars)
-│   │   │   ├── features/            # Módulos de negocio
-│   │   │   │   ├── home/            # Feature: Home page
-│   │   │   │   ├── event-detail/    # Feature: Event detail
-│   │   │   │   ├── checkout/        # Feature: Checkout
-│   │   │   │   ├── login/           # Feature: Login
-│   │   │   │   └── organizer/       # Feature: Organizer dashboard
-│   │   │   ├── app.ts               # Componente raíz
-│   │   │   ├── app.config.ts        # Configuración
-│   │   │   └── app.routes.ts        # Rutas
-│   │   ├── main.ts                  # Entry point
-│   │   ├── styles.scss              # Estilos globales
-│   │   └── index.html
-│   ├── public/                      # Assets estáticos
-│   ├── angular.json                 # Configuración Angular
-│   ├── package.json                 # Dependencias (pnpm)
-│   └── README.md                    # Documentación frontend
-├── requerimientos/                  # Documentación de requerimientos
-│   ├── REQUERIMIENTOS.md
-│   └── SPRINT_*.md
-├── docker-compose.yml               # Red base
-├── docker-compose.local.yml         # Infraestructura local
-├── docker-compose.dev.yml           # Todos los servicios (dev)
-├── docker-compose.prod.yml          # Todos los servicios (prod)
-├── build.gradle                     # Configuración raíz del build
-├── settings.gradle                  # Definición de módulos
-├── gradle.properties                # Configuración de Gradle
-└── gradlew / gradlew.bat            # Scripts del wrapper de Gradle
+│   ├── api-gateway/             # Spring Cloud Gateway (puerto 8080)
+│   ├── event-service/           # Gestión de eventos (puerto 8082)
+│   └── order-service/           # Gestión de pedidos/reservas (puerto 8083)
+├── frontend/                    # Aplicación Angular 21 (puerto 4200)
+└── database/                    # Scripts y migraciones de base de datos
 ```
+
+### Stack Tecnológico
+
+| Capa | Tecnología | Versión |
+|------|------------|---------|
+| **Backend** | Java | 25 |
+| | Spring Boot | 3.5.0 |
+| | Spring Cloud | 2025.0.0 |
+| | Gradle | 9.4 |
+| | PostgreSQL | 16 (Docker) |
+| | Redis | 7 (Docker) |
+| | Keycloak | 24.0 (OAuth2/OIDC) |
+| **Frontend** | Angular | 21.2 |
+| | TypeScript | 5.9 |
+| | Tailwind CSS | 4.x |
+| | pnpm | 10.x |
+| **Infraestructura** | Docker Compose | Multi-entorno |
+| | Node.js | 22+ |
+
+### Características Principales
+
+- **Gestión de Eventos**: Operaciones CRUD con inventario de tickets
+- **Sistema de Pedidos**: Reservas temporales con TTL de 5 minutos en Redis
+- **Seguridad OAuth2**: Integración con Keycloak y validación JWT en API Gateway
+- **Patrón Microservicios**: Enrutamiento por Gateway, aislamiento de servicios
+- **Caché Redis**: Seguimiento de disponibilidad de tickets y reservas temporales
+- **Multi-entorno**: Local (hot reload), Dev (Docker), Prod (Docker optimizado)
+
+---
 
 ## Construcción y Ejecución
 
 ### Prerrequisitos
 
-#### Backend
-
-- **Java 25** (recomendado: usar SDKMAN)
-- **Docker y Docker Compose** (para despliegue en contenedores)
-
-#### Frontend
-
-- **Node.js 22+** (recomendado: usar nvm o fnm)
-- **pnpm** (`npm install -g pnpm`)
-
-### Configurar Entorno Java
-
 ```bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+# Backend
 sdk install java 25-tem
 sdk use java 25-tem
+
+# Frontend
+nvm install 22
+npm install -g pnpm
 ```
 
-### Comandos de Build
-
-#### Backend
-
-| Comando                                        | Descripción                                |
-|------------------------------------------------|--------------------------------------------|
-| `./gradlew build`                              | Construir todos los módulos con tests      |
-| `./gradlew build -x test`                      | Construir todos los módulos (saltar tests) |
-| `./gradlew clean`                              | Limpiar todos los artefactos de build      |
-| `./gradlew :common:build`                      | Construir solo el módulo common            |
-| `./gradlew :microservices:event-service:build` | Construir solo event-service               |
-| `./gradlew :microservices:api-gateway:build`   | Construir solo api-gateway                 |
-| `./gradlew dependencies`                       | Ver dependencias del proyecto              |
-
-#### Frontend
-
-| Comando                  | Descripción                           |
-|--------------------------|---------------------------------------|
-| `pnpm install`           | Instalar dependencias                 |
-| `pnpm start`             | Servidor desarrollo (localhost:4200)  |
-| `pnpm build`             | Build para producción                 |
-| `pnpm watch`             | Build en modo watch                   |
-| `pnpm test`              | Ejecutar tests                        |
-| `pnpm ng <comando>`      | Angular CLI commands                  |
-
-### Comandos de Tests
+### Inicio Rápido - Stack Completo (Desarrollo)
 
 ```bash
-./gradlew test
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
-./gradlew :microservices:event-service:test --tests "*EventServiceTest*"
-./gradlew :microservices:order-service:test --tests "*OrderServiceTest*"
-```
-
-### Ejecutar en Entorno Local (Recomendado para Desarrollo)
-
-```bash
-# Terminal 1: Iniciar infraestructura (PostgreSQL, Redis, Keycloak)
+# Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
-# Terminal 2: Iniciar Event Service con hot reload
+# Terminal 2: Event Service
 ./gradlew :microservices:event-service:bootRun
 
-# Terminal 3: Iniciar Order Service con hot reload
+# Terminal 3: Order Service
 ./gradlew :microservices:order-service:bootRun
 
-# Terminal 4: Iniciar API Gateway con hot reload
+# Terminal 4: API Gateway
 ./gradlew :microservices:api-gateway:bootRun
 
-# Terminal 5: Iniciar Frontend Angular
+# Terminal 5: Frontend
 cd frontend && pnpm start
 ```
 
-**Ventajas del entorno local:**
+**Puntos de Acceso:**
+- 🌐 Frontend: http://localhost:4200
+- 🔌 API Gateway: http://localhost:8080
+- 📖 Swagger Event Service: http://localhost:8082/swagger-ui.html
+- 📖 Swagger Order Service: http://localhost:8083/swagger-ui.html
+- 🔐 Keycloak Dashboard: http://localhost:8180
 
-- ✅ Hot reload automático al cambiar código (backend y frontend)
-- ✅ Debugging directo desde el IDE
-- ✅ Iteración rápida en desarrollo
-- ✅ Frontend accesible en http://localhost:4200
-
-### Ejecutar en Entorno Dev (Testing)
+### Comandos del Backend
 
 ```bash
-# Todos los servicios en Docker
+# Construir todo
+./gradlew build
+
+# Construir sin tests
+./gradlew build -x test
+
+# Construir módulo específico
+./gradlew :microservices:event-service:build
+
+# Ejecutar tests
+./gradlew test
+
+# Ejecutar test específico
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
+
+# Ejecutar servicio
+./gradlew :microservices:event-service:bootRun
+
+# Limpiar build
+./gradlew clean
+```
+
+### Comandos del Frontend
+
+```bash
+cd frontend
+
+# Instalar dependencias
+pnpm install
+
+# Servidor de desarrollo
+pnpm start
+
+# Build producción
+pnpm build
+
+# Ejecutar tests
+pnpm test
+
+# Generar componente
+pnpm ng generate component features/<feature>/components/<name>
+```
+
+### Comandos Docker
+
+```bash
+# Entorno local (solo infraestructura)
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Entorno dev (todos los servicios en Docker)
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-# Ver logs
-docker compose logs -f
-```
-
-### Ejecutar en Entorno Prod (Producción)
-
-```bash
-# Requiere variables de entorno para secretos
-export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
-export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
-export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
-
-# Todos los servicios en Docker con configuración de producción
+# Entorno producción
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# Ver logs
+docker compose logs -f <nombre-servicio>
+
+# Detener y eliminar volúmenes
+docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 ```
 
-### Puertos de los Servicios
-
-| Servicio      | Puerto | Descripción                                 |
-|---------------|--------|---------------------------------------------|
-| API Gateway   | 8080   | Punto de entrada para todas las solicitudes |
-| API Gateway   | 5005   | Debug remoto (solo dev)                     |
-| Event Service | 8082   | Microservicio de gestión de eventos         |
-| Event Service | 5005   | Debug remoto (solo dev)                     |
-| Order Service | 8083   | Microservicio de gestión de pedidos         |
-| Order Service | 5005   | Debug remoto (solo dev)                     |
-| **Frontend**  | **4200** | **Aplicación Angular 21**                   |
-| PostgreSQL    | 5432   | Base de datos events_db                     |
-| PostgreSQL    | 5433   | Base de datos orders_db                     |
-| Redis         | 6379   | Caché y gestión de stock                    |
-| Keycloak      | 8180   | Autenticación y gestión de usuarios         |
-
-### Enrutamiento del API Gateway
-
-El API Gateway tiene configuraciones de rutas específicas por perfil:
-
-| Perfil | Event Service               | Order Service               | Frontend                |
-|--------|-----------------------------|-----------------------------|-------------------------|
-| Local  | `http://localhost:8082`     | `http://localhost:8083`     | `http://localhost:4200` |
-| Dev    | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:4200`  |
-| Prod   | `http://event-service:8082` | `http://order-service:8083` | `http://frontend:4200`  |
-
-> **Nota:** Durante el desarrollo local, el frontend Angular corre directamente en `localhost:4200`. El ruteo a través del API Gateway se usa en producción.
+---
 
 ## Convenciones de Desarrollo
 
-### Frontend (Angular 21) - Feature-First Architecture
+### Backend (Java/Spring)
 
-#### Arquitectura
+#### Estructura de Paquetes
 
-El frontend sigue una arquitectura **feature-first**, organizando el código por funcionalidades de negocio:
+```
+microservices/<servicio>/src/main/java/com/vento/<modulo>/
+├── controller/      # Endpoints REST (@RestController)
+├── service/         # Lógica de negocio (@Service)
+├── repository/      # Acceso a datos (@Repository)
+├── model/           # Entidades JPA
+├── dto/             # Objetos de Transferencia de Datos
+├── config/          # Clases de configuración
+└── exception/       # Excepciones y handlers personalizados
+```
 
-- **`features/`**: Código específico de una funcionalidad de negocio (páginas, componentes, servicios del feature)
-- **`shared/`**: Componentes, directivas y pipes reutilizables en múltiples features
-- **`core/`**: Servicios singleton, interceptores HTTP, guards, configuración global
+#### Convenciones de Nombres
 
-#### Signals (Reactividad Moderna)
+| Tipo | Convención | Ejemplo |
+|------|------------|---------|
+| Clases | PascalCase | `EventController`, `OrderService` |
+| Métodos | camelCase | `createEvent()`, `findById()` |
+| Constantes | UPPER_SNAKE_CASE | `DEFAULT_PAGE_SIZE`, `REDIS_TTL` |
+| Paquetes | minúsculas singular | `com.vento.event.controller` |
 
-Angular 21 usa Signals como patrón principal de reactividad. No se requiere instalación adicional.
+#### Estilo de Código
+
+- **Imports**: Explícitos (nunca `.*`), orden: static > java > javax > org.springframework > otros > terceros
+- **Anotaciones**: `@Autowired` en constructores, `@Transactional` en métodos que modifican datos
+- **DTOs**: Inmutables con `@Value` o records, usar `@Builder` para objetos complejos
+- **Excepciones**: Extienden `RuntimeException`, usar `@ControllerAdvice` para manejo global
+- **Logging**: `@Slf4j` (Lombok), niveles: ERROR (excepciones), WARN (warnings), INFO (operacional)
+- **Config**: `application.yml` con perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`)
+
+#### Ejemplo de Patrón Service
+
+```java
+@Service
+@RequiredArgsConstructor
+public class EventService {
+    private final EventRepository eventRepository;
+    private final TicketInventoryService ticketInventoryService;
+
+    @Transactional
+    public EventDTO createEvent(CreateEventRequest request) {
+        // Lógica de negocio
+    }
+}
+```
+
+#### Prácticas de Testing
+
+- **Framework**: JUnit 5, Mockito
+- **Patrón**: AAA (Arrange, Act, Assert)
+- **Nombres**: `*Test.java` para clases de test
+- **Tests Integración**: `@SpringBootTest`
+- **Tests Unitarios**: Mockear dependencias con Mockito
+
+### Frontend (Angular)
+
+#### Arquitectura: Feature-First
+
+```
+src/app/
+├── core/                     # Servicios globales singleton
+│   ├── auth/                 # Autenticación, manejo JWT
+│   ├── guards/               # Guards de rutas (canActivate)
+│   ├── interceptors/         # Interceptores HTTP
+│   └── services/             # Servicios globales
+├── shared/                   # Componentes reutilizables
+│   ├── components/           # Componentes UI (event-card, etc.)
+│   ├── directives/           # Directivas personalizadas
+│   ├── pipes/                # Transformadores de datos
+│   └── ui/                   # Componentes de layout
+└── features/                 # Módulos de negocio (lazy-loaded)
+    └── <feature>/
+        ├── components/       # Componentes específicos del feature
+        ├── services/         # Servicios del feature
+        └── <feature>.page.ts # Componente página principal
+```
+
+#### Convenciones de Nombres
+
+| Tipo | Convención | Ejemplo |
+|------|------------|---------|
+| Páginas | `*.page.ts` | `home.page.ts`, `login.page.ts` |
+| Componentes | `*.component.ts` | `event-card.component.ts` |
+| Servicios | `*.service.ts` | `auth.service.ts` |
+| Guards | `*.guard.ts` | `auth.guard.ts` |
+| Interceptors | `*.interceptor.ts` | `jwt.interceptor.ts` |
+
+#### Estilo de Código
+
+- **Componentes**: Standalone (sin NgModules), usar `imports: []` en decorator
+- **Gestión de Estado**: Signals (`signal()`, `computed()`, `effect()`)
+- **Inyección de Dependencias**: Función `inject()` (no constructor injection)
+- **Estilos**: SCSS con Tailwind CSS v4
+- **Formato**: Prettier (printWidth: 100, comillas simples, 2 espacios)
+- **TypeScript**: strict mode, noImplicitOverride, strictTemplates
+
+#### Ejemplo de Patrón Componente
 
 ```typescript
-import { Component, signal, computed, effect } from '@angular/core';
-
 @Component({
-  selector: 'app-example',
-  template: `
-    <p>Count: {{ count() }}</p>
-    <p>Double: {{ doubleCount() }}</p>
-    <button (click)="increment()">+</button>
-  `
+  selector: 'app-event-list',
+  standalone: true,
+  imports: [CommonModule, EventCardComponent],
+  templateUrl: './event-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ExampleComponent {
-  // Signal mutable
-  count = signal(0);
+export class EventListComponent {
+  private eventService = inject(EventService);
+  
+  events = this.eventService.events;
+  isLoading = signal(false);
 
-  // Signal computado (read-only)
-  doubleCount = computed(() => this.count() * 2);
-
-  increment() {
-    this.count.update(value => value + 1);
+  loadEvents() {
+    this.isLoading.set(true);
+    this.eventService.loadEvents();
   }
 }
 ```
 
-#### Componentes Standalone
+---
 
-No usar NgModules. Todos los componentes son standalone.
+## Referencia de la API
 
-```typescript
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+### Rutas del API Gateway (Puerto 8080)
 
-@Component({
-  selector: 'app-my-component',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './my-component.html'
-})
-export class MyComponent {}
+| Endpoint | Método | Servicio | Descripción |
+|----------|--------|----------|-------------|
+| `/api/events/**` | Todos | event-service:8082 | Gestión de eventos |
+| `/api/orders/**` | Todos | order-service:8083 | Gestión de pedidos |
+| `/ui/*` | GET | frontend:4200 | Aplicación frontend |
+
+### Endpoints del Event Service
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/events` | Crear evento |
+| GET | `/api/events/{id}` | Obtener evento por UUID |
+| GET | `/api/events` | Listar eventos (paginado) |
+| GET | `/api/events/featured` | Eventos destacados |
+| PUT | `/api/events/{id}` | Actualizar evento |
+| DELETE | `/api/events/{id}` | Eliminar evento |
+| PUT | `/api/events/{id}/tickets/release` | Liberar tickets en Redis |
+
+### Endpoints del Order Service
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/orders` | Crear reserva (TTL 5 min) |
+| GET | `/api/orders/{id}` | Obtener pedido por ID |
+| GET | `/api/orders/my-orders` | Pedidos del usuario autenticado |
+| PUT | `/api/orders/{id}/cancel` | Cancelar pedido |
+| PUT | `/api/orders/{id}/confirm` | Confirmar pedido |
+
+### Seguridad (Keycloak)
+
+| Escenario | Respuesta |
+|-----------|-----------|
+| Request sin token | `401 Unauthorized` |
+| Token inválido/expirado | `401 Unauthorized` |
+| Token válido sin rol | `403 Forbidden` |
+| Token válido con rol | `200 OK` |
+
+**Headers propagados a microservicios:**
+- `X-User-Id`: ID del usuario desde claim `sub` del JWT
+- `X-User-Roles`: Roles separados por coma desde `realm_access.roles`
+
+---
+
+## Datos y Estado
+
+### Claves de Redis
+
+| Patrón | Propósito | TTL |
+|--------|-----------|-----|
+| `vento:event:{id}:available_tickets` | Inventario de tickets | Persistente |
+| `vento:reservation:{orderId}` | Reserva de pedido | 5 minutos |
+
+### Estados de Pedido
+
+```
+PENDING → CONFIRMED (pago exitoso)
+        → CANCELLED (usuario canceló)
+        → EXPIRED (timeout 5 min)
 ```
 
-#### Inyección de Dependencias
+### Puertos de Base de Datos
 
-Usar `inject()` en lugar de constructor injection.
+| Base de Datos | Puerto | Servicio |
+|---------------|--------|----------|
+| PostgreSQL Events | 5432 | event-service |
+| PostgreSQL Orders | 5433 | order-service |
 
-```typescript
-import { Component, inject } from '@angular/core';
-import { MyService } from './my.service';
+---
 
-@Component({ ... })
-export class MyComponent {
-  private service = inject(MyService);
-}
-```
+## Variables de Entorno
 
-#### Estructura de Carpetas
+### Archivos de Configuración
 
-```
-src/app/
-├── core/                     # Lógica global (singleton services)
-│   ├── auth/                 # Autenticación, JWT
-│   ├── guards/               # Route guards (canActivate)
-│   ├── interceptors/         # HTTP interceptors
-│   ├── providers/            # Signal/State providers globales
-│   └── services/             # Servicios globales
-│
-├── shared/                   # Reutilizable en toda la app
-│   ├── components/           # UI components puros (event-card, speaker-card)
-│   ├── directives/           # Directivas personalizadas
-│   ├── pipes/                # Transformadores de datos
-│   └── ui/                   # Layout components (navbars, footer)
-│
-└── features/                 # Módulos de negocio (lazy-loaded)
-    ├── home/                 # Feature: Home page
-    │   ├── components/       # Componentes específicos
-    │   ├── services/         # Servicios del feature
-    │   └── home.page.ts      # Página principal (*.page.ts)
-    ├── event-detail/         # Feature: Event detail
-    ├── checkout/             # Feature: Checkout
-    ├── login/                # Feature: Login
-    └── organizer/            # Feature: Organizer dashboard
-```
+| Archivo | Propósito | Versionado |
+|---------|-----------|------------|
+| `.env.example` | Plantilla | ✅ Sí |
+| `.env` | Desarrollo local | ❌ No |
+| `.env.prod` | Producción | ❌ No |
 
-#### Convenciones de Nomenclatura
-
-| Tipo | Convención | Ejemplo |
-|------|------------|---------|
-| **Pages** | `*.page.ts` | `home.page.ts`, `login.page.ts` |
-| **Components** | `*.component.ts` | `event-card.component.ts` |
-| **Services** | `*.service.ts` | `auth.service.ts` |
-| **Guards** | `*.guard.ts` | `auth.guard.ts` |
-| **Interceptors** | `*.interceptor.ts` | `jwt.interceptor.ts` |
-
-#### Estilos
-
-- Usar **SCSS** para todos los estilos
-- Estilos específicos de componente en archivos `.scss` junto al componente
-- Estilos globales en `styles.scss`
-
-#### Crear Nuevo Feature
-
-1. Crear carpeta: `features/<nombre-feature>/`
-2. Generar página: `pnpm ng generate component features/<nombre>/<nombre>.page --standalone`
-3. Renombrar a `.page.ts`
-4. Agregar ruta en `app.routes.ts`
-
-### Dependencias entre Módulos
-
-- Todos los microservicios dependen del módulo `common` para código compartido
-- Se usa Lombok para reducir código boilerplate (`@Data`, `@Builder`, etc.)
-- Spring Cloud BOM gestiona las versiones de dependencias para componentes cloud
-
-### Configuración por Perfiles
-
-Cada microservicio usa configuraciones específicas por perfil:
-
-```yaml
-# application.yml (base)
-spring:
-  application:
-    name: event-service
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}  # Default: local
-
-# application-local.yml - Desarrollo rápido con PostgreSQL en Docker
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/events_db
-    username: postgres
-    password: postgres
-
-# application-dev.yml - Desarrollo con variables de entorno
-spring:
-  datasource:
-    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:events_db}
-    username: ${DATABASE_USERNAME:postgres}
-    password: ${DATABASE_PASSWORD:postgres}
-
-# application-prod.yml - Producción con validación
-spring:
-  datasource:
-    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:events_db}
-  jpa:
-    hibernate:
-      ddl-auto: validate  # Nunca modificar schema automáticamente
-```
-
-### Variables de Entorno (.env)
-
-Para los entornos **Dev** y **Prod** con Docker, el proyecto usa variables de entorno externalizadas:
+### Variables Principales
 
 ```bash
-# Archivos de variables
-.env.example    # Plantilla versionada (git)
-.env            # Desarrollo local (ignorado)
-.env.prod       # Producción (ignorado, opcional)
-
-# Variables principales
+# PostgreSQL
 POSTGRES_EVENTS_DB=events_db
 POSTGRES_EVENTS_USER=postgres
-POSTGRES_EVENTS_PASSWORD=<password>
+POSTGRES_EVENTS_PASSWORD=postgres
 
 POSTGRES_ORDERS_DB=orders_db
 POSTGRES_ORDERS_USER=postgres
-POSTGRES_ORDERS_PASSWORD=<password>
+POSTGRES_ORDERS_PASSWORD=postgres
 
+# Keycloak
 KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=<password>
+KEYCLOAK_ADMIN_PASSWORD=admin
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3000
 ```
 
-**Uso en Docker Compose:**
+---
 
-```bash
-# Dev (usa .env automáticamente)
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+## Agregar un Nuevo Microservicio
 
-# Prod (usa .env.prod o exportar variables)
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-### Agregar un Nuevo Microservicio
-
-1. Crear directorio: `microservices/<nombre-servicio>/`
-2. Agregar `build.gradle` basado en los servicios existentes
-3. Crear estructura de paquetes Java: `src/main/java/com/vento/<servicio>/`
-4. Agregar `src/main/resources/application.yml` y configuraciones por perfil
-5. Crear `Dockerfile.dev` y `Dockerfile.prod`
-6. Registrar módulo en `settings.gradle`:
+1. Crear carpeta en `microservices/<nombre>/`
+2. Copiar `build.gradle` de un servicio existente, ajustar dependencias
+3. Crear estructura de paquetes siguiendo convenciones
+4. Agregar en `settings.gradle`:
    ```groovy
-   include 'microservices:<nombre-servicio>'
+   include 'microservices:<nombre>'
    ```
-7. Agregar rutas en `api-gateway/src/main/resources/application-local.yml`, `application-dev.yml`, y
-   `application-prod.yml`
+5. Configurar ruta en `api-gateway/application.yml`
+6. Crear `application.yml` con configs específicas por perfil
 
-### Build Multi-Etapa de Docker
+---
 
-**Dockerfile.dev** (una etapa, con debug):
+## Troubleshooting
 
-```dockerfile
-FROM eclipse-temurin:25-jdk-alpine
-# ... con puerto de debug 5005 expuesto
-```
-
-**Dockerfile.prod** (multi-etapa, optimizado):
-
-```dockerfile
-FROM eclipse-temurin:25-jdk-alpine AS builder
-# ... compilar JAR
-
-FROM eclipse-temurin:25-jre-alpine
-# ... usuario no-root, optimizaciones JVM
-```
-
-## Convenciones de Código
-
-### Estructura de Paquetes
-
-```
-com.vento.<modulo>/
-├── controller/   # Endpoints REST
-├── service/      # Lógica de negocio (interfaz + impl)
-├── repository/   # Acceso a datos
-├── model/        # Entidades JPA
-├── dto/          # Data Transfer Objects
-├── config/       # Configuración
-├── exception/    # Excepciones personalizadas
-└── util/         # Utilidades
-```
-
-### Nombres
-
-- Clases: PascalCase (`UserService`, `EventController`)
-- Métodos: camelCase (`getUserById`, `saveEvent`)
-- Constantes: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
-- Paquetes: minúsculas, singular (`com.vento.event`)
-- Variables: camelCase (`userList`, `maxItems`)
-
-### Imports
-
-- Imports explícitos (sin `.*`)
-- Orden: static > java > javax > org.springframework > terceros
-- Agrupar con líneas en blanco entre grupos
-
-### Tipos y Anotaciones
-
-- Usar interfaces para servicios cuando aplique
-- Preferir inmutables (`@Value`, records)
-- Usar `Optional` para valores nulos
-- `@Autowired` en constructores (no en campos)
-- Usar `@Valid` en DTOs de entrada
-- Usar `@Builder` para objetos complejos
-- Usar `@Service`, `@Repository`, `@Controller` apropiadamente
-
-### Manejo de Errores
-
-- Excepciones personalizadas extienden `RuntimeException`
-- `@ControllerAdvice` para manejo global de excepciones
-- Códigos HTTP apropiados (4xx para cliente, 5xx para servidor)
-- Usar `@Slf4j` para logging con Lombok
-- Registrar en niveles apropiados (ERROR, WARN, INFO)
-
-### Pruebas
-
-- Ubicación: `src/test/java` reflejando estructura de `src/main`
-- JUnit 5 (`org.junit.jupiter.api`)
-- `@SpringBootTest` para tests de integración
-- `@MockBean` para dependencias externas
-- Seguir patrón AAA (Arrange, Act, Assert)
-- Nombre: `*Test.java`, `*IntegrationTest.java`
-
-## Referencia de Archivos Clave
-
-| Archivo                                                    | Propósito                                                        |
-|------------------------------------------------------------|------------------------------------------------------------------|
-| `settings.gradle`                                          | Define nombre del proyecto y módulos incluidos                   |
-| `build.gradle` (raíz)                                      | Declara plugins de Spring Boot y dependency management           |
-| `gradle.properties`                                        | Configuración de rendimiento de Gradle (caché, paralelo, daemon) |
-| `docker-compose.yml`                                       | Red base compartida                                              |
-| `docker-compose.local.yml`                                 | Infraestructura local (solo para desarrollo)                     |
-| `docker-compose.dev.yml`                                   | Todos los servicios con Dockerfile.dev                           |
-| `docker-compose.prod.yml`                                  | Todos los servicios con Dockerfile.prod                          |
-| `common/build.gradle`                                      | Configuración de librería Java con Lombok                        |
-| `microservices/*/src/main/resources/application.yml`       | Config base con perfil default                                   |
-| `microservices/*/src/main/resources/application-local.yml` | Config local (DB hardcodeada)                                    |
-| `microservices/*/src/main/resources/application-dev.yml`   | Config dev (variables de entorno)                                |
-| `microservices/*/src/main/resources/application-prod.yml`  | Config prod (validación)                                         |
-
-## Seguridad (Keycloak)
-
-La autenticación y autorización del sistema está centralizada en el **API Gateway** usando **Keycloak** como proveedor
-de identidad OAuth2/OpenID Connect.
-
-### Credenciales por Defecto (Solo Desarrollo Local)
-
-| Servicio               | URL                   | Usuario | Contraseña |
-|------------------------|-----------------------|---------|------------|
-| **Keycloak Dashboard** | http://localhost:8180 | `admin` | `admin`    |
-
-> ⚠️ **IMPORTANTE:** Estas credenciales son **EXCLUSIVAS para desarrollo local**. En producción, debes cambiar las
-> contraseñas en el archivo `.env.prod` antes de desplegar.
-
-### Configuración Requerida
-
-Antes de usar la API, debes configurar Keycloak con los siguientes elementos:
-
-1. **Realm:** `vento-realm`
-2. **Cliente:** `vento-api` (OpenID Connect, confidential)
-3. **Roles:** `USER`, `ADMIN`
-4. **Usuarios:** Crear usuarios y asignar roles
-
-### Ejemplo Rápido de Uso
+### Problemas de Conexión a BD (Local)
 
 ```bash
-# 1. Obtener token JWT
-TOKEN=$(curl -X POST http://localhost:8180/realms/vento-realm/protocol/openid-connect/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "client_id=vento-api" \
-  -d "client_secret=<CLIENT_SECRET>" \
-  -d "username=testuser" \
-  -d "password=password123" | jq -r '.access_token')
+# Verificar infraestructura corriendo
+docker compose -f docker-compose.yml -f docker-compose.local.yml ps
 
-# 2. Usar token en requests a la API
-curl -X GET http://localhost:8080/api/events \
-  -H "Authorization: Bearer $TOKEN"
+# Ver logs de la BD
+docker compose logs postgres-events
 ```
 
-### Comportamiento de Seguridad
+### API Gateway "Connection Refused"
 
-| Escenario                      | Comportamiento                   |
-|--------------------------------|----------------------------------|
-| Request sin token              | `401 Unauthorized`               |
-| Token inválido/expirado        | `401 Unauthorized`               |
-| Token válido sin rol requerido | `403 Forbidden`                  |
-| Token válido con rol correcto  | `200 OK` → pasa al microservicio |
+El Gateway en modo local apunta a `localhost:8082` y `localhost:8083`. Asegúrate que los servicios estén corriendo:
 
-### Headers Propagados a Microservicios
+```bash
+curl http://localhost:8082/actuator/health
+curl http://localhost:8083/actuator/health
+```
 
-El API Gateway extrae información del JWT y la propaga como headers:
+### Resetear Bases de Datos (Local)
 
-| Header         | Descripción                         | Origen en JWT              |
-|----------------|-------------------------------------|----------------------------|
-| `X-User-Id`    | ID único del usuario                | Claim `sub`                |
-| `X-User-Roles` | Roles del usuario (comma-separated) | Claim `realm_access.roles` |
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+```
 
-> Los microservicios **NO validan JWT**. Confían en los headers propagados por el Gateway.
+### Problemas de Autenticación Keycloak
 
-## Redis — Esquema de Claves
+1. Verificar que el realm `vento-realm` existe
+2. Verificar configuración de clientes (`vento-api`, `vento-frontend`)
+3. Asegurarse que el usuario tiene roles asignados a nivel de **Realm**
+4. Verificar campos obligatorios del usuario completos (firstName, lastName)
 
-| Clave                                       | Tipo   | TTL       | Descripción                          |
-|---------------------------------------------|--------|-----------|--------------------------------------|
-| `vento:event:{eventId}:available_tickets`   | String | Sin TTL   | Tickets disponibles (INCR/DECR)      |
-| `vento:reservation:{orderId}`               | String | 5 minutos | Reserva temporal asociada a la orden |
+---
 
-- El prefijo `vento:` se configura con `vento.redis.key-prefix`
-- El TTL de reservas se configura con `vento.reservation.ttl-minutes` (default: 5)
-- Si Redis no tiene la clave de inventario, `InventoryService` hace fallback a PostgreSQL
+## Referencia de Estructura del Proyecto
 
-## Endpoints por Servicio
+### Archivos Raíz
 
-### Event Service (8082)
+| Archivo | Propósito |
+|---------|-----------|
+| `build.gradle` | Configuración Gradle raíz |
+| `settings.gradle` | Definición de módulos del proyecto |
+| `gradle.properties` | Configuración y versiones de Gradle |
+| `docker-compose*.yml` | Configuraciones de entorno Docker |
+| `.env.example` | Plantilla de variables de entorno |
 
-| Método | Endpoint                           | Descripción                        |
-|--------|------------------------------------|------------------------------------|
-| POST   | `/api/events`                      | Crear evento (init Redis key)      |
-| GET    | `/api/events`                      | Listar eventos (paginado)          |
-| GET    | `/api/events/featured`             | Eventos destacados                 |
-| GET    | `/api/events/{id}`                 | Obtener evento por ID              |
-| PUT    | `/api/events/{id}`                 | Actualizar evento (adjust Redis)   |
-| DELETE | `/api/events/{id}`                 | Eliminar evento (remove Redis key) |
-| PUT    | `/api/events/{id}/tickets/release` | Liberar tickets en Redis           |
+### Directorios Principales
 
-### Order Service (8083)
+| Directorio | Contenido |
+|------------|-----------|
+| `common/` | DTOs compartidos, excepciones, utilerías |
+| `microservices/` | Todos los servicios backend |
+| `frontend/` | Aplicación Angular |
+| `database/` | Scripts SQL, migraciones |
+| `requerimientos/` | Documentación de requisitos |
 
-| Método | Endpoint                    | Descripción                                    |
-|--------|-----------------------------|------------------------------------------------|
-| POST   | `/api/orders`               | Crear reserva (DECRBY Redis + TTL 5 min)       |
-| GET    | `/api/orders/{id}`          | Obtener pedido por ID                          |
-| GET    | `/api/orders/my-orders`     | Pedidos del usuario autenticado                |
-| PUT    | `/api/orders/{id}/cancel`   | Cancelar (INCRBY Redis + eliminar reserva)     |
-| PUT    | `/api/orders/{id}/confirm`  | Confirmar → CONFIRMED (eliminar reserva Redis) |
+---
 
-### Estados de Orden (OrderStatus)
+## Testing
 
-`PENDING` → `CONFIRMED` (confirm) | `CANCELLED` (cancel) | `EXPIRED` (TTL job)
+### Tests del Backend
 
-## Notas
+```bash
+# Todos los tests
+./gradlew test
 
-- **Frontend Angular 21**: La aplicación frontend está construida con Angular 21 usando pnpm como gestor de paquetes
-- Los archivos de configuración externos en `./config/` son opcionales y se cargan si existen
-- Git ignora `.gradle/`, `build/`, `.idea/`, y archivos específicos del entorno
-- **Importante:** El perfil por defecto es `local` para facilitar el desarrollo rápido
-- Los Dockerfile originales (`Dockerfile`) se mantienen por compatibilidad pero se recomienda usar `Dockerfile.dev` y
-  `Dockerfile.prod`
+# Tests de un módulo
+./gradlew :microservices:event-service:test
 
-### Frontend Development
+# Output detallado
+./gradlew test --info
+```
 
-- El servidor de desarrollo de Angular corre en `http://localhost:4200`
-- Usar `pnpm start` en la carpeta `frontend/` para iniciar el desarrollo
-- Hot reload está habilitado automáticamente
-- Para producción, usar `pnpm build` y servir los archivos estáticos desde el API Gateway
+**Cobertura de Tests:**
+- EventService: 6 tests ✅
+- OrderService: 9 tests ✅
+- TicketInventoryService: 3 tests ✅
+- ConflictResolutionService: 3 tests ✅
+
+### Tests del Frontend
+
+```bash
+cd frontend
+pnpm test
+```
+
+---
+
+## Documentación Relacionada
+
+- **[README.md](./README.md)**: Guía completa de usuario
+- **[AGENTS.md](./AGENTS.md)**: Referencia rápida para agentes AI
+- **[KEYCLOAK_SETUP.md](./KEYCLOAK_SETUP.md)**: Guía de configuración de Keycloak
+- **[POSTMAN_COLLECTION.json](./POSTMAN_COLLECTION.json)**: Colección para testing de API
+- **[frontend/README.md](./frontend/README.md)**: Documentación específica del frontend
