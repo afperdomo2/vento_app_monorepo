@@ -86,7 +86,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("USER")
 
                         // Orders requieren rol USER
-                        .pathMatchers("/api/orders/**").hasRole("USER")
+                        .pathMatchers("/api/orders/**").hasAnyRole("USER", "ADMIN")
 
                         // Todas las demás rutas requieren autenticación
                         .anyExchange().authenticated()
@@ -112,7 +112,7 @@ public class SecurityConfig {
     /**
      * Configuración CORS para permitir requests desde el frontend.
      * Los orígenes permitidos se configuran vía variables de entorno para flexibilidad.
-     * 
+     * <p>
      * Para desarrollo: http://localhost:4200,http://localhost:3000
      * Para producción: https://tuapp.com,https://www.tuapp.com
      */

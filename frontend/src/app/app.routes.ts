@@ -3,7 +3,13 @@ import { HomePage } from './features/home/home.page';
 import { EventDetailPage } from './features/event-detail/event-detail.page';
 import { LoginPage } from './features/login/login.page';
 import { CheckoutPage } from './features/checkout/checkout.page';
-import { OrganizerPage } from './features/organizer/organizer.page';
+import { OrganizerLayoutPage } from './features/organizer/organizer-layout.page';
+import { DashboardPage } from './features/organizer/dashboard/dashboard.page';
+import { AnalyticsPage } from './features/organizer/analytics/analytics.page';
+import { EventsPage } from './features/organizer/events/events.page';
+import { AttendeesPage } from './features/organizer/attendees/attendees.page';
+import { TicketingPage } from './features/organizer/ticketing/ticketing.page';
+import { SettingsPage } from './features/organizer/settings/settings.page';
 import { EventsListPage } from './features/events-list/events-list.page';
 import { ProfilePage } from './features/profile/profile.page';
 import { MyOrdersPage } from './features/my-orders/my-orders.page';
@@ -11,6 +17,7 @@ import { MyOrdersDetailPage } from './features/my-orders/my-orders-detail.page';
 
 import { authGuard } from './core/guards/auth.guard';
 import { publicGuard } from './core/guards/public.guard';
+import { organizerGuard } from './core/guards/organizer.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -29,8 +36,17 @@ export const routes: Routes = [
   },
   {
     path: 'organizer',
-    component: OrganizerPage,
-    canActivate: [authGuard]
+    component: OrganizerLayoutPage,
+    canActivate: [authGuard, organizerGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: DashboardPage },
+      { path: 'analytics', component: AnalyticsPage },
+      { path: 'events', component: EventsPage },
+      { path: 'attendees', component: AttendeesPage },
+      { path: 'ticketing', component: TicketingPage },
+      { path: 'settings', component: SettingsPage },
+    ]
   },
   {
     path: 'profile',

@@ -34,6 +34,17 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
 
         <!-- Right Side Actions -->
         <div class="flex items-center space-x-4">
+          <!-- Admin Button (Only for ADMIN role) -->
+          @if (authService.hasRole('ADMIN')) {
+            <a
+              routerLink="/organizer/dashboard"
+              class="hidden md:flex items-center gap-2 kinetic-gradient text-white px-4 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+            >
+              <span class="material-symbols-outlined text-base">admin_panel_settings</span>
+              <span>Administrar Eventos</span>
+            </a>
+          }
+
           <!-- Notifications -->
           <button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full relative">
             <span class="material-symbols-outlined">notifications</span>
@@ -86,6 +97,17 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
 
                   <!-- Menu Items -->
                   <div class="py-2">
+                    <!-- Admin Link (Only for ADMIN role) -->
+                    @if (authService.hasRole('ADMIN')) {
+                      <a
+                        routerLink="/organizer/dashboard"
+                        class="flex items-center gap-3 px-4 py-2.5 text-sm text-primary font-bold bg-primary-container/10 hover:bg-primary-container/20 transition-colors"
+                      >
+                        <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
+                        Administrar Eventos
+                      </a>
+                    }
+
                     <a
                       routerLink="/profile"
                       class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
@@ -141,7 +163,7 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
 })
 export class TopNavBar {
   authState = injectAuthState();
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private router = inject(Router);
 
   isUserMenuOpen = signal(false);
