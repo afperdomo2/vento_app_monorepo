@@ -94,7 +94,7 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
                       Mi Perfil
                     </a>
                     <a
-                      href="#"
+                      routerLink="/my-orders"
                       class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
                     >
                       <span class="material-symbols-outlined text-lg">receipt_long</span>

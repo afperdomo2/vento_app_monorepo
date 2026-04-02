@@ -6,6 +6,8 @@ import { CheckoutPage } from './features/checkout/checkout.page';
 import { OrganizerPage } from './features/organizer/organizer.page';
 import { EventsListPage } from './features/events-list/events-list.page';
 import { ProfilePage } from './features/profile/profile.page';
+import { MyOrdersPage } from './features/my-orders/my-orders.page';
+import { MyOrdersDetailPage } from './features/my-orders/my-orders-detail.page';
 
 import { authGuard } from './core/guards/auth.guard';
 import { publicGuard } from './core/guards/public.guard';
@@ -33,6 +35,16 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: ProfilePage,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'my-orders',
+    component: MyOrdersPage,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'my-orders/:id',
+    component: MyOrdersDetailPage,
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: '/home' }

@@ -2,7 +2,8 @@ import { inject, Injectable, signal, computed } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
-import { EventService, Event, PagedResponse } from '../../../core/services/event.service';
+import { EventService, Event } from '../../../core/services/event.service';
+import { PagedResponse } from '../../../core/models/api.models';
 
 /**
  * Query parameters for events API

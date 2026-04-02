@@ -16,6 +16,10 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -113,12 +117,11 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderDto> getOrdersByUserId(UUID userId) {
-        log.info("✅ Obteniendo pedidos para el usuario: {}", userId);
-        return orderRepository.findByUserId(userId)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
+    public Page<OrderDto> getOrdersByUserId(UUID userId, int page, int size) {
+        log.info("✅ Obteniendo pedidos paginados para el usuario: {} (page={}, size={})", userId, page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return orderRepository.findByUserId(userId, pageable)
+                .map(this::mapToDto);
     }
 
     /**

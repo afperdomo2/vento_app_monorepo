@@ -18,7 +18,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         <span class="font-inter text-[10px] font-bold uppercase tracking-widest mt-1">Search</span>
       </a>
       
-      <a routerLink="/checkout" routerLinkActive="active-mobile-highlight" 
+      <a routerLink="/my-orders" routerLinkActive="active-mobile-highlight" 
          class="flex flex-col items-center justify-center bg-indigo-600 text-white rounded-2xl p-3 mb-2 transform -translate-y-2 shadow-lg shadow-indigo-200 transition-transform active:scale-90">
         <span class="material-symbols-outlined">confirmation_number</span>
         <span class="font-inter text-[10px] font-bold uppercase tracking-widest mt-1">My Tickets</span>

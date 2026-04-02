@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { getEnvValue } from '../../../environments/env.config';
+import { ApiResponse, PagedResponse } from '../models/api.models';
 
 /**
  * API URL configuration
@@ -42,28 +43,6 @@ export interface Event {
   category: string;
   isSoldOut?: boolean;
   ticketsLeft?: number;
-}
-
-/**
- * API Response wrapper
- */
-interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  timestamp?: string;
-}
-
-/**
- * Paginated response from API
- */
-export interface PagedResponse<T> {
-  content: T[];
-  number: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-  first: boolean;
 }
 
 /**
