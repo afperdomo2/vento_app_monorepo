@@ -114,6 +114,7 @@ export function mapBackendEventToEvent(backendEvent: BackendEvent): Event {
     category,
     isSoldOut: backendEvent.availableTickets === 0,
     ticketsLeft: backendEvent.availableTickets ?? undefined,
+    rawEventDate: backendEvent.eventDate,
   };
 }
 

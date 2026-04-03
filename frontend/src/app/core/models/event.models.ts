@@ -23,6 +23,7 @@ export interface Event {
   category: string;
   isSoldOut?: boolean;
   ticketsLeft?: number;
+  rawEventDate?: string; // Original ISO string from backend (for editing)
 }
 
 export interface ListEventsParams {

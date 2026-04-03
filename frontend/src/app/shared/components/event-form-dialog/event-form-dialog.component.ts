@@ -237,7 +237,9 @@ export class EventFormDialog implements OnInit {
       this.form.patchValue({
         name: evt.title,
         description: evt.description,
-        eventDate: this.toLocalDatetimeString(evt.date, evt.time),
+        eventDate: evt.rawEventDate
+          ? this.toLocalISOString(evt.rawEventDate)
+          : this.toLocalDatetimeString(evt.date, evt.time),
         venue: evt.location,
         totalCapacity: evt.ticketsLeft ?? null,
         price: evt.price,
@@ -321,5 +323,11 @@ export class EventFormDialog implements OnInit {
     const datePart = date.split('T')[0];
     const timePart = time || '00:00';
     return `${datePart}T${timePart}`;
+  }
+
+  private toLocalISOString(isoString: string): string {
+    // Backend ISO: "2026-04-03T20:00:00" or "2026-04-03T20:00:00Z"
+    // datetime-local needs: "2026-04-03T20:00"
+    return isoString.slice(0, 16);
   }
 }
