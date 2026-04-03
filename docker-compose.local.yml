@@ -94,7 +94,7 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=false
       - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
       - KAFKA_LOG_DIRS=/var/lib/kafka/data
     volumes:
@@ -107,6 +107,19 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # Inicialización de topics Kafka
+  kafka-init:
+    image: apache/kafka:4.1.1
+    volumes:
+      - ./scripts/init-kafka.sh:/init-kafka.sh
+    command: ["sh", "/init-kafka.sh"]
+    networks:
+      - vento-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
 
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2

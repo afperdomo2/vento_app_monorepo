@@ -110,6 +110,19 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  # Inicialización de topics Kafka
+  kafka-init:
+    image: apache/kafka:4.1.1
+    volumes:
+      - ./scripts/init-kafka.sh:/init-kafka.sh
+    command: ["sh", "/init-kafka.sh"]
+    networks:
+      - vento-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+
   # Event Service
   event-service:
     build:

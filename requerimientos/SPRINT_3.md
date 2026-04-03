@@ -8,11 +8,11 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
 ## Semana 5: Patrón Saga (Coreografía)
 
 ### 5.1 - Infraestructura Kafka
-- [ ] **Docker Compose**:
+- [x] **Docker Compose**:
   - Agregar Kafka (puerto 9092)
   - Agregar Zookeeper/KRaft
   - Agregar Kafka UI (kafdrop o kafka-manager) para debugging
-- [ ] **Kafka Configuration**:
+- [x] **Kafka Configuration**:
   - Crear topics: `order.created`, `payment.processed`, `payment.failed`, `order.confirmed`, `order.cancelled`
   - Configurar particiones por eventId (para ordenamiento)
   - Configurar retención apropiada (7 días)
@@ -81,11 +81,12 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
 ## Semana 6: Manejo de Errores y Consistencia
 
 ### 6.1 - Dead Letter Queue (DLQ) Configuración
-- [ ] **DLQ Strategy**:
-  - Topic suffix: `.DLQ`
+- [x] **DLQ Topics**:
+  - Topics creados: `order.created.DLQ`, `payment.processed.DLQ`
+- [ ] **DLQ Strategy - Retries**:
   - Retry attempts: 3
   - Retry backoff: 1s, 5s, 30s
-  - DLQ topic: `order.created.DLQ`, `payment.processed.DLQ`
+  - Configurar en Spring Kafka
 - [ ] **DLQ Consumer**:
   - Listener para procesar mensajes fallidos
   - Loguear para análisis
