@@ -22,11 +22,13 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
           <!-- Desktop Navigation -->
           <div class="hidden md:flex items-center space-x-6 font-manrope text-sm font-semibold tracking-tight">
             <a routerLink="/home" routerLinkActive="active"
-               class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
+               class="flex items-center gap-2 text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
+              <span class="material-symbols-outlined text-base">home</span>
               Inicio
             </a>
             <a routerLink="/events" routerLinkActive="active"
-               class="text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
+               class="flex items-center gap-2 text-slate-600 hover:text-indigo-500 hover:scale-105 transition-transform duration-200">
+              <span class="material-symbols-outlined text-base">event</span>
               Eventos
             </a>
           </div>

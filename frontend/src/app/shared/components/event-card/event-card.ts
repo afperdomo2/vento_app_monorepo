@@ -1,7 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
-import { AuthService } from '../../../core/auth/auth.service';
 import { EventsListService } from '../../../features/events-list/services/events-list.service';
 import { formatCurrency } from '../../../core/format/format';
 
@@ -101,22 +100,6 @@ interface EventCardData {
           </div>
         </div>
       </a>
-
-      <!-- Reserve Button -->
-      <div class="px-6 pb-6 pt-4">
-        <button
-          (click)="handleReserve()"
-          [disabled]="event.isSoldOut"
-          class="w-full kinetic-gradient text-on-primary py-3 rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-        >
-          @if (event.isSoldOut) {
-            <span>Sold Out</span>
-          } @else {
-            <span class="material-symbols-outlined text-sm">shopping_cart</span>
-            <span>Reservar</span>
-          }
-        </button>
-      </div>
     </div>
   `,
   styles: [
@@ -130,26 +113,7 @@ interface EventCardData {
 export class EventCard {
   @Input({ required: true }) event!: EventCardData;
 
-  private authService = inject(AuthService);
   private eventsListService = inject(EventsListService);
-  private router = inject(Router);
-
-  handleReserve() {
-    // Check if user is authenticated
-    if (!this.authService.isAuthenticated()) {
-      // Store current URL for redirect after login
-      sessionStorage.setItem('returnUrl', this.router.url);
-      // Redirect to login
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    // User is authenticated, proceed to checkout
-    // In a real implementation, this would navigate to checkout with event data
-    this.router.navigate(['/checkout'], {
-      queryParams: { eventId: this.event.id },
-    });
-  }
 
   saveScrollPosition() {
     this.eventsListService.saveScrollPosition();
