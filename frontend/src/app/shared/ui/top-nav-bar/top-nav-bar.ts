@@ -38,7 +38,7 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
           @if (authService.hasRole('ADMIN')) {
             <a
               routerLink="/organizer/dashboard"
-              class="hidden md:flex items-center gap-2 kinetic-gradient text-white px-4 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+              class="hidden md:flex items-center gap-2 bg-surface-container-high text-on-surface px-3.5 py-2 rounded-full text-sm font-medium hover:bg-surface-container transition-colors"
             >
               <span class="material-symbols-outlined text-base">admin_panel_settings</span>
               <span>Administrar Eventos</span>

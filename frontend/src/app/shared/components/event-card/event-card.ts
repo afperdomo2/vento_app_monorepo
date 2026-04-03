@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { EventsListService } from '../../../features/events-list/services/events-list.service';
+import { formatCurrency } from '../../../core/format/format';
 
 interface EventCardData {
   id: string;
@@ -11,7 +12,7 @@ interface EventCardData {
   date: string;
   time: string;
   location: string;
-  price: string | number;
+  price: number;
   imageUrl: string;
   category: string;
   isSoldOut?: boolean;
@@ -23,13 +24,11 @@ interface EventCardData {
   standalone: true,
   imports: [RouterLink],
   template: `
-    <div class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
+    <div
+      class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2"
+    >
       <!-- Clickable Area for Event Detail -->
-      <a
-        [routerLink]="'/events/' + event.id"
-        (click)="saveScrollPosition()"
-        class="block"
-      >
+      <a [routerLink]="'/events/' + event.id" (click)="saveScrollPosition()" class="block">
         <!-- Image Section -->
         <div class="aspect-[4/3] overflow-hidden relative">
           <img
@@ -40,22 +39,30 @@ interface EventCardData {
 
           <!-- Category Badge -->
           <div class="absolute top-4 left-4 flex gap-2">
-            <span class="bg-surface-container-lowest/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">
+            <span
+              class="bg-surface-container-lowest/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary"
+            >
               {{ event.category }}
             </span>
             @if (event.isSoldOut) {
-              <span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+              <span
+                class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
+              >
                 Sold Out
               </span>
             } @else if (event.ticketsLeft && event.ticketsLeft < 10) {
-              <span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse">
+              <span
+                class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse"
+              >
                 Only {{ event.ticketsLeft }} left
               </span>
             }
           </div>
 
           <!-- Favorite Button -->
-          <button class="absolute top-4 right-4 w-10 h-10 bg-surface-container-lowest/90 backdrop-blur rounded-full flex items-center justify-center text-on-surface-variant hover:text-error transition-colors">
+          <button
+            class="absolute top-4 right-4 w-10 h-10 bg-surface-container-lowest/90 backdrop-blur rounded-full flex items-center justify-center text-on-surface-variant hover:text-error transition-colors"
+          >
             <span class="material-symbols-outlined">favorite</span>
           </button>
         </div>
@@ -63,13 +70,17 @@ interface EventCardData {
         <!-- Content Section -->
         <div class="p-6">
           <!-- Date and Time -->
-          <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3">
+          <div
+            class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3"
+          >
             <span class="material-symbols-outlined text-sm">calendar_month</span>
             {{ event.date }} • {{ event.time }}
           </div>
 
           <!-- Title -->
-          <h3 class="text-xl font-headline font-bold mb-3 leading-tight group-hover:text-primary transition-colors">
+          <h3
+            class="text-xl font-headline font-bold mb-3 leading-tight group-hover:text-primary transition-colors"
+          >
             {{ event.title }}
           </h3>
 
@@ -85,7 +96,7 @@ interface EventCardData {
               <span class="text-xs text-on-surface-variant font-medium">{{ event.location }}</span>
             </div>
             <span class="text-lg font-bold text-on-surface">
-              {{ event.price }}
+              {{ formatPrice(event.price) }}
             </span>
           </div>
         </div>
@@ -108,11 +119,13 @@ interface EventCardData {
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class EventCard {
   @Input({ required: true }) event!: EventCardData;
@@ -134,11 +147,15 @@ export class EventCard {
     // User is authenticated, proceed to checkout
     // In a real implementation, this would navigate to checkout with event data
     this.router.navigate(['/checkout'], {
-      queryParams: { eventId: this.event.id }
+      queryParams: { eventId: this.event.id },
     });
   }
 
   saveScrollPosition() {
     this.eventsListService.saveScrollPosition();
+  }
+
+  formatPrice(price: number): string {
+    return formatCurrency(price);
   }
 }

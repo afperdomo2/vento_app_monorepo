@@ -1,6 +1,8 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EventService } from '../../../core/services/event.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { formatCurrency } from '../../../core/format/format';
 import { Event } from '../../../core/models/event.models';
 import { EventFormDialog } from '../../../shared/components/event-form-dialog/event-form-dialog.component';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -17,7 +19,6 @@ interface EventsState {
   editingEvent: Event | null;
   deletingEvent: Event | null;
   isDeleting: boolean;
-  successMessage: string | null;
 }
 
 const initialState: EventsState = {
@@ -32,7 +33,6 @@ const initialState: EventsState = {
   editingEvent: null,
   deletingEvent: null,
   isDeleting: false,
-  successMessage: null,
 };
 
 @Component({
@@ -58,22 +58,6 @@ const initialState: EventsState = {
           Crear Evento
         </button>
       </header>
-
-      <!-- Success Message -->
-      @if (successMessage()) {
-        <div
-          class="bg-success-container border border-success/20 rounded-xl p-4 flex items-center gap-3"
-        >
-          <span class="material-symbols-outlined text-success">check_circle</span>
-          <p class="text-success font-medium text-sm">{{ successMessage() }}</p>
-          <button
-            (click)="clearSuccess()"
-            class="ml-auto p-1 hover:bg-success/10 rounded-full transition-colors"
-          >
-            <span class="material-symbols-outlined text-success text-sm">close</span>
-          </button>
-        </div>
-      }
 
       <!-- Loading State -->
       @if (isLoading()) {
@@ -296,6 +280,7 @@ const initialState: EventsState = {
 })
 export class EventsPage implements OnInit {
   private eventService = inject(EventService);
+  private notification = inject(NotificationService);
 
   private state = signal<EventsState>(initialState);
 
@@ -310,7 +295,6 @@ export class EventsPage implements OnInit {
   readonly editingEvent = computed(() => this.state().editingEvent);
   readonly deletingEvent = computed(() => this.state().deletingEvent);
   readonly isDeleting = computed(() => this.state().isDeleting);
-  readonly successMessage = computed(() => this.state().successMessage);
 
   ngOnInit(): void {
     this.loadEvents();
@@ -354,7 +338,7 @@ export class EventsPage implements OnInit {
 
   onEventCreated(event: Event): void {
     this.closeCreateDialog();
-    this.showSuccess('Evento creado exitosamente');
+    this.notification.success('Evento creado exitosamente');
     this.loadEvents();
   }
 
@@ -368,7 +352,7 @@ export class EventsPage implements OnInit {
 
   onEventUpdated(_event: Event): void {
     this.closeEditDialog();
-    this.showSuccess('Evento actualizado exitosamente');
+    this.notification.success('Evento actualizado exitosamente');
     this.loadEvents();
   }
 
@@ -389,26 +373,17 @@ export class EventsPage implements OnInit {
     this.eventService.deleteEvent(event.id).subscribe({
       next: () => {
         this.closeDeleteDialog();
-        this.showSuccess('Evento eliminado exitosamente');
+        this.notification.success('Evento eliminado exitosamente');
         this.loadEvents();
       },
-      error: () => {
+      error: (err) => {
+        this.notification.error(err.message || 'No se pudo eliminar el evento');
         this.state.update((s) => ({ ...s, isDeleting: false }));
       },
     });
   }
 
-  showSuccess(message: string): void {
-    this.state.update((s) => ({ ...s, successMessage: message }));
-    setTimeout(() => this.clearSuccess(), 5000);
-  }
-
-  clearSuccess(): void {
-    this.state.update((s) => ({ ...s, successMessage: null }));
-  }
-
-  formatPrice(price: string | number): string {
-    const num = typeof price === 'string' ? parseFloat(price) : price;
-    return `$${num.toFixed(2)}`;
+  formatPrice(price: number): string {
+    return formatCurrency(price);
   }
 }

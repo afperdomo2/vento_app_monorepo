@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, output, input } from '@angular/core'
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EventService } from '../../../core/services/event.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Event, CreateEventRequest, UpdateEventRequest } from '../../../core/models/event.models';
 
 export interface EventFormData {
@@ -208,6 +209,7 @@ export interface EventFormData {
 export class EventFormDialog implements OnInit {
   private fb = inject(FormBuilder);
   private eventService = inject(EventService);
+  private notification = inject(NotificationService);
 
   event = input<Event | null>(null);
   close = output<void>();
@@ -237,8 +239,8 @@ export class EventFormDialog implements OnInit {
         description: evt.description,
         eventDate: this.toLocalDatetimeString(evt.date, evt.time),
         venue: evt.location,
-        totalCapacity: undefined, // Not in display Event model
-        price: typeof evt.price === 'string' ? parseFloat(evt.price) : evt.price,
+        totalCapacity: evt.ticketsLeft ?? null,
+        price: evt.price,
       });
     }
   }
@@ -268,7 +270,8 @@ export class EventFormDialog implements OnInit {
           this.saved.emit(updated);
           this.isSubmitting.set(false);
         },
-        error: () => {
+        error: (err) => {
+          this.notification.error(err.message || 'No se pudo actualizar el evento');
           this.isSubmitting.set(false);
         },
       });
@@ -287,7 +290,8 @@ export class EventFormDialog implements OnInit {
           this.saved.emit(created);
           this.isSubmitting.set(false);
         },
-        error: () => {
+        error: (err) => {
+          this.notification.error(err.message || 'No se pudo crear el evento');
           this.isSubmitting.set(false);
         },
       });
@@ -314,7 +318,6 @@ export class EventFormDialog implements OnInit {
   }
 
   private toLocalDatetimeString(date: string, time: string): string {
-    // Convert "2026-12-31" + "20:00" to "2026-12-31T20:00" for datetime-local input
     const datePart = date.split('T')[0];
     const timePart = time || '00:00';
     return `${datePart}T${timePart}`;

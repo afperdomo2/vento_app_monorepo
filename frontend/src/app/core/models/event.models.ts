@@ -18,7 +18,7 @@ export interface Event {
   date: string;
   time: string;
   location: string;
-  price: string | number;
+  price: number;
   imageUrl: string;
   category: string;
   isSoldOut?: boolean;
@@ -49,17 +49,4 @@ export interface UpdateEventRequest {
   venue?: string;
   totalCapacity?: number;
   price?: number;
-}
-
-export interface BackendEvent {
-  id: string;
-  name: string;
-  description: string;
-  eventDate: string;
-  venue: string;
-  totalCapacity: number;
-  availableTickets: number | null;
-  price: number;
-  createdAt?: string;
-  updatedAt?: string;
 }
