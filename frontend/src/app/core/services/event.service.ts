@@ -5,7 +5,13 @@ import { catchError, map } from 'rxjs/operators';
 
 import { getEnvValue } from '../../../environments/env.config';
 import { ApiResponse, PagedResponse } from '../models/api.models';
-import { BackendEvent, Event, ListEventsParams } from '../models/event.models';
+import {
+  BackendEvent,
+  Event,
+  ListEventsParams,
+  CreateEventRequest,
+  UpdateEventRequest,
+} from '../models/event.models';
 import { mapBackendEventsToEvents } from '../mappers/event.mapper';
 import { createHttpErrorHandler } from '../handlers/http-error.handler';
 
@@ -30,17 +36,33 @@ export class EventService {
     },
   });
 
+  createEvent(request: CreateEventRequest): Observable<Event> {
+    return this.http.post<ApiResponse<BackendEvent>>(this.apiUrl, request).pipe(
+      map((response) => mapBackendEventsToEvents([response.data])[0]),
+      catchError(this.handleError),
+    );
+  }
+
+  updateEvent(id: string, request: UpdateEventRequest): Observable<Event> {
+    return this.http.put<ApiResponse<BackendEvent>>(`${this.apiUrl}/${id}`, request).pipe(
+      map((response) => mapBackendEventsToEvents([response.data])[0]),
+      catchError(this.handleError),
+    );
+  }
+
+  deleteEvent(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(catchError(this.handleError));
+  }
+
   getFeaturedEvents(limit: number = 6): Observable<Event[]> {
     // Ensure limit is between 6 and 20
     const safeLimit = Math.max(6, Math.min(20, limit));
 
     return this.http
-      .get<ApiResponse<BackendEvent[]>>(
-        `${this.apiUrl}/featured?limit=${safeLimit}`
-      )
+      .get<ApiResponse<BackendEvent[]>>(`${this.apiUrl}/featured?limit=${safeLimit}`)
       .pipe(
         map((response) => mapBackendEventsToEvents(response.data)),
-        catchError(this.handleError)
+        catchError(this.handleError),
       );
   }
 
@@ -66,16 +88,14 @@ export class EventService {
           ...response.data,
           content: mapBackendEventsToEvents(response.data.content),
         })),
-        catchError(this.handleError)
+        catchError(this.handleError),
       );
   }
 
   getEventById(id: string): Observable<Event> {
-    return this.http
-      .get<ApiResponse<BackendEvent>>(`${this.apiUrl}/${id}`)
-      .pipe(
-        map((response) => mapBackendEventsToEvents([response.data])[0]),
-        catchError(this.handleError)
-      );
+    return this.http.get<ApiResponse<BackendEvent>>(`${this.apiUrl}/${id}`).pipe(
+      map((response) => mapBackendEventsToEvents([response.data])[0]),
+      catchError(this.handleError),
+    );
   }
 }

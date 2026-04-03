@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, signal, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 
@@ -11,7 +11,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
     <app-top-nav-bar />
     <div class="flex min-h-screen bg-surface pt-16">
       <!-- Sidebar - Desktop -->
-      <aside class="hidden md:flex flex-col h-[calc(100vh-4rem)] w-64 bg-slate-50 dark:bg-slate-950 py-6 px-4 space-y-2 border-r-0 font-inter text-sm font-medium sticky top-16">
+      <aside
+        class="hidden md:flex flex-col h-[calc(100vh-4rem)] w-64 bg-slate-50 dark:bg-slate-950 py-6 px-4 space-y-2 border-r-0 font-inter text-sm font-medium sticky top-16"
+      >
         <nav class="flex-1 space-y-1">
           <a
             routerLink="/organizer/dashboard"
@@ -19,7 +21,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
             class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
             [class.active-nav]="isActive('/dashboard')"
           >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/dashboard')">dashboard</span>
+            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/dashboard')"
+              >dashboard</span
+            >
             <span>Dashboard</span>
           </a>
 
@@ -29,7 +33,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
             class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
             [class.active-nav]="isActive('/analytics')"
           >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/analytics')">insights</span>
+            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/analytics')"
+              >insights</span
+            >
             <span>Analíticas</span>
           </a>
 
@@ -39,7 +45,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
             class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
             [class.active-nav]="isActive('/events')"
           >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/events')">event</span>
+            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/events')"
+              >event</span
+            >
             <span>Eventos</span>
           </a>
 
@@ -49,13 +57,16 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
             class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
             [class.active-nav]="isActive('/ticketing')"
           >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')">confirmation_number</span>
+            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')"
+              >confirmation_number</span
+            >
             <span>Tickets</span>
           </a>
         </nav>
 
         <div class="mt-auto space-y-1 pt-4 border-t border-slate-200/50">
           <button
+            (click)="navigateToCreateEvent()"
             class="w-full kinetic-cta text-white font-bold py-3 px-4 rounded-full flex items-center justify-center space-x-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-transform"
             type="button"
           >
@@ -67,10 +78,7 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 
       <!-- Mobile Sidebar Overlay -->
       @if (showMobileSidebar()) {
-        <div
-          class="fixed inset-0 bg-black/50 z-40 md:hidden"
-          (click)="toggleMobileSidebar()"
-        ></div>
+        <div class="fixed inset-0 bg-black/50 z-40 md:hidden" (click)="toggleMobileSidebar()"></div>
       }
 
       <!-- Mobile Sidebar -->
@@ -99,7 +107,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
               [class.active-nav]="isActive('/dashboard')"
               (click)="toggleMobileSidebar()"
             >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/dashboard')">dashboard</span>
+              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/dashboard')"
+                >dashboard</span
+              >
               <span>Dashboard</span>
             </a>
 
@@ -110,7 +120,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
               [class.active-nav]="isActive('/analytics')"
               (click)="toggleMobileSidebar()"
             >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/analytics')">insights</span>
+              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/analytics')"
+                >insights</span
+              >
               <span>Analíticas</span>
             </a>
 
@@ -121,7 +133,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
               [class.active-nav]="isActive('/events')"
               (click)="toggleMobileSidebar()"
             >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/events')">event</span>
+              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/events')"
+                >event</span
+              >
               <span>Eventos</span>
             </a>
 
@@ -132,13 +146,16 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
               [class.active-nav]="isActive('/ticketing')"
               (click)="toggleMobileSidebar()"
             >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')">confirmation_number</span>
+              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')"
+                >confirmation_number</span
+              >
               <span>Tickets</span>
             </a>
           </nav>
 
           <div class="mt-auto pt-4 border-t border-slate-200/50">
             <button
+              (click)="navigateToCreateEvent()"
               class="w-full kinetic-cta text-white font-bold py-3 px-4 rounded-full flex items-center justify-center space-x-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-transform"
               type="button"
             >
@@ -161,7 +178,9 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
           >
             <span class="material-symbols-outlined">menu</span>
           </button>
-          <h1 class="font-manrope font-bold text-indigo-700 text-xl tracking-tighter">Hub de Organizadores</h1>
+          <h1 class="font-manrope font-bold text-indigo-700 text-xl tracking-tighter">
+            Hub de Organizadores
+          </h1>
           <div class="w-10"></div>
         </div>
 
@@ -172,30 +191,38 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 
     <app-bottom-nav-bar />
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
+  styles: [
+    `
+      :host {
+        display: block;
+      }
 
-    .active-nav {
-      background-color: rgba(99, 102, 241, 0.1);
-      color: #4a40e0;
-    }
+      .active-nav {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: #4a40e0;
+      }
 
-    .fill-icon {
-      font-variation-settings: 'FILL' 1;
-    }
-  `]
+      .fill-icon {
+        font-variation-settings: 'FILL' 1;
+      }
+    `,
+  ],
 })
 export class OrganizerLayoutPage {
+  private router = inject(Router);
   showMobileSidebar = signal(false);
 
   toggleMobileSidebar(): void {
-    this.showMobileSidebar.update(value => !value);
+    this.showMobileSidebar.update((value) => !value);
   }
 
   isActive(route: string): boolean {
-    // Simple check - in a real app you might use ActivatedRoute
     return window.location.pathname.includes(route);
+  }
+
+  navigateToCreateEvent(): void {
+    this.router.navigate(['/organizer/events']);
+    // Close mobile sidebar if open
+    this.showMobileSidebar.set(false);
   }
 }
