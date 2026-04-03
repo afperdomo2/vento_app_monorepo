@@ -77,6 +77,39 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  # Kafka para event-driven architecture
+  kafka:
+    image: apache/kafka:4.1.1
+    ports:
+      - "9092:9092"     # Internal listener (container-to-container only)
+    environment:
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENERS=INTERNAL://:9092,CONTROLLER://:9094
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:9092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9094
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=false
+      - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+      - KAFKA_LOG_RETENTION_HOURS=168 # Retener logs por 7 días (producción)
+      - KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS=300000
+    volumes:
+      - kafka-data-prod:/var/lib/kafka/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
   # Event Service
   event-service:
     build:
@@ -194,4 +227,6 @@ volumes:
   redis-data-prod:
     driver: local
   keycloak-data-prod:
+    driver: local
+  kafka-data-prod:
     driver: local
