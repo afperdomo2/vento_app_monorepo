@@ -4,31 +4,41 @@ import { NotificationService, Notification } from '../../../core/services/notifi
 
 const TYPE_CONFIG: Record<
   Notification['type'],
-  { icon: string; colorClass: string; bgClass: string; borderClass: string }
+  {
+    icon: string;
+    textClass: string;
+    bgClass: string;
+    borderClass: string;
+    iconBgClass: string;
+  }
 > = {
   success: {
     icon: 'check_circle',
-    colorClass: 'text-success',
-    bgClass: 'bg-success-container',
-    borderClass: 'border-success/20',
+    textClass: 'text-green-800',
+    bgClass: 'bg-green-50',
+    borderClass: 'border-green-200',
+    iconBgClass: 'bg-green-100',
   },
   error: {
     icon: 'error',
-    colorClass: 'text-error',
-    bgClass: 'bg-error-container',
-    borderClass: 'border-error/20',
+    textClass: 'text-red-800',
+    bgClass: 'bg-red-50',
+    borderClass: 'border-red-200',
+    iconBgClass: 'bg-red-100',
   },
   warning: {
     icon: 'warning',
-    colorClass: 'text-warning',
-    bgClass: 'bg-warning-container',
-    borderClass: 'border-warning/20',
+    textClass: 'text-amber-800',
+    bgClass: 'bg-amber-50',
+    borderClass: 'border-amber-200',
+    iconBgClass: 'bg-amber-100',
   },
   info: {
     icon: 'info',
-    colorClass: 'text-info',
-    bgClass: 'bg-info-container',
-    borderClass: 'border-info/20',
+    textClass: 'text-blue-800',
+    bgClass: 'bg-blue-50',
+    borderClass: 'border-blue-200',
+    iconBgClass: 'bg-blue-100',
   },
 };
 
@@ -37,27 +47,57 @@ const TYPE_CONFIG: Record<
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="fixed top-20 right-4 z-[100] flex flex-col gap-3 w-80 max-w-[calc(100vw-2rem)]">
+    <div class="fixed top-20 right-4 z-[9999] flex flex-col gap-3 w-80 max-w-[calc(100vw-2rem)]">
       @for (notification of notifications(); track notification.id) {
-        @let cfg = getTypeConfig(notification.type);
+        @let cfg = TYPE_CONFIG[notification.type];
         <div
-          class="{{ cfg.bgClass }} {{
-            cfg.borderClass
-          }} border rounded-xl p-4 flex items-start gap-3 shadow-lg
-                 animate-slide-in-right"
+          [ngClass]="[
+            cfg.bgClass,
+            cfg.borderClass,
+            'border',
+            'rounded-xl',
+            'p-4',
+            'flex',
+            'items-start',
+            'gap-3',
+            'shadow-lg',
+            'animate-slide-in-right',
+          ]"
           role="alert"
         >
-          <span class="material-symbols-outlined {{ cfg.colorClass }} text-xl flex-shrink-0 mt-0.5">
-            {{ cfg.icon }}
+          <span
+            [ngClass]="[
+              cfg.iconBgClass,
+              'w-9',
+              'h-9',
+              'rounded-full',
+              'flex',
+              'items-center',
+              'justify-center',
+              'flex-shrink-0',
+            ]"
+          >
+            <span [ngClass]="[cfg.textClass, 'material-symbols-outlined', 'text-lg']">{{
+              cfg.icon
+            }}</span>
           </span>
-          <p class="{{ cfg.colorClass }} text-sm font-medium flex-1">{{ notification.message }}</p>
+          <p [ngClass]="[cfg.textClass, 'text-sm', 'font-medium', 'flex-1', 'pt-1']">
+            {{ notification.message }}
+          </p>
           <button
             type="button"
             (click)="dismiss(notification.id)"
-            class="p-0.5 rounded-full hover:bg-black/10 transition-colors flex-shrink-0"
+            [ngClass]="[
+              cfg.textClass,
+              'p-1',
+              'rounded-full',
+              'hover:bg-black/10',
+              'transition-colors',
+              'flex-shrink-0',
+            ]"
             aria-label="Cerrar notificación"
           >
-            <span class="material-symbols-outlined {{ cfg.colorClass }} text-sm">close</span>
+            <span class="material-symbols-outlined text-sm">close</span>
           </button>
         </div>
       }
@@ -79,16 +119,24 @@ const TYPE_CONFIG: Record<
       .animate-slide-in-right {
         animation: slide-in-right 0.3s ease-out;
       }
+
+      @keyframes fade-out-up {
+        from {
+          opacity: 1;
+          transform: translateX(0) translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateX(40px) translateY(-8px);
+        }
+      }
     `,
   ],
 })
 export class ToastNotificationComponent {
   private notificationSvc = inject(NotificationService);
   protected notifications = this.notificationSvc.notifications;
-
-  protected getTypeConfig(type: Notification['type']) {
-    return TYPE_CONFIG[type];
-  }
+  protected TYPE_CONFIG = TYPE_CONFIG;
 
   protected dismiss(id: string): void {
     this.notificationSvc.dismiss(id);
