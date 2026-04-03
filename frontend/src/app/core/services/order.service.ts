@@ -6,7 +6,7 @@ import { catchError, map } from 'rxjs/operators';
 import { getEnvValue } from '../../../environments/env.config';
 import { createHttpErrorHandler } from '../handlers/http-error.handler';
 import { ApiResponse, PagedResponse } from '../models/api.models';
-import { Order } from '../models/order.models';
+import { CreateOrderRequest, Order } from '../models/order.models';
 
 const API_URL = getEnvValue('API_URL');
 
@@ -43,6 +43,16 @@ export class OrderService {
   getOrderById(id: string): Observable<Order> {
     return this.http
       .get<ApiResponse<Order>>(`${this.apiUrl}/${id}`)
+      .pipe(
+        map((response) => response.data),
+        catchError(this.handleError)
+      );
+  }
+
+
+  createOrder(request: CreateOrderRequest): Observable<Order> {
+    return this.http
+      .post<ApiResponse<Order>>(this.apiUrl, request)
       .pipe(
         map((response) => response.data),
         catchError(this.handleError)

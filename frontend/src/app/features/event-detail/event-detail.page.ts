@@ -1,10 +1,12 @@
 import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { EventService } from '../../core/services/event.service';
+import { OrderService } from '../../core/services/order.service';
 import { Event } from '../../core/models/event.models';
+import { Order } from '../../core/models/order.models';
 import { formatCurrency } from '../../core/format/format';
 
 @Component({
@@ -230,11 +232,16 @@ import { formatCurrency } from '../../core/format/format';
                   </div>
 
                   <button
-                    routerLink="/checkout"
-                    [queryParams]="{ eventId: eventId, quantity: quantity() }"
-                    class="w-full py-4 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-lg shadow-lg hover:scale-[1.02] transition-transform duration-200"
+                    (click)="reserveTickets()"
+                    [disabled]="isCreating()"
+                    class="w-full py-4 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-lg shadow-lg hover:scale-[1.02] transition-transform duration-200 disabled:opacity-60 disabled:hover:scale-100 flex items-center justify-center gap-2"
                   >
-                    Reservar Ahora
+                    @if (isCreating()) {
+                      <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                      <span>Reservando...</span>
+                    } @else {
+                      <span>Reservar Ahora</span>
+                    }
                   </button>
 
                   <p class="text-center text-xs text-on-surface-variant px-4">
@@ -260,6 +267,42 @@ import { formatCurrency } from '../../core/format/format';
     >
       <span class="material-symbols-outlined">arrow_back</span>
     </button>
+
+    <!-- Error Modal -->
+    @if (showErrorModal()) {
+      <div
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+        (click)="closeErrorModal()"
+      >
+        <div
+          class="bg-surface-container-lowest rounded-2xl p-8 max-w-md w-full shadow-2xl border border-outline-variant/10"
+          (click)="$event.stopPropagation()"
+        >
+          <!-- Error Icon -->
+          <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 rounded-full bg-error-container/20 flex items-center justify-center">
+              <span class="material-symbols-outlined text-error text-4xl">error</span>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <h3 class="text-xl font-headline font-bold text-on-surface text-center mb-3">
+            No se pudo crear la reserva
+          </h3>
+          <p class="text-on-surface-variant text-center text-sm mb-8">
+            {{ creationError() }}
+          </p>
+
+          <!-- Action Button -->
+          <button
+            (click)="closeErrorModal()"
+            class="w-full py-3 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `
@@ -272,13 +315,21 @@ import { formatCurrency } from '../../core/format/format';
 export class EventDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
+  private router = inject(Router);
   private eventService = inject(EventService);
+  private orderService = inject(OrderService);
 
   event = signal<Event | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   quantity = signal(1);
   eventId = '';
+
+  // Order creation state
+  isCreating = signal(false);
+  creationError = signal<string | null>(null);
+  showErrorModal = signal(false);
+  createdOrder = signal<Order | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -306,6 +357,38 @@ export class EventDetailPage implements OnInit {
     });
   }
 
+  reserveTickets(): void {
+    if (!this.event()) return;
+
+    this.isCreating.set(true);
+    this.creationError.set(null);
+    this.showErrorModal.set(false);
+
+    this.orderService.createOrder({
+      eventId: this.eventId,
+      quantity: this.quantity(),
+    }).subscribe({
+      next: (order) => {
+        this.createdOrder.set(order);
+        this.isCreating.set(false);
+        this.router.navigate(['/checkout'], {
+          queryParams: { orderId: order.id },
+        });
+      },
+      error: (err) => {
+        this.isCreating.set(false);
+        const message = err?.message || 'No se pudo crear la reserva. Inténtalo de nuevo.';
+        this.creationError.set(message);
+        this.showErrorModal.set(true);
+      },
+    });
+  }
+
+  closeErrorModal(): void {
+    this.showErrorModal.set(false);
+    this.creationError.set(null);
+  }
+
   goBack(): void {
     // Confirm if user has selected more than 1 ticket
     if (this.quantity() > 1) {
@@ -320,6 +403,10 @@ export class EventDetailPage implements OnInit {
 
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
+    if (this.showErrorModal()) {
+      this.closeErrorModal();
+      return;
+    }
     this.goBack();
   }
 

@@ -1,5 +1,10 @@
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED';
 
+export interface CreateOrderRequest {
+  eventId: string;
+  quantity: number;
+}
+
 export interface Order {
   id: string;
   userId: string;
