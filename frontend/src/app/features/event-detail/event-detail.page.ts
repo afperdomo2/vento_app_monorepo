@@ -5,6 +5,7 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { EventService } from '../../core/services/event.service';
 import { OrderService } from '../../core/services/order.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Event } from '../../core/models/event.models';
 import { Order } from '../../core/models/order.models';
 import { formatCurrency } from '../../core/format/format';
@@ -318,6 +319,7 @@ export class EventDetailPage implements OnInit {
   private router = inject(Router);
   private eventService = inject(EventService);
   private orderService = inject(OrderService);
+  private authService = inject(AuthService);
 
   event = signal<Event | null>(null);
   loading = signal(true);
@@ -359,6 +361,14 @@ export class EventDetailPage implements OnInit {
 
   reserveTickets(): void {
     if (!this.event()) return;
+
+    // Check if user is authenticated before creating order
+    if (!this.authService.isAuthenticated()) {
+      // Store current URL to redirect back after login
+      sessionStorage.setItem('returnUrl', this.router.url);
+      this.router.navigate(['/login']);
+      return;
+    }
 
     this.isCreating.set(true);
     this.creationError.set(null);

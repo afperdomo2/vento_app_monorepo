@@ -63,6 +63,16 @@ import { getAndClearReturnUrl } from '../../core/guards/auth.guard';
         <!-- Auth Form Section (The Functional Canvas) -->
         <section class="bg-surface-container-lowest p-8 lg:p-20 flex flex-col justify-center">
           <div class="max-w-md w-full mx-auto space-y-10">
+            <!-- Back Button -->
+            <button
+              type="button"
+              (click)="goBack()"
+              class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-bold text-sm mb-4"
+            >
+              <span class="material-symbols-outlined text-lg">arrow_back</span>
+              <span>Volver</span>
+            </button>
+
             <!-- Header -->
             <header class="space-y-2">
               <h2 class="headline-lg text-3xl text-on-surface">Bienvenido de nuevo</h2>
@@ -318,8 +328,13 @@ export class LoginPage {
   private redirectAfterLogin() {
     // Get return URL from sessionStorage (set by authGuard)
     const returnUrl = getAndClearReturnUrl();
-    
+
     // Redirect to return URL or home page
     this.router.navigateByUrl(returnUrl || '/home');
+  }
+
+  goBack(): void {
+    // Navigate to home as default fallback
+    this.router.navigate(['/home']);
   }
 }
