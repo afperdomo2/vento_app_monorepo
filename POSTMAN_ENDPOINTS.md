@@ -593,6 +593,67 @@ Confirma una orden en estado `PENDING`, pasándola a `CONFIRMED`. Elimina la res
 
 ---
 
+### 💳 Payments
+
+#### Process Payment
+
+Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, con un delay de ~2 segundos.
+
+- **Método:** `POST`
+- **URL:** `{{base_url}}/api/payments/process`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Accept: application/json
+  ```
+- **Body (JSON):**
+  ```json
+  {
+    "orderId": "123e4567-e89b-12d3-a456-426614174000",
+    "amount": 150.00
+  }
+  ```
+- **Campos requeridos:**
+  | Campo | Tipo | Descripción |
+  |-------|------|-------------|
+  | `orderId` | string (UUID) | ID de la orden a pagar |
+  | `amount` | number | Monto total a procesar |
+
+- **Respuesta exitosa (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "orderId": "123e4567-e89b-12d3-a456-426614174000",
+      "transactionId": "txn_8ddcccb1-6ea",
+      "amount": 150.00
+    }
+  }
+  ```
+
+- **Respuesta fallida (402 Payment Required) — RFC 9457:**
+  ```json
+  {
+    "type": "https://vento.app/errors/payment-failed",
+    "title": "Pago fallido",
+    "status": 402,
+    "detail": "Fondo insuficiente",
+    "instance": "/api/payments/process",
+    "service": "payment-service",
+    "timestamp": "2026-04-04T15:10:00.499",
+    "orderId": "123e4567-e89b-12d3-a456-426614174000"
+  }
+  ```
+
+  **Posibles razones de fallo:**
+  - Fondo insuficiente
+  - Tarjeta rechazada
+  - Límite de crédito excedido
+  - Transacción bloqueada por seguridad
+  - Error en la verificación 3D Secure
+
+---
+
 ### 🏥 Health Checks
 
 #### API Gateway Health
@@ -624,6 +685,14 @@ Confirma una orden en estado `PENDING`, pasándola a `CONFIRMED`. Elimina la res
 
 ---
 
+#### Payment Service Health
+
+- **Método:** `GET`
+- **URL:** `http://localhost:8084/actuator/health`
+- **Respuesta exitosa:** `200 OK`
+
+---
+
 #### Keycloak Health
 
 - **Método:** `GET`
@@ -644,6 +713,7 @@ Confirma una orden en estado `PENDING`, pasándola a `CONFIRMED`. Elimina la res
 | `403 Forbidden`             | Sin permisos       | Token válido pero sin rol requerido            |
 | `404 Not Found`             | No encontrado      | ID de evento/orden no existe                   |
 | `409 Conflict`              | Conflicto          | No hay tickets disponibles, orden ya cancelada |
+| `402 Payment Required`      | Pago fallido       | Pago rechazado, fondo insuficiente, etc.       |
 | `500 Internal Server Error` | Error del servidor | Excepción no manejada en el backend            |
 
 ---

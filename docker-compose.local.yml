@@ -134,6 +134,26 @@ services:
       kafka:
         condition: service_healthy
 
+  # Payment Service - Servicio simulado de pagos
+  payment-service:
+    build:
+      context: .
+      dockerfile: microservices/payment-service/Dockerfile.dev
+    ports:
+      - "8084:8084"
+      - "5009:5005"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SERVER_PORT=8084
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 networks:
   vento-network:
     driver: bridge

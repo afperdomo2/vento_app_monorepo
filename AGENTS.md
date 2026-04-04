@@ -3,7 +3,7 @@
 ## Proyecto
 
 Monorepo Spring Boot + Gradle con microservicios: `common/`, `api-gateway/` (8080), `event-service/` (8082),
-`order-service/` (8083), **frontend/** (Angular 21, 4200).
+`order-service/` (8083), `payment-service/` (8084), **frontend/** (Angular 21, 4200).
 Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0, Angular 21.2, pnpm 10.
 
 ## Comandos
@@ -106,7 +106,7 @@ src/app/
 
 ## Puertos & Redis
 
-- **Puertos**: api-gateway:8080, event-service:8082, order-service:8083, frontend:4200, postgres:5432/5433, redis:6379, keycloak:8180
+- **Puertos**: api-gateway:8080, event-service:8082, order-service:8083, payment-service:8084, frontend:4200, postgres:5432/5433, redis:6379, keycloak:8180
 - **Redis Keys**: `vento:event:{id}:available_tickets` (tickets), `vento:reservation:{orderId}` (5min TTL)
 - **Order States**: `PENDING` → `CONFIRMED` | `CANCELLED` | `EXPIRED`
 

@@ -1,7 +1,6 @@
 package com.vento.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.function.Supplier;
 
@@ -23,6 +22,7 @@ import java.util.function.Supplier;
 @Slf4j
 public final class ConflictResolutionService {
 
+    private static final String JPA_OPTIMISTIC_LOCK_EXCEPTION = "org.springframework.orm.ObjectOptimisticLockingFailureException";
     private static final long BASE_DELAY_MS = 100;
 
     private ConflictResolutionService() {
@@ -43,7 +43,13 @@ public final class ConflictResolutionService {
         while (attempt <= maxRetries) {
             try {
                 return operation.get();
-            } catch (ObjectOptimisticLockingFailureException e) {
+            } catch (Exception e) {
+                // Check if it's an ObjectOptimisticLockingFailureException by class name
+                // to avoid hard dependency on spring-orm
+                if (!e.getClass().getName().equals(JPA_OPTIMISTIC_LOCK_EXCEPTION)) {
+                    throw e;
+                }
+                
                 attempt++;
                 if (attempt > maxRetries) {
                     log.error("❌ Conflicto de versión JPA agotó {} reintentos. Lanzando excepción.", maxRetries);

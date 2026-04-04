@@ -4,15 +4,19 @@
 
 ```
 vento_app_monorepo/
-├── common/                      # Módulo compartido (DTOs, utilerías)
-│   └── src/main/java/com/vento/common/dto/
-│       ├── ApiResponse.java     # Wrapper de respuesta
-│       ├── event/               # DTOs de eventos
-│       └── order/               # DTOs de pedidos (futuro)
+├── common/                      # Módulo compartido (DTOs, excepciones, utilerías)
+│   └── src/main/java/com/vento/common/
+│       ├── dto/                 # DTOs compartidos
+│       │   ├── ApiResponse.java
+│       │   ├── event/           # DTOs de eventos
+│       │   ├── order/           # DTOs de pedidos
+│       │   └── payment/         # DTOs de pagos
+│       └── exception/           # Excepciones globales
 ├── microservices/
 │   ├── api-gateway/             # Spring Cloud Gateway (:8080)
 │   ├── event-service/           # Microservicio de eventos (:8082)
-│   └── order-service/            # Microservicio de pedidos (:8083)
+│   ├── order-service/           # Microservicio de pedidos (:8083)
+│   └── payment-service/         # Microservicio de pagos (:8084)
 └── frontend/                    # Aplicación Angular 21 (:4200)
 ```
 
@@ -240,11 +244,12 @@ docker compose stop order-service
 
 ## 🌐 Ruteo del API Gateway
 
-| Endpoint         | Servicio           | Descripción               |
-|------------------|--------------------|---------------------------|
-| `/api/events/**` | event-service:8082 | Gestión de eventos        |
-| `/api/orders/**` | order-service:8083 | Gestión de pedidos        |
-| `/ui/*`          | frontend:4200      | Frontend de la aplicación |
+| Endpoint         | Servicio            | Descripción               |
+|------------------|---------------------|---------------------------|
+| `/api/events/**` | event-service:8082  | Gestión de eventos        |
+| `/api/orders/**` | order-service:8083  | Gestión de pedidos        |
+| `/api/payments/**` | payment-service:8084 | Procesamiento de pagos  |
+| `/ui/*`          | frontend:4200       | Frontend de la aplicación |
 
 > **Nota:** Durante el desarrollo local, el frontend corre directamente en `http://localhost:4200`. El ruteo `/ui/*` es
 > útil cuando el frontend se sirve a través del API Gateway en producción.
@@ -267,6 +272,7 @@ docker compose stop order-service
 | GET    | `/api/orders/my-orders`           | Pedidos del usuario autenticado     |
 | PUT    | `/api/orders/{id}/cancel`         | Cancelar pedido                     |
 | PUT    | `/api/orders/{id}/confirm`        | Confirmar pedido (simula pago)      |
+| POST   | `/api/payments/process`           | Procesar pago simulado (80% éxito)  |
 
 ----
 
@@ -301,6 +307,17 @@ docker compose stop order-service
 > **Reserva temporal:** Al crear una orden queda en estado `PENDING` con una reserva en Redis que expira a los
 > **5 minutos** (configurable con `vento.reservation.ttl-minutes`). Si no se confirma o cancela antes, la orden
 > pasa automáticamente a `EXPIRED` y los tickets se liberan. Ver Swagger para el flujo completo.
+
+### Payment Service (Puerto 8084)
+
+**Swagger UI:** http://localhost:8084/swagger-ui.html
+
+| Método | Endpoint                   | Descripción                                        |
+|--------|----------------------------|----------------------------------------------------|
+| POST   | `/api/payments/process`    | Procesar pago simulado (80% éxito, 20% fallo, 2s delay) |
+
+> **Simulación de pago:** El servicio simula un gateway de pago real con 80% de tasa de éxito y 20% de fallo.
+> Cada request tiene un delay de ~2 segundos. Los fallos devuelven HTTP 402 con formato RFC 9457.
 
 ## 🔐 Seguridad (Keycloak)
 
@@ -390,6 +407,7 @@ Cada microservicio es independiente:
 
 - `event-service` - Gestión de eventos
 - `order-service` - Gestión de pedidos
+- `payment-service` - Procesamiento de pagos simulados
 
 ## 🛠️ Desarrollo
 
@@ -407,10 +425,13 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 # Terminal 3: Order Service
 ./gradlew :microservices:order-service:bootRun
 
-# Terminal 4: API Gateway
+# Terminal 4: Payment Service
+./gradlew :microservices:payment-service:bootRun
+
+# Terminal 5: API Gateway
 ./gradlew :microservices:api-gateway:bootRun
 
-# Terminal 5: Frontend
+# Terminal 6: Frontend
 cd frontend && pnpm start
 ```
 
@@ -420,6 +441,7 @@ cd frontend && pnpm start
 - 🔌 **API Gateway:** http://localhost:8080
 - 📖 **Swagger Event Service:** http://localhost:8082/swagger-ui.html
 - 📖 **Swagger Order Service:** http://localhost:8083/swagger-ui.html
+- 📖 **Swagger Payment Service:** http://localhost:8084/swagger-ui.html
 - 🔐 **Keycloak:** http://localhost:8180
 
 ### Compilar un módulo específico
@@ -681,6 +703,7 @@ para la gestión de errores. Todas las respuestas de error siguen este formato:
 | `https://vento.app/errors/unauthorized`     | 401  | Error de autenticación         |
 | `https://vento.app/errors/forbidden`        | 403  | Error de autorización          |
 | `https://vento.app/errors/not-found`        | 404  | Recurso no encontrado          |
+| `https://vento.app/errors/payment-failed`   | 402  | Pago fallido                   |
 | `https://vento.app/errors/conflict`         | 409  | Conflicto de negocio           |
 | `https://vento.app/errors/internal-error`   | 500  | Error interno del servidor     |
 | `https://vento.app/errors/bad-gateway`      | 502  | Error en servicio externo      |

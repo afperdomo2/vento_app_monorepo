@@ -3,14 +3,11 @@ package com.vento.common.exception;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -194,27 +191,9 @@ public class GlobalExceptionHandler {
                 .body(problem);
     }
 
-    // -------------------------------------------------------------------------
-    // 409 — ObjectOptimisticLockingFailureException directa (sin retry)
-    // -------------------------------------------------------------------------
-
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<ProblemDetail> handleJpaOptimisticLock(
-            ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
-
-        ProblemDetail problem = buildProblem(
-                HttpStatus.CONFLICT,
-                "optimistic-lock-conflict",
-                "Conflicto de concurrencia",
-                "La entidad fue modificada por otro proceso. Por favor intente nuevamente.",
-                request.getRequestURI()
-        );
-
-        log.warn("⚠️ [{}] ObjectOptimisticLockingFailureException en {}: {}", serviceName, request.getRequestURI(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(problem);
-    }
+    // NOTE: ObjectOptimisticLockingFailureException handler removed to avoid
+    // hard dependency on spring-orm for services that don't use JPA (e.g. payment-service).
+    // Optimistic lock conflicts are handled via OptimisticLockConflictException above.
 
     // -------------------------------------------------------------------------
     // 409 — Tickets insuficientes (sobreventa)
@@ -333,48 +312,36 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
-    // 503 — Error de conexión con Redis
+    // 402 — Pago fallido
     // -------------------------------------------------------------------------
 
-    @ExceptionHandler(RedisConnectionFailureException.class)
-    public ResponseEntity<ProblemDetail> handleRedisConnectionFailure(
-            RedisConnectionFailureException ex, HttpServletRequest request) {
+    @ExceptionHandler(PaymentFailedException.class)
+    public ResponseEntity<ProblemDetail> handlePaymentFailed(
+            PaymentFailedException ex, HttpServletRequest request) {
 
         ProblemDetail problem = buildProblem(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "redis-connection-error",
-                "Error de conexión con Redis",
-                "No se pudo conectar al servicio de caché. El sistema está intentando reconectar.",
+                HttpStatus.PAYMENT_REQUIRED,
+                "payment-failed",
+                "Pago fallido",
+                ex.getFailureReason(),
                 request.getRequestURI()
         );
+        problem.setProperty("orderId", ex.getOrderId());
 
-        log.error("❌ [{}] Redis Connection Failure en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        log.warn("❌ [{}] Pago fallido en {}: orderId={}, razón={}",
+                serviceName, request.getRequestURI(), ex.getOrderId(), ex.getFailureReason());
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
     }
 
-    // -------------------------------------------------------------------------
-    // 503 — Error de conexión con Base de Datos
-    // -------------------------------------------------------------------------
+    // NOTE: RedisConnectionFailureException handler removed to avoid
+    // hard dependency on spring-data-redis for services that don't use Redis (e.g. payment-service).
+    // Services using Redis should handle Redis connection errors locally.
 
-    @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ProblemDetail> handleDatabaseConnectionFailure(
-            DataAccessException ex, HttpServletRequest request) {
-
-        ProblemDetail problem = buildProblem(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "database-connection-error",
-                "Error de conexión con la base de datos",
-                "No se pudo conectar a la base de datos. El sistema está intentando reconectar.",
-                request.getRequestURI()
-        );
-
-        log.error("❌ [{}] Database Connection Failure en {}: {}", serviceName, request.getRequestURI(), ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(problem);
-    }
+    // NOTE: DataAccessException handler removed to avoid
+    // hard dependency on spring-tx/spring-orm for services that don't use DB (e.g. payment-service).
+    // Services using databases should handle DB connection errors locally.
 
     // -------------------------------------------------------------------------
     // 500 — Error inesperado (captura cualquier excepción no manejada)

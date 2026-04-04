@@ -1,0 +1,6 @@
+# Payment Service - Configuración Local
+
+logging:
+  level:
+    com.vento.payment: DEBUG
+    org.springframework.web: INFO

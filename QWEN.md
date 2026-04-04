@@ -12,7 +12,8 @@ vento_app_monorepo/
 ├── microservices/
 │   ├── api-gateway/             # Spring Cloud Gateway (puerto 8080)
 │   ├── event-service/           # Gestión de eventos (puerto 8082)
-│   └── order-service/           # Gestión de pedidos/reservas (puerto 8083)
+│   ├── order-service/           # Gestión de pedidos/reservas (puerto 8083)
+│   └── payment-service/         # Procesamiento de pagos (puerto 8084)
 ├── frontend/                    # Aplicación Angular 21 (puerto 4200)
 └── database/                    # Scripts y migraciones de base de datos
 ```
@@ -39,6 +40,7 @@ vento_app_monorepo/
 
 - **Gestión de Eventos**: Operaciones CRUD con inventario de tickets
 - **Sistema de Pedidos**: Reservas temporales con TTL de 5 minutos en Redis
+- **Procesamiento de Pagos**: Simulación de gateway de pago con 80% éxito, 20% fallo
 - **Seguridad OAuth2**: Integración con Keycloak y validación JWT en API Gateway
 - **Patrón Microservicios**: Enrutamiento por Gateway, aislamiento de servicios
 - **Caché Redis**: Seguimiento de disponibilidad de tickets y reservas temporales
@@ -72,10 +74,13 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 # Terminal 3: Order Service
 ./gradlew :microservices:order-service:bootRun
 
-# Terminal 4: API Gateway
+# Terminal 4: Payment Service
+./gradlew :microservices:payment-service:bootRun
+
+# Terminal 5: API Gateway
 ./gradlew :microservices:api-gateway:bootRun
 
-# Terminal 5: Frontend
+# Terminal 6: Frontend
 cd frontend && pnpm start
 ```
 
@@ -84,6 +89,7 @@ cd frontend && pnpm start
 - 🔌 API Gateway: http://localhost:8080
 - 📖 Swagger Event Service: http://localhost:8082/swagger-ui.html
 - 📖 Swagger Order Service: http://localhost:8083/swagger-ui.html
+- 📖 Swagger Payment Service: http://localhost:8084/swagger-ui.html
 - 🔐 Keycloak Dashboard: http://localhost:8180
 
 ### Comandos del Backend
@@ -287,6 +293,7 @@ export class EventListComponent {
 |----------|--------|----------|-------------|
 | `/api/events/**` | Todos | event-service:8082 | Gestión de eventos |
 | `/api/orders/**` | Todos | order-service:8083 | Gestión de pedidos |
+| `/api/payments/**` | Todos | payment-service:8084 | Procesamiento de pagos |
 | `/ui/*` | GET | frontend:4200 | Aplicación frontend |
 
 ### Endpoints del Event Service
@@ -310,6 +317,16 @@ export class EventListComponent {
 | GET | `/api/orders/my-orders` | Pedidos del usuario autenticado |
 | PUT | `/api/orders/{id}/cancel` | Cancelar pedido |
 | PUT | `/api/orders/{id}/confirm` | Confirmar pedido |
+
+### Endpoints del Payment Service
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/payments/process` | Procesar pago simulado (80% éxito, 20% fallo, ~2s delay) |
+
+**Respuestas:**
+- **200 OK** — Pago exitoso: `{ "success": true, "data": { "orderId", "transactionId", "amount" } }`
+- **402 Payment Required** — Pago fallido (RFC 9457): `{ "type": "https://vento.app/errors/payment-failed", "title", "status", "detail", "orderId" }`
 
 ### Seguridad (Keycloak)
 
@@ -452,7 +469,7 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 | Directorio | Contenido |
 |------------|-----------|
 | `common/` | DTOs compartidos, excepciones, utilerías |
-| `microservices/` | Todos los servicios backend |
+| `microservices/` | Todos los servicios backend (api-gateway, event-service, order-service, payment-service) |
 | `frontend/` | Aplicación Angular |
 | `database/` | Scripts SQL, migraciones |
 | `requerimientos/` | Documentación de requisitos |
@@ -479,6 +496,7 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 - OrderService: 9 tests ✅
 - TicketInventoryService: 3 tests ✅
 - ConflictResolutionService: 3 tests ✅
+- PaymentFailedException: tests pendientes
 
 ### Tests del Frontend
 

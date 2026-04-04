@@ -834,6 +834,47 @@
       "description": "Endpoints para la gestión de pedidos y reservas"
     },
     {
+      "name": "💳 Payments",
+      "item": [
+        {
+          "name": "Process Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"amount\": 150.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/process",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "process"
+              ]
+            },
+            "description": "Simula el procesamiento de un pago con 80% de éxito, 20% de fallo y ~2s de delay.\n\nÉxito (200 OK): Devuelve transactionId generado.\nFallo (402): Devuelve ProblemDetail con RFC 9457.\n\nNo requiere autenticación (endpoint de desarrollo)."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para procesamiento de pagos simulados"
+    },
+    {
       "name": "🏥 Health Checks",
       "item": [
         {
@@ -908,6 +949,31 @@
               ]
             },
             "description": "Verifica el estado de salud del Order Service.\n\nNo requiere autenticación (acceso directo al servicio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Payment Service Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8084/actuator/health",
+              "host": [
+                "http://localhost:8084"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica el estado de salud del Payment Service.\n\nNo requiere autenticación (acceso directo al servicio)."
           },
           "response": []
         },
