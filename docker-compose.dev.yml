@@ -201,6 +201,25 @@ services:
       retries: 3
       start_period: 60s
 
+  # Payment Service
+  payment-service:
+    build:
+      context: .
+      dockerfile: microservices/payment-service/Dockerfile.dev
+    ports:
+      - "8084:8084"
+      - "5009:5005"  # Debug port
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # API Gateway
   api-gateway:
     build:
@@ -216,6 +235,8 @@ services:
       event-service:
         condition: service_started
       order-service:
+        condition: service_started
+      payment-service:
         condition: service_started
       keycloak:
         condition: service_healthy
