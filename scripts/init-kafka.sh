@@ -14,12 +14,10 @@ echo "✅ Kafka debería estar listo"
 
 echo "📝 Creando topics..."
 
-$KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic order.created --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic payment.processed --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic payment.failed --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic order.confirmed --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic order.cancelled --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
-$KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic order.created.DLQ --partitions 1 --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic payment.processed.DLQ --partitions 1 --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 
 echo "✅ Topics creados:"

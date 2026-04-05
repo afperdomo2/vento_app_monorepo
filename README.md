@@ -70,6 +70,7 @@ Redis, Keycloak) corre en Docker.
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # Ejecutar microservicios en terminales separadas
+./gradlew :microservices:payment-service:bootRun
 ./gradlew :microservices:event-service:bootRun
 ./gradlew :microservices:order-service:bootRun
 ./gradlew :microservices:api-gateway:bootRun

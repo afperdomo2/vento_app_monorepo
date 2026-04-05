@@ -1,6 +1,14 @@
 # Payment Service - Configuración Local
 
+spring:
+  config:
+    activate:
+      on-profile: local
+  kafka:
+    bootstrap-servers: localhost:9093
+
 logging:
   level:
     com.vento.payment: DEBUG
     org.springframework.web: INFO
+    org.springframework.kafka: DEBUG

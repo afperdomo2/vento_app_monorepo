@@ -21,8 +21,11 @@ spring:
   h2:
     console:
       enabled: false
+  kafka:
+    bootstrap-servers: localhost:9093
 
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.kafka: DEBUG
