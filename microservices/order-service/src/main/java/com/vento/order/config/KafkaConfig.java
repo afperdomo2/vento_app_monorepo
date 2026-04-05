@@ -1,6 +1,7 @@
 package com.vento.order.config;
 
-import com.vento.common.config.KafkaTopics;
+import com.vento.common.dto.kafka.PaymentFailedEvent;
+import com.vento.common.dto.kafka.PaymentProcessedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -13,6 +14,7 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.util.backoff.FixedBackOff;
@@ -51,20 +53,56 @@ public class KafkaConfig {
         return new KafkaTemplate<>(orderProducerFactory());
     }
 
-    // ==================== CONSUMER ====================
+    // ==================== CONSUMER FACTORIES ====================
 
+    /**
+     * Consumer factory para PaymentProcessedEvent.
+     * Usa ErrorHandlingDeserializer para capturar errores de serialización sin reintentar infinitamente.
+     */
     @Bean
-    public ConsumerFactory<String, Object> orderConsumerFactory() {
+    public ConsumerFactory<String, PaymentProcessedEvent> paymentProcessedConsumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "order-service-group");
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.vento.common.dto.kafka.*,com.vento.order.*");
-        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "java.lang.Object");
+
+        // ErrorHandlingDeserializer envuelve al JsonDeserializer para capturar errores
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
+
+        // Config del JsonDeserializer interno
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.vento.common.dto.kafka");
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, PaymentProcessedEvent.class.getName());
+        config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, "false");
+
         return new DefaultKafkaConsumerFactory<>(config);
     }
+
+    /**
+     * Consumer factory para PaymentFailedEvent.
+     */
+    @Bean
+    public ConsumerFactory<String, PaymentFailedEvent> paymentFailedConsumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "order-service-group");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
+
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.vento.common.dto.kafka");
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, PaymentFailedEvent.class.getName());
+        config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, "false");
+
+        return new DefaultKafkaConsumerFactory<>(config);
+    }
+
+    // ==================== ERROR HANDLER ====================
 
     @Bean
     public CommonErrorHandler errorHandler(KafkaTemplate<String, Object> orderKafkaTemplate) {
@@ -73,14 +111,25 @@ public class KafkaConfig {
         return new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
     }
 
+    // ==================== LISTENER CONTAINER FACTORIES ====================
+
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> orderKafkaListenerContainerFactory(
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentProcessedEvent> paymentProcessedListenerFactory(
             CommonErrorHandler errorHandler) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(orderConsumerFactory());
+        var factory = new ConcurrentKafkaListenerContainerFactory<String, PaymentProcessedEvent>();
+        factory.setConsumerFactory(paymentProcessedConsumerFactory());
         factory.setCommonErrorHandler(errorHandler);
-        factory.setConcurrency(3);
+        factory.setConcurrency(1);
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentFailedEvent> paymentFailedListenerFactory(
+            CommonErrorHandler errorHandler) {
+        var factory = new ConcurrentKafkaListenerContainerFactory<String, PaymentFailedEvent>();
+        factory.setConsumerFactory(paymentFailedConsumerFactory());
+        factory.setCommonErrorHandler(errorHandler);
+        factory.setConcurrency(1);
         return factory;
     }
 }

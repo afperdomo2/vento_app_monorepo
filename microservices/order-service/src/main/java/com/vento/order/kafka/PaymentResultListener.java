@@ -4,7 +4,6 @@ import com.vento.common.config.KafkaTopics;
 import com.vento.common.dto.kafka.PaymentFailedEvent;
 import com.vento.common.dto.kafka.PaymentProcessedEvent;
 import com.vento.common.dto.order.OrderStatus;
-import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.order.model.Order;
 import com.vento.order.repository.OrderRepository;
@@ -13,10 +12,7 @@ import com.vento.order.service.TicketInventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * Listener de resultados de pago desde payment-service via Kafka.
@@ -39,9 +35,9 @@ public class PaymentResultListener {
     @KafkaListener(
             topics = KafkaTopics.PAYMENT_PROCESSED,
             groupId = "${spring.kafka.consumer.group-id:order-service-group}",
-            containerFactory = "orderKafkaListenerContainerFactory"
+            containerFactory = "paymentProcessedListenerFactory"
     )
-    public void handlePaymentProcessed(@Payload PaymentProcessedEvent event) {
+    public void handlePaymentProcessed(PaymentProcessedEvent event) {
         log.info("📨 Recibido PaymentProcessedEvent para orden: {}, transacción: {}",
                 event.orderId(), event.transactionId());
 
@@ -71,9 +67,9 @@ public class PaymentResultListener {
     @KafkaListener(
             topics = KafkaTopics.PAYMENT_FAILED,
             groupId = "${spring.kafka.consumer.group-id:order-service-group}",
-            containerFactory = "orderKafkaListenerContainerFactory"
+            containerFactory = "paymentFailedListenerFactory"
     )
-    public void handlePaymentFailed(@Payload PaymentFailedEvent event) {
+    public void handlePaymentFailed(PaymentFailedEvent event) {
         log.info("📨 Recibido PaymentFailedEvent para orden: {}, razón: {}",
                 event.orderId(), event.reason());
 

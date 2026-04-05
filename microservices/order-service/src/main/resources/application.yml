@@ -61,16 +61,8 @@ spring.kafka:
     retries: 3
     properties:
       enable.idempotence: true
-  consumer:
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-    auto-offset-reset: earliest
-    properties:
-      spring.json.trusted.packages: "com.vento.common.dto.kafka.*,com.vento.order.*"
-      spring.json.value.default.type: java.lang.Object
   listener:
     ack-mode: record
-    concurrency: 3
 
 spring-doc:
   api-docs:
