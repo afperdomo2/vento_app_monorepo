@@ -15,9 +15,11 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { OrderSummary } from './components/order-summary/order-summary';
 import { OrderService } from '../../core/services/order.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { EventService } from '../../core/services/event.service';
 import { Order } from '../../core/models/order.models';
 import { Event } from '../../core/models/event.models';
+import { PaymentRequest } from '../../core/models/payment.models';
 
 const ORDER_EXPIRY_MINUTES = 5;
 const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
@@ -109,8 +111,10 @@ const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
                     >
                     <input
                       type="text"
+                      [(ngModel)]="cardNumber"
                       placeholder="0000 0000 0000 0000"
-                      class="w-full pl-12 pr-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium"
+                      [disabled]="processingPayment()"
+                      class="w-full pl-12 pr-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -124,8 +128,10 @@ const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
                     </label>
                     <input
                       type="text"
+                      [(ngModel)]="cardExpiry"
                       placeholder="MM/YY"
-                      class="w-full px-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium"
+                      [disabled]="processingPayment()"
+                      class="w-full px-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium disabled:opacity-50"
                     />
                   </div>
                   <div class="space-y-2">
@@ -136,8 +142,10 @@ const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
                     </label>
                     <input
                       type="text"
+                      [(ngModel)]="cardCvc"
                       placeholder="123"
-                      class="w-full px-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium"
+                      [disabled]="processingPayment()"
+                      class="w-full px-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -150,8 +158,10 @@ const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
                   </label>
                   <input
                     type="text"
+                    [(ngModel)]="cardName"
                     placeholder="JUAN PEREZ"
-                    class="w-full px-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium"
+                    [disabled]="processingPayment()"
+                    class="w-full px-4 py-4 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all duration-200 placeholder:text-outline/50 font-medium disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -175,11 +185,16 @@ const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
             <!-- Action Button -->
             <button
               (click)="handleConfirmPayment()"
-              [disabled]="timeRemaining() <= 0"
+              [disabled]="timeRemaining() <= 0 || processingPayment() || !formValid()"
               class="kinetic-gradient w-full py-5 rounded-full text-white font-headline text-lg font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Confirmar Pago Seguro
-              <span class="material-symbols-outlined">lock</span>
+              @if (processingPayment()) {
+                <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                Procesando pago...
+              } @else {
+                Confirmar Pago Seguro
+                <span class="material-symbols-outlined">lock</span>
+              }
             </button>
           </div>
 
@@ -238,6 +253,105 @@ const SESSION_STORAGE_KEY_PREFIX = 'checkout:expireTime:';
         </div>
       </div>
     }
+
+    <!-- Payment Success Modal -->
+    @if (showSuccessModal()) {
+      <div
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      >
+        <div
+          class="bg-surface-container-lowest rounded-2xl p-8 max-w-md w-full shadow-2xl border border-outline-variant/10"
+        >
+          <!-- Success Icon -->
+          <div class="flex justify-center mb-6">
+            <div
+              class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center"
+            >
+              <span
+                class="material-symbols-outlined text-primary text-4xl"
+                style="font-variation-settings: 'FILL' 1"
+                >check_circle</span
+              >
+            </div>
+          </div>
+
+          <!-- Success Message -->
+          <h3
+            class="text-xl font-headline font-bold text-on-surface text-center mb-3"
+          >
+            ¡Pago exitoso!
+          </h3>
+          <p class="text-on-surface-variant text-center text-sm mb-8">
+            Tu pago ha sido procesado correctamente. Tus entradas están listas.
+          </p>
+
+          <!-- Action Button -->
+          <button
+            (click)="goToMyOrders()"
+            class="w-full py-3 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform"
+          >
+            Ver mis pedidos
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Payment Error Modal -->
+    @if (showErrorModal()) {
+      <div
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+      >
+        <div
+          class="bg-surface-container-lowest rounded-2xl p-8 max-w-md w-full shadow-2xl border border-outline-variant/10"
+        >
+          <!-- Error Icon -->
+          <div class="flex justify-center mb-6">
+            <div
+              class="w-16 h-16 rounded-full bg-error-container/20 flex items-center justify-center"
+            >
+              <span
+                class="material-symbols-outlined text-error text-4xl"
+                >payment</span
+              >
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <h3
+            class="text-xl font-headline font-bold text-on-surface text-center mb-3"
+          >
+            Pago rechazado
+          </h3>
+          <p class="text-on-surface-variant text-center text-sm mb-2">
+            No se pudo procesar el pago.
+          </p>
+          @if (paymentErrorReason()) {
+            <p class="text-error text-center text-xs mb-2 font-medium">
+              Razón: {{ paymentErrorReason() }}
+            </p>
+          }
+          <p class="text-on-surface-variant text-center text-xs mb-8">
+            Tu reserva sigue activa. Puedes intentarlo de nuevo.
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="space-y-3">
+            <button
+              (click)="retryPayment()"
+              class="w-full py-3 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-sm shadow-lg hover:scale-[1.02] transition-transform"
+            >
+              Intentar de nuevo
+            </button>
+            <button
+              (click)="goToEventDetail()"
+              class="w-full py-3 rounded-full border border-outline text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors"
+            >
+              Cancelar y volver al evento
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `
@@ -251,15 +365,34 @@ export class CheckoutPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private orderService = inject(OrderService);
+  private paymentService = inject(PaymentService);
   private eventService = inject(EventService);
 
   order = signal<Order | null>(null);
   event = signal<Event | null>(null);
   loading = signal(true);
+  processingPayment = signal(false);
   timeRemaining = signal(0);
   orderExpired = signal(false);
   showExpiredModal = signal(false);
+  showSuccessModal = signal(false);
+  showErrorModal = signal(false);
+  paymentErrorReason = signal('');
   redirectCountdown = signal(5);
+
+  // Payment form fields
+  cardNumber = signal('');
+  cardExpiry = signal('');
+  cardCvc = signal('');
+  cardName = signal('');
+  formValid = computed(() => {
+    return (
+      this.cardNumber().length >= 13 &&
+      this.cardExpiry().length >= 4 &&
+      this.cardCvc().length >= 3 &&
+      this.cardName().length >= 2
+    );
+  });
 
   private timerSubscription: Subscription | null = null;
   private redirectSubscription: Subscription | null = null;
@@ -381,7 +514,36 @@ export class CheckoutPage implements OnInit, OnDestroy {
   }
 
   handleConfirmPayment(): void {
-    if (this.timeRemaining() <= 0) return;
-    alert('Funcionalidad pendiente: procesamiento de pago');
+    if (this.timeRemaining() <= 0 || this.processingPayment() || !this.formValid()) return;
+
+    this.processingPayment.set(true);
+
+    const request: PaymentRequest = {
+      orderId: this.orderId,
+      amount: this.order()?.totalAmount ?? 0,
+    };
+
+    this.paymentService.processPayment(request).subscribe({
+      next: (result) => {
+        this.processingPayment.set(false);
+        this.showSuccessModal.set(true);
+        console.log('✅ Pago exitoso:', result);
+      },
+      error: (err) => {
+        this.processingPayment.set(false);
+        // The error handler returns an Error with the message from backend
+        this.paymentErrorReason.set(err?.message || 'Error desconocido al procesar el pago');
+        this.showErrorModal.set(true);
+        console.error('❌ Pago fallido:', err);
+      },
+    });
+  }
+
+  goToMyOrders(): void {
+    this.router.navigate(['/my-orders', this.orderId]);
+  }
+
+  retryPayment(): void {
+    this.showErrorModal.set(false);
   }
 }
