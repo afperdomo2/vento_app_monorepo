@@ -56,7 +56,7 @@ public class PaymentResultListener {
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido", event.orderId()));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            log.warn("⚠️ Orden {} no está en PENDING (estado: {}). Ignorando evento.",
+            log.warn("⚠️ Evento duplicado para orden {} - ya procesada con estado: {}. Ignorando evento.",
                     event.orderId(), order.getStatus());
             return;
         }
@@ -100,7 +100,7 @@ public class PaymentResultListener {
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido", event.orderId()));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            log.warn("⚠️ Orden {} no está en PENDING (estado: {}). Ignorando evento.",
+            log.warn("⚠️ Evento duplicado para orden {} - ya procesada con estado: {}. Ignorando evento.",
                     event.orderId(), order.getStatus());
             return;
         }

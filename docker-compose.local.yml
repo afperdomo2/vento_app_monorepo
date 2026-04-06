@@ -42,6 +42,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # PostgreSQL para Payment Service
+  postgres-payments:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: payments_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-payments-data-local:/var/lib/postgresql/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Redis para cache y gestión de stock
   redis:
     image: redis:7-alpine
@@ -144,6 +163,8 @@ volumes:
   postgres-events-data-local:
     driver: local
   postgres-orders-data-local:
+    driver: local
+  postgres-payments-data-local:
     driver: local
   redis-data-local:
     driver: local
