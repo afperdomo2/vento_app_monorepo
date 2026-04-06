@@ -63,7 +63,7 @@ sdk use java 25-tem
 ```
 
 Los microservicios se ejecutan localmente con Gradle para aprovechar el hot reload. Solo la infraestructura (PostgreSQL,
-Redis, Keycloak) corre en Docker.
+Redis, Keycloak, Elasticsearch) corre en Docker.
 
 ```bash
 # Iniciar solo infraestructura
@@ -447,6 +447,8 @@ cd frontend && pnpm start
 - 📖 **Swagger Order Service:** http://localhost:8083/swagger-ui.html
 - 📖 **Swagger Payment Service:** http://localhost:8084/swagger-ui.html
 - 🔐 **Keycloak:** http://localhost:8180
+- 🔍 **Elasticsearch:** http://localhost:9200
+- 📊 **Kibana:** http://localhost:5601
 
 ### Compilar un módulo específico
 
@@ -627,6 +629,7 @@ KEYCLOAK_ADMIN_PASSWORD=admin         # Contraseña admin (CAMBIAR EN PROD)
    docker compose -f docker-compose.yml -f docker-compose.local.yml ps
    # PostgreSQL events: 5432
    # PostgreSQL orders: 5433
+   # Elasticsearch: 9200
    ```
 
 3. Verificar logs de la base de datos:

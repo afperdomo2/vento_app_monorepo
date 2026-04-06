@@ -5,6 +5,7 @@
 Monorepo Spring Boot + Gradle con microservicios: `common/`, `api-gateway/` (8080), `event-service/` (8082),
 `order-service/` (8083), `payment-service/` (8084), **frontend/** (Angular 21, 4200).
 Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0, Angular 21.2, pnpm 10.
+Infraestructura: PostgreSQL, Redis, Keycloak, Kafka, Elasticsearch (9200), Kibana (5601).
 
 ## Comandos
 

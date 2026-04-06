@@ -8,17 +8,17 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
 ## Semana 7: Búsqueda Avanzada con Elasticsearch
 
 ### 7.1 - Infraestructura Elasticsearch
-- [ ] **Docker Compose**:
-  - Agregar Elasticsearch (puerto 9200)
-  - Agregar Kibana (puerto 5601) para desarrollo
-- [ ] **Elasticsearch Configuration**:
-  - Crear índice `events`
-  - Configurar mappings apropiados
-  - Configurar analyzers para búsqueda de texto
+- [x] **Docker Compose**:
+  - [x] Agregar Elasticsearch (puerto 9200)
+  - [x] Agregar Kibana (puerto 5601) para desarrollo
+- [x] **Elasticsearch Configuration**:
+  - [x] Crear índice `events` con init-elasticsearch.sh
+  - [x] Configurar mappings apropiados (text, geo_point, date, etc.)
+  - [x] Configurar analyzers para búsqueda de texto (autocomplete)
 - [ ] **Elasticsearch Client**:
-  - Agregar spring-data-elasticsearch en event-service
-  - Configurar client connection
-  - Configurar serializers
+  - [ ] Agregar spring-data-elasticsearch en event-service
+  - [ ] Configurar client connection
+  - [ ] Configurar serializers
 
 ### 7.2 - Sincronización PostgreSQL → Elasticsearch
 - [ ] **Event Index Mapping**:

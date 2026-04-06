@@ -73,6 +73,30 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Elasticsearch para búsqueda avanzada de eventos (sin Kibana en prod)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    volumes:
+      - elasticsearch-data-prod:/usr/share/elasticsearch/data
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+
   # Keycloak para autenticación y gestión de usuarios
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
@@ -293,4 +317,6 @@ volumes:
   keycloak-data-prod:
     driver: local
   kafka-data-prod:
+    driver: local
+  elasticsearch-data-prod:
     driver: local

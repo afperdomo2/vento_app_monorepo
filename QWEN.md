@@ -65,7 +65,7 @@ npm install -g pnpm
 ### Inicio Rápido - Stack Completo (Desarrollo)
 
 ```bash
-# Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak)
+# Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak, Elasticsearch)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # Terminal 2: Event Service
@@ -91,6 +91,8 @@ cd frontend && pnpm start
 - 📖 Swagger Order Service: http://localhost:8083/swagger-ui.html
 - 📖 Swagger Payment Service: http://localhost:8084/swagger-ui.html
 - 🔐 Keycloak Dashboard: http://localhost:8180
+- 🔍 Elasticsearch: http://localhost:9200
+- 📊 Kibana: http://localhost:5601
 
 ### Comandos del Backend
 
@@ -360,12 +362,18 @@ PENDING → CONFIRMED (pago exitoso)
         → EXPIRED (timeout 5 min)
 ```
 
-### Puertos de Base de Datos
+### Puertos de Infraestructura
 
-| Base de Datos | Puerto | Servicio |
-|---------------|--------|----------|
+| Servicio | Puerto | Propósito |
+|----------|--------|-----------|
 | PostgreSQL Events | 5432 | event-service |
 | PostgreSQL Orders | 5433 | order-service |
+| PostgreSQL Payments | 5434 | payment-service |
+| Redis | 6379 | Caché y reservas temporales |
+| Kafka | 9092/9093 | Message broker |
+| Kafka UI | 8089 | Debugging de Kafka |
+| Elasticsearch | 9200 | Búsqueda avanzada |
+| Kibana | 5601 | UI de Elasticsearch |
 
 ---
 
