@@ -67,7 +67,7 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
   - [x] Retorna resultado cacheado si ya fue procesado
 
 ### 5.5 - Order-service: Transiciones de Estado
-- [ ] **Listeners para Resultados de Pago**:
+- [x] **Listeners para Resultados de Pago**:
   - [x] `PaymentProcessedEvent` listener:
     - [x] Cambiar Order → CONFIRMED
     - [x] Eliminar clave reservation en Redis
@@ -76,11 +76,12 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
     - [x] Cambiar Order → CANCELLED
     - [x] Liberar tickets en Redis (INCRBY)
     - [x] Publicar OrderCancelledEvent
-- [ ] **Dead Letter Queue (DLQ)**:
+- [x] **Dead Letter Queue (DLQ)**:
   - [x] ~~Topic: `order.created.DLQ`~~ → eliminado
   - [x] Configurar retry (3 intentos con backoff de 1s)
   - [x] Si falla definitivamente → DLQ (con ErrorHandlingDeserializer)
-  - [ ] Alertar/monitorear mensajes en DLQ
+  - [x] DlqConsumer implementado para escuchar mensajes DLQ
+  - [x] Almacenamiento en tabla `failed_events` para análisis
 
 ---
 
@@ -130,7 +131,7 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
   - [ ] Corregir inconsistencias automáticamente
 
 ### 6.4 - Flujo Completo con Kafka
-- [ ] **Happy Path con Saga** (adaptado a pago manual):
+- [x] **Happy Path con Saga** (adaptado a pago manual):
   ```
   Cliente → POST /orders
        ↓
@@ -214,7 +215,7 @@ Semana 6 ───────────────────────�
   - [x] Payment-service: Tabla `processed_payments` evita doble procesamiento
   - [x] Order-service: PaymentResultListener ignora eventos duplicados
   - [x] Tests unitarios de idempotencia pasan
-- [ ] Tests de integración pasan
+- [x] Tests de integración pasan
 - [x] Build completo pasa con `./gradlew build`
 
 ---
