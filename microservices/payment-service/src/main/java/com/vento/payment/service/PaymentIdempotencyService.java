@@ -1,7 +1,7 @@
 package com.vento.payment.service;
 
-import com.vento.common.dto.payment.PaymentResult;
-import com.vento.payment.model.PaymentStatus;
+import com.vento.common.dto.payment.PaymentDto;
+import com.vento.common.enums.PaymentStatus;
 import com.vento.payment.model.ProcessedPayment;
 import com.vento.payment.repository.ProcessedPaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,11 +43,11 @@ public class PaymentIdempotencyService {
      * @throws IllegalStateException si el pago no existe
      */
     @Transactional(readOnly = true)
-    public PaymentResult getCachedResult(UUID orderId) {
+    public PaymentDto getCachedResult(UUID orderId) {
         ProcessedPayment payment = processedPaymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new IllegalStateException("Pago no encontrado para orden: " + orderId));
 
-        return PaymentResult.builder()
+        return PaymentDto.builder()
                 .orderId(payment.getOrderId())
                 .transactionId(payment.getTransactionId())
                 .amount(payment.getAmount())
@@ -62,7 +62,7 @@ public class PaymentIdempotencyService {
      * @param userId      ID del usuario
      */
     @Transactional
-    public void recordPayment(UUID orderId, PaymentResult result, UUID userId) {
+    public void recordPayment(UUID orderId, PaymentDto result, UUID userId) {
         ProcessedPayment payment = ProcessedPayment.builder()
                 .orderId(orderId)
                 .userId(userId)

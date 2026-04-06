@@ -1,6 +1,6 @@
 package com.vento.event.service;
 
-import com.vento.common.dto.TicketDto;
+import com.vento.common.dto.event.TicketDto;
 import com.vento.common.dto.kafka.OrderConfirmedEvent;
 import com.vento.common.enums.TicketStatus;
 import com.vento.event.model.Ticket;

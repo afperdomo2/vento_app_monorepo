@@ -1,4 +1,4 @@
-package com.vento.common.dto.order;
+package com.vento.common.enums;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

@@ -1,6 +1,6 @@
 package com.vento.order.service;
 
-import com.vento.common.dto.order.OrderStatus;
+import com.vento.common.enums.OrderStatus;
 import com.vento.order.model.Order;
 import com.vento.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;

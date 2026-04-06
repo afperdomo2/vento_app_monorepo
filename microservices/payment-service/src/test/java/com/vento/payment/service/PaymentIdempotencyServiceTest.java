@@ -2,9 +2,9 @@ package com.vento.payment.service;
 
 import com.vento.common.context.UserContext;
 import com.vento.common.dto.payment.PaymentRequest;
-import com.vento.common.dto.payment.PaymentResult;
+import com.vento.common.dto.payment.PaymentDto;
 import com.vento.common.exception.PaymentFailedException;
-import com.vento.payment.model.PaymentStatus;
+import com.vento.common.enums.PaymentStatus;
 import com.vento.payment.model.ProcessedPayment;
 import com.vento.payment.repository.ProcessedPaymentRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -99,7 +99,7 @@ class PaymentIdempotencyServiceTest {
         when(processedPaymentRepository.findByOrderId(orderId)).thenReturn(Optional.of(payment));
 
         // When
-        PaymentResult result = idempotencyService.getCachedResult(orderId);
+        PaymentDto result = idempotencyService.getCachedResult(orderId);
 
         // Then
         assertThat(result).isNotNull();
@@ -126,7 +126,7 @@ class PaymentIdempotencyServiceTest {
     void shouldRecordSuccessfulPayment() {
         // Given
         String transactionId = "txn_" + UUID.randomUUID().toString().substring(0, 12);
-        PaymentResult result = PaymentResult.builder()
+        PaymentDto result = PaymentDto.builder()
                 .orderId(orderId)
                 .transactionId(transactionId)
                 .amount(amount)

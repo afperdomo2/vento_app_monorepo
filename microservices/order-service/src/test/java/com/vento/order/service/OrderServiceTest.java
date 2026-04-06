@@ -4,7 +4,7 @@ import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.order.CreateOrderRequest;
 import com.vento.common.dto.order.OrderDto;
-import com.vento.common.dto.order.OrderStatus;
+import com.vento.common.enums.OrderStatus;
 import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.InsufficientTicketsException;
 import com.vento.order.client.EventClient;

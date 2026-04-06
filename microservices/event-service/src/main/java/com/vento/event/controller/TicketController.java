@@ -1,7 +1,7 @@
 package com.vento.event.controller;
 
 import com.vento.common.dto.ApiResponse;
-import com.vento.common.dto.TicketDto;
+import com.vento.common.dto.event.TicketDto;
 import com.vento.event.service.TicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

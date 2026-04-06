@@ -1,6 +1,6 @@
 package com.vento.order.model;
 
-import com.vento.common.dto.order.OrderStatus;
+import com.vento.common.enums.OrderStatus;
 import com.vento.common.model.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

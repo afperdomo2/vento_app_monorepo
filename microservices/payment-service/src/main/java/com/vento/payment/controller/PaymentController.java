@@ -6,7 +6,7 @@ import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.kafka.PaymentFailedEvent;
 import com.vento.common.dto.kafka.PaymentProcessedEvent;
 import com.vento.common.dto.payment.PaymentRequest;
-import com.vento.common.dto.payment.PaymentResult;
+import com.vento.common.dto.payment.PaymentDto;
 import com.vento.common.exception.PaymentFailedException;
 import com.vento.payment.service.PaymentIdempotencyService;
 import com.vento.payment.service.SimulatedPaymentService;
@@ -43,7 +43,7 @@ public class PaymentController {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "402", description = "Pago fallido (fondo insuficiente, tarjeta rechazada, etc.)")
             }
     )
-    public ApiResponse<PaymentResult> processPayment(@Valid @RequestBody PaymentRequest request) {
+    public ApiResponse<PaymentDto> processPayment(@Valid @RequestBody PaymentRequest request) {
         log.info("📥 Recibida solicitud de pago para orden: {}", request.getOrderId());
 
         // Extraer userId del contexto de usuario (propagado por API Gateway via header X-User-Id)
@@ -57,7 +57,7 @@ public class PaymentController {
         }
 
         try {
-            PaymentResult result = paymentService.processPayment(request);
+            PaymentDto result = paymentService.processPayment(request);
 
             // 2️⃣ Registrar pago exitoso (idempotencia)
             idempotencyService.recordPayment(request.getOrderId(), result, userId);

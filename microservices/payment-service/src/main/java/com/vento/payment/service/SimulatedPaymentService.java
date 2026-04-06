@@ -1,7 +1,7 @@
 package com.vento.payment.service;
 
 import com.vento.common.dto.payment.PaymentRequest;
-import com.vento.common.dto.payment.PaymentResult;
+import com.vento.common.dto.payment.PaymentDto;
 import com.vento.common.exception.PaymentFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class SimulatedPaymentService {
      * @param request solicitud de pago
      * @return resultado del procesamiento
      */
-    public PaymentResult processPayment(PaymentRequest request) {
+    public PaymentDto processPayment(PaymentRequest request) {
         log.info("🔄 Procesando pago para orden: {}, monto: {}", request.getOrderId(), request.getAmount());
 
         try {
@@ -47,7 +47,7 @@ public class SimulatedPaymentService {
             String transactionId = "txn_" + UUID.randomUUID().toString().substring(0, 12);
             log.info("✅ Pago exitoso para orden: {}, transacción: {}", request.getOrderId(), transactionId);
 
-            return PaymentResult.builder()
+            return PaymentDto.builder()
                     .orderId(request.getOrderId())
                     .transactionId(transactionId)
                     .amount(request.getAmount())

@@ -1,6 +1,6 @@
 package com.vento.order.repository;
 
-import com.vento.common.dto.order.OrderStatus;
+import com.vento.common.enums.OrderStatus;
 import com.vento.order.model.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

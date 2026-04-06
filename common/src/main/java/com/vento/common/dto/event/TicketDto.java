@@ -1,4 +1,4 @@
-package com.vento.common.dto;
+package com.vento.common.dto.event;
 
 import java.io.Serializable;
 import java.time.Instant;

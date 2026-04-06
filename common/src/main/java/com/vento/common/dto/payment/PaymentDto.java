@@ -13,8 +13,8 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Resultado del procesamiento de pago")
-public class PaymentResult {
+@Schema(description = "DTO del procesamiento de pago")
+public class PaymentDto {
 
     @Schema(description = "ID de la orden procesada", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID orderId;

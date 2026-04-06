@@ -1,5 +1,6 @@
 package com.vento.common.dto.order;
 
+import com.vento.common.enums.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

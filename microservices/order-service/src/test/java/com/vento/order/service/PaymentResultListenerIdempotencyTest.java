@@ -2,7 +2,7 @@ package com.vento.order.service;
 
 import com.vento.common.dto.kafka.PaymentFailedEvent;
 import com.vento.common.dto.kafka.PaymentProcessedEvent;
-import com.vento.common.dto.order.OrderStatus;
+import com.vento.common.enums.OrderStatus;
 import com.vento.order.kafka.PaymentResultListener;
 import com.vento.order.model.Order;
 import com.vento.order.repository.OrderRepository;

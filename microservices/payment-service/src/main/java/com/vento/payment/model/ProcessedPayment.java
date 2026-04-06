@@ -1,5 +1,6 @@
 package com.vento.payment.model;
 
+import com.vento.common.enums.PaymentStatus;
 import com.vento.common.model.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
