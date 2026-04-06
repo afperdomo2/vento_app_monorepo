@@ -12,11 +12,11 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
   - [x] Agregar Kafka (puerto 9092)
   - [x] Agregar Zookeeper/KRaft
   - [x] Agregar Kafka UI (kafdrop o kafka-manager) para debugging
-- [ ] **Kafka Configuration**:
+- [x] **Kafka Configuration**:
   - [x] Crear topics: `payment.processed`, `payment.failed`, `order.confirmed`, `order.cancelled`
   - [x] ~~Crear topic `order.created`~~ → eliminado (no aplica en flujo de pago manual)
   - [x] Configurar particiones por eventId (3 particiones)
-  - [ ] Configurar retención apropiada (7 días)
+  - [x] Configurar retención apropiada (7 días prod / 14 días local+dev)
 - [ ] **Spring Kafka Dependencies**:
   - [ ] Agregar spring-kafka en event-service → ❌ pendiente (Fase 4)
   - [x] Agregar spring-kafka en order-service
