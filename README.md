@@ -147,6 +147,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 # 3. Ver logs
 docker compose logs -f
+
+# 4. Crear topics de kafka (solo la primera vez o si se reinicia el contenedor)
+docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
 ```
 
 **Ventajas:**

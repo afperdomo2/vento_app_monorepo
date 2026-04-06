@@ -95,10 +95,13 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
   - [x] Retry attempts: 3
   - [x] Retry backoff: exponencial 1s → 5s → 25s → 125s
   - [x] Configurar en Spring Kafka
-- [ ] **DLQ Consumer**:
-  - [ ] Listener para procesar mensajes fallidos
-  - [ ] Loguear para análisis
-  - [ ] Almacenar en tabla `failed_events` para retry manual
+- [x] **DLQ Consumer**:
+  - [x] Listener para procesar mensajes fallidos
+  - [x] Loguear para análisis
+  - [x] Almacenar en tabla `failed_events` para retry manual
+  - [x] Tabla `failed_events` con campos: topic, key, payload, exception, failedAt, processed
+  - [x] Servicio DlqService para almacenamiento y re-procesamiento manual
+  - [x] DlqConsumer escucha topics: payment.processed.DLQ, payment.failed.DLQ
 - [ ] **Monitoring**:
   - [ ] Métricas de mensajes en DLQ
   - [ ] Alertar si DLQ crece
