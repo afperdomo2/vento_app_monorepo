@@ -40,14 +40,14 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
   - [x] Escuchar `PaymentProcessedEvent` → Order(CONFIRMED)
   - [x] Escuchar `PaymentFailedEvent` → Order(CANCELLED), liberar stock
   - [x] ~~Escuchar `OrderCreatedEvent` → Iniciar saga~~ → eliminado (no aplica)
-- [ ] **Publicar Eventos**:
+- [x] **Publicar Eventos**:
   - [x] ~~`OrderCreatedEvent` → Inicia saga~~ → eliminado
-  - [ ] `OrderConfirmedEvent` → Saga completada
-  - [ ] `OrderCancelledEvent` → Saga compensada
-- [ ] **Compensaciones**:
+  - [x] `OrderConfirmedEvent` → Saga completada
+  - [x] `OrderCancelledEvent` → Saga compensada
+- [x] **Compensaciones**:
   - [x] Si pago falla → INCRBY en Redis para liberar tickets
   - [x] Marcar orden como CANCELLED
-  - [ ] Publicar evento de cancelación
+  - [x] Publicar evento de cancelación
 
 ### 5.4 - Payment-service: Procesamiento de Pagos
 - [x] **💳 Servicio Simulado**:
@@ -69,11 +69,11 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
   - [x] `PaymentProcessedEvent` listener:
     - [x] Cambiar Order → CONFIRMED
     - [x] Eliminar clave reservation en Redis
-    - [ ] Publicar OrderConfirmedEvent
+    - [x] Publicar OrderConfirmedEvent
   - [x] `PaymentFailedEvent` listener:
     - [x] Cambiar Order → CANCELLED
     - [x] Liberar tickets en Redis (INCRBY)
-    - [ ] Publicar OrderCancelledEvent
+    - [x] Publicar OrderCancelledEvent
 - [ ] **Dead Letter Queue (DLQ)**:
   - [x] ~~Topic: `order.created.DLQ`~~ → eliminado
   - [x] Configurar retry (3 intentos con backoff de 1s)

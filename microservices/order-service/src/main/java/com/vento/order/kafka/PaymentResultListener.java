@@ -1,6 +1,8 @@
 package com.vento.order.kafka;
 
 import com.vento.common.config.KafkaTopics;
+import com.vento.common.dto.kafka.OrderCancelledEvent;
+import com.vento.common.dto.kafka.OrderConfirmedEvent;
 import com.vento.common.dto.kafka.PaymentFailedEvent;
 import com.vento.common.dto.kafka.PaymentProcessedEvent;
 import com.vento.common.dto.order.OrderStatus;
@@ -12,13 +14,21 @@ import com.vento.order.service.TicketInventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
 
 /**
  * Listener de resultados de pago desde payment-service via Kafka.
  *
  * Consume eventos de payment.processed y payment.failed para actualizar
  * el estado de las órdenes automáticamente.
+ *
+ * Tras cada transición de estado, publica un evento al topic correspondiente
+ * (order.confirmed / order.cancelled). Estos eventos no son consumidos por
+ * ningún servicio actualmente; están reservados para futuros consumidores
+ * (notificaciones, facturación, analytics, etc.).
  */
 @Component
 @RequiredArgsConstructor
@@ -28,6 +38,7 @@ public class PaymentResultListener {
     private final OrderRepository orderRepository;
     private final ReservationService reservationService;
     private final TicketInventoryService ticketInventoryService;
+    private final KafkaTemplate<String, Object> orderKafkaTemplate;
 
     /**
      * Escucha pagos exitosos y confirma la orden.
@@ -59,6 +70,18 @@ public class PaymentResultListener {
         reservationService.removeReservation(order.getId());
 
         log.info("✅ Reserva temporal eliminada para orden confirmada: {}", event.orderId());
+
+        // Publicar evento de confirmación (sin consumidores actuales)
+        var confirmedEvent = new OrderConfirmedEvent(
+                order.getId(),
+                order.getEventId(),
+                order.getUserId(),
+                order.getQuantity(),
+                order.getTotalAmount(),
+                Instant.now()
+        );
+        orderKafkaTemplate.send(KafkaTopics.ORDER_CONFIRMED, order.getId().toString(), confirmedEvent);
+        log.info("📤 Evento order.confirmed publicado para orden: {}", event.orderId());
     }
 
     /**
@@ -94,5 +117,17 @@ public class PaymentResultListener {
         reservationService.removeReservation(order.getId());
 
         log.info("✅ Tickets liberados y reserva eliminada para orden cancelada: {}", event.orderId());
+
+        // Publicar evento de cancelación (sin consumidores actuales)
+        var cancelledEvent = new OrderCancelledEvent(
+                order.getId(),
+                order.getEventId(),
+                order.getUserId(),
+                order.getQuantity(),
+                event.reason(),
+                Instant.now()
+        );
+        orderKafkaTemplate.send(KafkaTopics.ORDER_CANCELLED, order.getId().toString(), cancelledEvent);
+        log.info("📤 Evento order.cancelled publicado para orden: {}", event.orderId());
     }
 }
