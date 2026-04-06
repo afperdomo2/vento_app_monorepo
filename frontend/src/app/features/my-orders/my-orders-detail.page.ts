@@ -1,10 +1,12 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import QRCode from 'qrcode';
 
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
 import { MyOrdersService } from './services/my-orders.service';
+import { TicketService } from '../../core/services/ticket.service';
 import { formatCurrency, formatDateTime } from '../../core/format/format';
 import {
   OrderStatus,
@@ -12,6 +14,16 @@ import {
   OrderDetailState,
   initialOrderDetailState,
 } from './models/order.model';
+import { Ticket } from '../../core/models/ticket.models';
+
+/**
+ * Ticket con URL del QR ya generada (data URL).
+ */
+interface TicketWithQR extends Ticket {
+  qrDataUrl: string;
+  ticketNumber: number;
+  totalTickets: number;
+}
 
 @Component({
   selector: 'app-my-orders-detail',
@@ -243,6 +255,93 @@ import {
               </div>
             </div>
 
+            <!-- Tickets Section (only for CONFIRMED orders) -->
+            @if (order()?.status === 'CONFIRMED') {
+              @if (ticketsLoading()) {
+                <div class="bg-surface-container rounded-2xl p-6">
+                  <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Tus Entradas</h3>
+                  <div class="flex items-center justify-center py-8">
+                    <span class="material-symbols-outlined text-primary text-3xl animate-spin"
+                      >progress_activity</span
+                    >
+                    <span class="ml-3 text-on-surface-variant font-medium">Generando tus entradas...</span>
+                  </div>
+                </div>
+              } @else if (tickets().length > 0) {
+                <div>
+                  <div class="flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1"
+                      >confirmation_number</span
+                    >
+                    <h3 class="font-headline text-lg font-bold text-on-surface">Tus Entradas</h3>
+                    <span class="text-xs font-bold text-primary bg-primary-container px-2 py-0.5 rounded-full">
+                      {{ tickets().length }}
+                    </span>
+                  </div>
+
+                  <div class="space-y-4">
+                    @for (ticket of tickets(); track ticket.id) {
+                      <div
+                        class="bg-surface-container-low rounded-2xl overflow-hidden shadow-sm border border-outline-variant/10"
+                      >
+                        <!-- Ticket Header -->
+                        <div class="flex items-center justify-between px-5 py-3 bg-surface-container-highest/50">
+                          <span class="font-headline text-sm font-bold text-on-surface">
+                            Entrada {{ ticket.ticketNumber }} de {{ ticket.totalTickets }}
+                          </span>
+                          <span
+                            class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                            [class]="getTicketStatusClass(ticket.status)"
+                          >
+                            {{ getTicketStatusLabel(ticket.status) }}
+                          </span>
+                        </div>
+
+                        <!-- Ticket Body -->
+                        <div class="flex flex-col sm:flex-row">
+                          <!-- Left: Event Info -->
+                          <div class="flex-1 p-5 sm:border-r border-dashed border-outline-variant/30">
+                            <div class="flex items-start gap-3">
+                              <img
+                                [src]="order()!.eventImageUrl"
+                                [alt]="order()!.eventTitle"
+                                class="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                              />
+                              <div class="min-w-0">
+                                <p class="font-bold text-on-surface text-sm truncate">
+                                  {{ order()!.eventTitle }}
+                                </p>
+                                <div class="flex items-center gap-1 mt-1 text-on-surface-variant text-xs">
+                                  <span class="material-symbols-outlined text-sm">calendar_today</span>
+                                  {{ order()!.eventDate }}
+                                </div>
+                                <div class="flex items-center gap-1 text-on-surface-variant text-xs">
+                                  <span class="material-symbols-outlined text-sm">location_on</span>
+                                  {{ order()!.eventVenue }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Right: QR Code -->
+                          <div class="flex flex-col items-center justify-center p-5 sm:min-w-[160px]">
+                            <img
+                              [src]="ticket.qrDataUrl"
+                              alt="Código QR"
+                              class="w-28 h-28 rounded-lg"
+                            />
+                            <p class="font-mono text-xs font-bold text-on-surface mt-2 tracking-widest">
+                              {{ ticket.accessCode }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            }
+
             <!-- Actions -->
             <div class="flex gap-3">
               <a
@@ -276,18 +375,29 @@ import {
 })
 export class MyOrdersDetailPage implements OnInit {
   private orderService = inject(MyOrdersService);
+  private ticketService = inject(TicketService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   private state = signal<OrderDetailState>(initialOrderDetailState);
-
   readonly order = computed(() => this.state().order);
   readonly isLoading = computed(() => this.state().isLoading);
   readonly error = computed(() => this.state().error);
 
+  // Tickets state
+  tickets = signal<TicketWithQR[]>([]);
+  ticketsLoading = signal(false);
+
   ngOnInit(): void {
     this.loadOrder();
   }
+
+  private orderEffect = effect(() => {
+    const order = this.order();
+    if (order?.status === 'CONFIRMED') {
+      this.loadTickets();
+    }
+  });
 
   loadOrder(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -306,6 +416,54 @@ export class MyOrdersDetailPage implements OnInit {
         this.state.update((s) => ({ ...s, isLoading: false, error: err.message }));
       },
     });
+  }
+
+  loadTickets(): void {
+    const orderId = this.state().order?.id;
+    if (!orderId) return;
+
+    this.ticketsLoading.set(true);
+
+    this.ticketService.getTicketsByOrder(orderId).subscribe({
+      next: (tickets) => {
+        const ticketsWithQR: TicketWithQR[] = tickets.map((ticket, index) => ({
+          ...ticket,
+          qrDataUrl: '',
+          ticketNumber: index + 1,
+          totalTickets: tickets.length,
+        }));
+        this.tickets.set(ticketsWithQR);
+        this.ticketsLoading.set(false);
+        this.generateQRCodes();
+      },
+      error: () => {
+        this.ticketsLoading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Genera los códigos QR para cada ticket.
+   * Se hace después de renderizar para que el DOM esté disponible.
+   */
+  private async generateQRCodes(): Promise<void> {
+    const updated = [...this.tickets()];
+    for (let i = 0; i < updated.length; i++) {
+      try {
+        const qrDataUrl = await QRCode.toDataURL(updated[i].accessCode, {
+          width: 200,
+          margin: 1,
+          color: {
+            dark: '#1C1B1F',
+            light: '#FFFFFF',
+          },
+        });
+        updated[i] = { ...updated[i], qrDataUrl };
+      } catch (err) {
+        console.error(`Error generating QR for ticket ${updated[i].id}:`, err);
+      }
+    }
+    this.tickets.set(updated);
   }
 
   goBack(): void {
@@ -330,6 +488,24 @@ export class MyOrdersDetailPage implements OnInit {
       EXPIRED: 'bg-error/10 text-error',
     };
     return classes[status];
+  }
+
+  getTicketStatusLabel(status: Ticket['status']): string {
+    const labels: Record<Ticket['status'], string> = {
+      ACTIVE: 'Activo',
+      CANCELLED: 'Cancelado',
+      USED: 'Usado',
+    };
+    return labels[status] || status;
+  }
+
+  getTicketStatusClass(status: Ticket['status']): string {
+    const classes: Record<Ticket['status'], string> = {
+      ACTIVE: 'bg-primary-container/20 text-primary',
+      CANCELLED: 'bg-error-container/20 text-error',
+      USED: 'bg-surface-container-highest text-on-surface-variant',
+    };
+    return classes[status] || 'bg-surface-container-high text-on-surface-variant';
   }
 
   formatOrderId(id: string): string {

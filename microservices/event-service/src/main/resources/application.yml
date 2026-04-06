@@ -5,6 +5,10 @@ spring:
     import: optional:file:./config/event-service.yml
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9093}
+    consumer:
+      group-id: event-service-group
   data:
     redis:
       host: ${REDIS_HOST:localhost}

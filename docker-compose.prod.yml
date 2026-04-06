@@ -139,6 +139,7 @@ services:
       DATABASE_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       postgres-events:
         condition: service_healthy

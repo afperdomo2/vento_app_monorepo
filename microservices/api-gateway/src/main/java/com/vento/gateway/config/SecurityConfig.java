@@ -79,6 +79,9 @@ public class SecurityConfig {
                         // Eventos - GET público (cualquiera puede ver eventos)
                         .pathMatchers(HttpMethod.GET, "/api/events/**").permitAll()
 
+                        // Tickets - requieren autenticación (usuario dueño de los tickets)
+                        .pathMatchers(HttpMethod.GET, "/api/events/tickets/**").hasAnyRole("USER", "ADMIN")
+
                         // Eventos - Mutaciones solo para ADMIN
                         .pathMatchers(HttpMethod.POST, "/api/events/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.PUT, "/api/events/**").hasRole("ADMIN")
