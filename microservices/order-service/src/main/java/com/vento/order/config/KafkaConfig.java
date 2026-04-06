@@ -17,7 +17,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.util.backoff.ExponentialBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -107,8 +107,10 @@ public class KafkaConfig {
     @Bean
     public CommonErrorHandler errorHandler(KafkaTemplate<String, Object> orderKafkaTemplate) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(orderKafkaTemplate);
-        // 3 reintentos con intervalo de 1 segundo antes de enviar a DLQ
-        return new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
+        // Retry exponencial: 1s → 5s → 25s → 125s (3 reintentos antes de enviar a DLQ)
+        ExponentialBackOff backOff = new ExponentialBackOff(1000L, 5);
+        backOff.setMaxInterval(125000L); // Máximo 125 segundos
+        return new DefaultErrorHandler(recoverer, backOff);
     }
 
     // ==================== LISTENER CONTAINER FACTORIES ====================

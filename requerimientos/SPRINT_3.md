@@ -87,12 +87,13 @@ Introducir Kafka para desacoplar servicios mediante el patrón Saga en coreograf
 ## Semana 6: Manejo de Errores y Consistencia
 
 ### 6.1 - Dead Letter Queue (DLQ) Configuración
-- [ ] **DLQ Topics**:
-  - [ ] ~~`order.created.DLQ`~~ → eliminado
+- [x] **DLQ Topics**:
+  - [x] ~~`order.created.DLQ`~~ → eliminado
   - [x] `payment.processed.DLQ`
-- [ ] **DLQ Strategy - Retries**:
+  - [x] `payment.failed.DLQ`
+- [x] **DLQ Strategy - Retries**:
   - [x] Retry attempts: 3
-  - [ ] Retry backoff: 1s, 5s, 30s → actualmente 1s fijo (no exponencial)
+  - [x] Retry backoff: exponencial 1s → 5s → 25s → 125s
   - [x] Configurar en Spring Kafka
 - [ ] **DLQ Consumer**:
   - [ ] Listener para procesar mensajes fallidos

@@ -19,6 +19,7 @@ $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic payment.fa
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic order.confirmed --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic order.cancelled --partitions "$PARTITIONS" --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 $KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic payment.processed.DLQ --partitions 1 --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
+$KAFKA_TOPICS --create --bootstrap-server "$BOOTSTRAP_SERVER" --topic payment.failed.DLQ --partitions 1 --replication-factor "$REPLICATION_FACTOR" --if-not-exists || true
 
 echo "✅ Topics creados:"
 $KAFKA_TOPICS --list --bootstrap-server "$BOOTSTRAP_SERVER"

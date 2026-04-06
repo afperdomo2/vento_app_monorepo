@@ -17,4 +17,5 @@ public final class KafkaTopics {
 
     // Dead Letter Queues
     public static final String PAYMENT_PROCESSED_DLQ = "payment.processed.DLQ";
+    public static final String PAYMENT_FAILED_DLQ = "payment.failed.DLQ";
 }
