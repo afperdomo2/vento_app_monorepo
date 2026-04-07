@@ -25,18 +25,4 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
      */
     @Query("SELECT e FROM Event e WHERE e.eventDate > :now AND e.availableTickets > 0 ORDER BY e.eventDate ASC")
     List<Event> findFeaturedEvents(@Param("now") LocalDateTime now, Pageable pageable);
-
-    /**
-     * Busca eventos por término de texto en nombre, descripción y ubicación.
-     * La búsqueda es case-insensitive y usa matching parcial.
-     *
-     * @param searchTerm término de búsqueda
-     * @param pageable configuración de paginación
-     * @return página de eventos que coinciden con la búsqueda
-     */
-    @Query("SELECT e FROM Event e WHERE e.availableTickets > 0 AND " +
-           "(LOWER(e.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(e.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(e.venue) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    Page<Event> searchEvents(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

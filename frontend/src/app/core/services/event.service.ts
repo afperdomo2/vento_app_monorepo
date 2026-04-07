@@ -75,11 +75,6 @@ export class EventService {
       sortDir: params.sortDir || 'ASC',
     };
 
-    // Add search parameter if present
-    if (params.search && params.search.trim()) {
-      queryParams['search'] = params.search.trim();
-    }
-
     return this.http
       .get<ApiResponse<PagedResponse<BackendEvent>>>(this.apiUrl, {
         params: queryParams,

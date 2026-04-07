@@ -66,15 +66,10 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EventDto> listEvents(String searchTerm, Pageable pageable) {
-        log.info("✅ Listando eventos - Página: {}, Tamaño: {}, Búsqueda: {}",
-                pageable.getPageNumber(), pageable.getPageSize(), searchTerm != null ? searchTerm : "sin filtro");
-        
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            return eventRepository.searchEvents(searchTerm.trim(), pageable)
-                    .map(this::mapToDto);
-        }
-        
+    public Page<EventDto> listEvents(Pageable pageable) {
+        log.info("✅ Listando eventos - Página: {}, Tamaño: {}",
+                pageable.getPageNumber(), pageable.getPageSize());
+
         return eventRepository.findAll(pageable)
                 .map(this::mapToDto);
     }

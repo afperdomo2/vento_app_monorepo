@@ -35,7 +35,6 @@ export interface ListEventsParams {
   size: number;
   sortBy?: string;
   sortDir?: string;
-  search?: string;
 }
 
 export interface SearchEventsParams {
