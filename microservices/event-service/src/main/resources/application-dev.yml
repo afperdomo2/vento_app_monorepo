@@ -22,6 +22,13 @@ spring:
     console:
       enabled: false
 
+vento:
+  elasticsearch:
+    sync:
+      enabled: true
+      sync-interval-ms: 300000     # 5 minutos
+      sync-initial-delay-ms: 60000 # 1 minuto al inicio
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
