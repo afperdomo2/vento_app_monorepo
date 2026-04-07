@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, output, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LocationPickerComponent } from '../../ui/location-picker/location-picker.component';
 import { EventService } from '../../../core/services/event.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Event, CreateEventRequest, UpdateEventRequest } from '../../../core/models/event.models';
@@ -12,12 +13,14 @@ export interface EventFormData {
   venue: string;
   totalCapacity: number;
   price: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 @Component({
   selector: 'app-event-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, LocationPickerComponent],
   template: `
     <!-- Backdrop -->
     <div
@@ -26,11 +29,11 @@ export interface EventFormData {
     >
       <!-- Dialog -->
       <div
-        class="bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        class="bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
         (click)="$event.stopPropagation()"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between p-6 pb-4 border-b border-outline-variant/10">
+        <div class="flex items-center justify-between p-6 pb-4 border-b border-outline-variant/10 shrink-0">
           <h2 class="font-headline text-xl font-bold text-on-surface">
             {{ isEdit() ? 'Editar Evento' : 'Crear Evento' }}
           </h2>
@@ -44,157 +47,175 @@ export interface EventFormData {
           </button>
         </div>
 
-        <!-- Form -->
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-5">
-          <!-- Name -->
-          <div>
-            <label for="name" class="block text-sm font-bold text-on-surface mb-1.5">
-              Nombre del evento <span class="text-error">*</span>
-            </label>
-            <input
-              id="name"
-              type="text"
-              formControlName="name"
-              placeholder="Ej: Concierto de Rock 2026"
-              class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
-                     placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
-                     focus:border-transparent transition-all text-sm"
-            />
-            @if (form.get('name')?.touched && form.get('name')?.invalid) {
-              <p class="text-error text-xs mt-1.5">{{ getErrorMessage('name') }}</p>
-            }
-          </div>
-
-          <!-- Description -->
-          <div>
-            <label for="description" class="block text-sm font-bold text-on-surface mb-1.5">
-              Descripción
-            </label>
-            <textarea
-              id="description"
-              formControlName="description"
-              rows="3"
-              placeholder="Describe el evento..."
-              class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
-                     placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
-                     focus:border-transparent transition-all text-sm resize-none"
-            ></textarea>
-            @if (form.get('description')?.touched && form.get('description')?.invalid) {
-              <p class="text-error text-xs mt-1.5">{{ getErrorMessage('description') }}</p>
-            }
-          </div>
-
-          <!-- Date & Time -->
-          <div>
-            <label for="eventDate" class="block text-sm font-bold text-on-surface mb-1.5">
-              Fecha y hora <span class="text-error">*</span>
-            </label>
-            <input
-              id="eventDate"
-              type="datetime-local"
-              formControlName="eventDate"
-              class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
-                     focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                     transition-all text-sm"
-            />
-            @if (form.get('eventDate')?.touched && form.get('eventDate')?.invalid) {
-              <p class="text-error text-xs mt-1.5">{{ getErrorMessage('eventDate') }}</p>
-            }
-          </div>
-
-          <!-- Venue -->
-          <div>
-            <label for="venue" class="block text-sm font-bold text-on-surface mb-1.5">
-              Lugar del evento <span class="text-error">*</span>
-            </label>
-            <input
-              id="venue"
-              type="text"
-              formControlName="venue"
-              placeholder="Ej: Estadio Nacional"
-              class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
-                     placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
-                     focus:border-transparent transition-all text-sm"
-            />
-            @if (form.get('venue')?.touched && form.get('venue')?.invalid) {
-              <p class="text-error text-xs mt-1.5">{{ getErrorMessage('venue') }}</p>
-            }
-          </div>
-
-          <!-- Capacity & Price -->
-          <div class="grid grid-cols-2 gap-4">
+        <!-- Content: 2-column layout on desktop, 1-column on mobile -->
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col lg:grid lg:grid-cols-[1fr_1.2fr] overflow-y-auto">
+          <!-- Left: Form -->
+          <div class="p-6 space-y-5 lg:overflow-y-auto">
+            <!-- Name -->
             <div>
-              <label for="totalCapacity" class="block text-sm font-bold text-on-surface mb-1.5">
-                Capacidad <span class="text-error">*</span>
+              <label for="name" class="block text-sm font-bold text-on-surface mb-1.5">
+                Nombre del evento <span class="text-error">*</span>
               </label>
               <input
-                id="totalCapacity"
-                type="number"
-                formControlName="totalCapacity"
-                min="1"
-                max="500000"
-                placeholder="5000"
+                id="name"
+                type="text"
+                formControlName="name"
+                placeholder="Ej: Concierto de Rock 2026"
                 class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
                        placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
                        focus:border-transparent transition-all text-sm"
               />
-              @if (form.get('totalCapacity')?.touched && form.get('totalCapacity')?.invalid) {
-                <p class="text-error text-xs mt-1.5">{{ getErrorMessage('totalCapacity') }}</p>
+              @if (form.get('name')?.touched && form.get('name')?.invalid) {
+                <p class="text-error text-xs mt-1.5">{{ getErrorMessage('name') }}</p>
               }
             </div>
 
+            <!-- Description -->
             <div>
-              <label for="price" class="block text-sm font-bold text-on-surface mb-1.5">
-                Precio <span class="text-error">*</span>
+              <label for="description" class="block text-sm font-bold text-on-surface mb-1.5">
+                Descripción
+              </label>
+              <textarea
+                id="description"
+                formControlName="description"
+                rows="3"
+                placeholder="Describe el evento..."
+                class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
+                       placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
+                       focus:border-transparent transition-all text-sm resize-none"
+              ></textarea>
+              @if (form.get('description')?.touched && form.get('description')?.invalid) {
+                <p class="text-error text-xs mt-1.5">{{ getErrorMessage('description') }}</p>
+              }
+            </div>
+
+            <!-- Date & Time -->
+            <div>
+              <label for="eventDate" class="block text-sm font-bold text-on-surface mb-1.5">
+                Fecha y hora <span class="text-error">*</span>
               </label>
               <input
-                id="price"
-                type="number"
-                formControlName="price"
-                min="0.01"
-                step="0.01"
-                placeholder="150.00"
+                id="eventDate"
+                type="datetime-local"
+                formControlName="eventDate"
+                class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
+                       focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                       transition-all text-sm"
+              />
+              @if (form.get('eventDate')?.touched && form.get('eventDate')?.invalid) {
+                <p class="text-error text-xs mt-1.5">{{ getErrorMessage('eventDate') }}</p>
+              }
+            </div>
+
+            <!-- Venue -->
+            <div>
+              <label for="venue" class="block text-sm font-bold text-on-surface mb-1.5">
+                Lugar del evento <span class="text-error">*</span>
+              </label>
+              <input
+                id="venue"
+                type="text"
+                formControlName="venue"
+                placeholder="Ej: Estadio Nacional"
                 class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
                        placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
                        focus:border-transparent transition-all text-sm"
               />
-              @if (form.get('price')?.touched && form.get('price')?.invalid) {
-                <p class="text-error text-xs mt-1.5">{{ getErrorMessage('price') }}</p>
+              @if (form.get('venue')?.touched && form.get('venue')?.invalid) {
+                <p class="text-error text-xs mt-1.5">{{ getErrorMessage('venue') }}</p>
               }
+            </div>
+
+            <!-- Capacity & Price -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="totalCapacity" class="block text-sm font-bold text-on-surface mb-1.5">
+                  Capacidad <span class="text-error">*</span>
+                </label>
+                <input
+                  id="totalCapacity"
+                  type="number"
+                  formControlName="totalCapacity"
+                  min="1"
+                  max="500000"
+                  placeholder="5000"
+                  class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
+                         placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
+                         focus:border-transparent transition-all text-sm"
+                />
+                @if (form.get('totalCapacity')?.touched && form.get('totalCapacity')?.invalid) {
+                  <p class="text-error text-xs mt-1.5">{{ getErrorMessage('totalCapacity') }}</p>
+                }
+              </div>
+
+              <div>
+                <label for="price" class="block text-sm font-bold text-on-surface mb-1.5">
+                  Precio <span class="text-error">*</span>
+                </label>
+                <input
+                  id="price"
+                  type="number"
+                  formControlName="price"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="150.00"
+                  class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
+                         placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
+                         focus:border-transparent transition-all text-sm"
+                />
+                @if (form.get('price')?.touched && form.get('price')?.invalid) {
+                  <p class="text-error text-xs mt-1.5">{{ getErrorMessage('price') }}</p>
+                }
+              </div>
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="flex gap-3 pt-4">
-            <button
-              type="button"
-              (click)="close.emit()"
-              class="flex-1 px-4 py-3 rounded-xl font-bold text-sm
-                     bg-surface-container-high text-on-surface hover:bg-surface-container
-                     transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="form.invalid || isSubmitting()"
-              class="flex-1 kinetic-cta text-white px-4 py-3 rounded-xl font-bold text-sm
-                     shadow-lg shadow-indigo-100 hover:scale-105 transition-all
-                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              @if (isSubmitting()) {
-                <span class="flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined text-sm animate-spin"
-                    >progress_activity</span
-                  >
-                  {{ isEdit() ? 'Guardando...' : 'Creando...' }}
-                </span>
-              } @else {
-                {{ isEdit() ? 'Guardar Cambios' : 'Crear Evento' }}
-              }
-            </button>
+          <!-- Right: Map -->
+          <div class="p-6 pt-0 lg:p-6 lg:border-l border-outline-variant/10 min-h-[350px] lg:min-h-[450px]">
+            <div class="sticky top-0 lg:pt-6">
+              <label class="block text-sm font-bold text-on-surface mb-1.5 lg:hidden">
+                Ubicación en el mapa <span class="text-error">*</span>
+              </label>
+              <app-location-picker
+                [initialLat]="form.get('latitude')?.value || 0"
+                [initialLng]="form.get('longitude')?.value || 0"
+                (locationChange)="onLocationChange($event)"
+              ></app-location-picker>
+            </div>
           </div>
         </form>
+
+        <!-- Footer: Actions (outside columns) -->
+        <div class="flex gap-3 p-6 pt-4 border-t border-outline-variant/10 shrink-0">
+          <button
+            type="button"
+            (click)="close.emit()"
+            class="flex-1 px-4 py-3 rounded-xl font-bold text-sm
+                   bg-surface-container-high text-on-surface hover:bg-surface-container
+                   transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="onSubmit()"
+            [disabled]="form.invalid || isSubmitting()"
+            class="flex-1 kinetic-cta text-white px-4 py-3 rounded-xl font-bold text-sm
+                   shadow-lg shadow-indigo-100 hover:scale-105 transition-all
+                   disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            @if (isSubmitting()) {
+              <span class="flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm animate-spin"
+                  >progress_activity</span
+                >
+                {{ isEdit() ? 'Guardando...' : 'Creando...' }}
+              </span>
+            } @else {
+              {{ isEdit() ? 'Guardar Cambios' : 'Crear Evento' }}
+            }
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -228,6 +249,8 @@ export class EventFormDialog implements OnInit {
       [Validators.required, Validators.min(1), Validators.max(500000)],
     ],
     price: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    latitude: [null as number | null],
+    longitude: [null as number | null],
   });
 
   ngOnInit(): void {
@@ -243,6 +266,8 @@ export class EventFormDialog implements OnInit {
         venue: evt.location,
         totalCapacity: evt.ticketsLeft ?? null,
         price: evt.price,
+        latitude: evt.latitude ?? null,
+        longitude: evt.longitude ?? null,
       });
     }
   }
@@ -265,6 +290,8 @@ export class EventFormDialog implements OnInit {
         venue: formValue.venue || undefined,
         totalCapacity: formValue.totalCapacity || undefined,
         price: formValue.price || undefined,
+        latitude: formValue.latitude || undefined,
+        longitude: formValue.longitude || undefined,
       };
 
       this.eventService.updateEvent(evt.id, request).subscribe({
@@ -285,6 +312,8 @@ export class EventFormDialog implements OnInit {
         venue: formValue.venue!,
         totalCapacity: formValue.totalCapacity!,
         price: formValue.price!,
+        latitude: formValue.latitude || undefined,
+        longitude: formValue.longitude || undefined,
       };
 
       this.eventService.createEvent(request).subscribe({
@@ -298,6 +327,10 @@ export class EventFormDialog implements OnInit {
         },
       });
     }
+  }
+
+  onLocationChange(coords: { lat: number; lng: number }): void {
+    this.form.patchValue({ latitude: coords.lat, longitude: coords.lng });
   }
 
   onBackdropClick(): void {

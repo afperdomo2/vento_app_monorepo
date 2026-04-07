@@ -7,6 +7,8 @@ export interface BackendEvent {
   totalCapacity: number;
   availableTickets: number | null;
   price: number;
+  latitude?: number;
+  longitude?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -24,6 +26,8 @@ export interface Event {
   isSoldOut?: boolean;
   ticketsLeft?: number;
   rawEventDate?: string; // Original ISO string from backend (for editing)
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ListEventsParams {
@@ -41,6 +45,8 @@ export interface CreateEventRequest {
   venue: string;
   totalCapacity: number;
   price: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface UpdateEventRequest {
@@ -50,4 +56,6 @@ export interface UpdateEventRequest {
   venue?: string;
   totalCapacity?: number;
   price?: number;
+  latitude?: number;
+  longitude?: number;
 }

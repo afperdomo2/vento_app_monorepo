@@ -115,6 +115,8 @@ export function mapBackendEventToEvent(backendEvent: BackendEvent): Event {
     isSoldOut: backendEvent.availableTickets === 0,
     ticketsLeft: backendEvent.availableTickets ?? undefined,
     rawEventDate: backendEvent.eventDate,
+    latitude: backendEvent.latitude ?? undefined,
+    longitude: backendEvent.longitude ?? undefined,
   };
 }
 
