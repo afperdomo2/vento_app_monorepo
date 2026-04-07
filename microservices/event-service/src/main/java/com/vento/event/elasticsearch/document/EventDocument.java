@@ -1,4 +1,4 @@
-package com.vento.event.document;
+package com.vento.event.elasticsearch.document;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

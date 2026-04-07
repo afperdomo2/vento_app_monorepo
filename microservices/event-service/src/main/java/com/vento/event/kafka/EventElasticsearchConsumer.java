@@ -1,8 +1,8 @@
 package com.vento.event.kafka;
 
-import com.vento.event.document.EventDocument;
+import com.vento.event.elasticsearch.document.EventDocument;
 import com.vento.event.model.Event;
-import com.vento.event.repository.EventElasticsearchRepository;
+import com.vento.event.elasticsearch.repository.EventElasticsearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

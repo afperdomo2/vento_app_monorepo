@@ -1,6 +1,6 @@
-package com.vento.event.repository;
+package com.vento.event.elasticsearch.repository;
 
-import com.vento.event.document.EventDocument;
+import com.vento.event.elasticsearch.document.EventDocument;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
