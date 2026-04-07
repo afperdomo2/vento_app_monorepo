@@ -1,5 +1,6 @@
 package com.vento.event.api.controller;
 
+import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.EventSearchRequest;
 import com.vento.event.core.service.EventSearchService;
@@ -28,36 +29,36 @@ public class EventSearchController {
 
     @GetMapping("/search")
     @Operation(summary = "Búsqueda de texto libre", description = "Busca eventos por nombre, descripción o lugar con tolerancia a errores.")
-    public ResponseEntity<Page<EventDto>> searchByText(
+    public ResponseEntity<ApiResponse<Page<EventDto>>> searchByText(
             @Parameter(description = "Texto a buscar") @RequestParam(required = false, defaultValue = "") String q,
             @PageableDefault(size = 10) Pageable pageable) {
-        
+
         Page<EventDto> result = searchService.searchByText(q, pageable)
                 .map(eventService::mapToDto);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @GetMapping("/search/advanced")
     @Operation(summary = "Búsqueda avanzada con filtros", description = "Busca eventos con filtros de precio, fecha y disponibilidad.")
-    public ResponseEntity<Page<EventDto>> searchAdvanced(
+    public ResponseEntity<ApiResponse<Page<EventDto>>> searchAdvanced(
             @ModelAttribute EventSearchRequest request,
             @PageableDefault(size = 10) Pageable pageable) {
-        
+
         Page<EventDto> result = searchService.searchAdvanced(request)
                 .map(eventService::mapToDto);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @GetMapping("/search/nearby")
     @Operation(summary = "Búsqueda por geolocalización", description = "Busca eventos cercanos a una ubicación dada.")
-    public ResponseEntity<Page<EventDto>> searchNearby(
+    public ResponseEntity<ApiResponse<Page<EventDto>>> searchNearby(
             @Parameter(description = "Latitud") @RequestParam Double lat,
             @Parameter(description = "Longitud") @RequestParam Double lon,
             @Parameter(description = "Distancia (ej. 5km, 10mi)") @RequestParam(defaultValue = "10km") String distance,
             @PageableDefault(size = 10) Pageable pageable) {
-        
+
         Page<EventDto> result = searchService.searchNearby(lat, lon, distance, pageable)
                 .map(eventService::mapToDto);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }
