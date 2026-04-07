@@ -66,7 +66,9 @@ public class KafkaConfig {
         config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
 
-        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.vento.common.dto.kafka,com.vento.event.document");
+        // Configuración crítica para deserializar eventos genéricos (Event)
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.vento.common.dto.kafka,com.vento.event.core.model");
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, com.vento.event.core.model.Event.class.getName());
         config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, "false");
 
         return new DefaultKafkaConsumerFactory<>(config);
