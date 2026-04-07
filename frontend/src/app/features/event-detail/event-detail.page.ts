@@ -3,6 +3,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
+import { LocationPickerComponent } from '../../shared/ui/location-picker/location-picker.component';
 import { EventService } from '../../core/services/event.service';
 import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -13,7 +14,7 @@ import { formatCurrency } from '../../core/format/format';
 @Component({
   selector: 'app-event-detail',
   standalone: true,
-  imports: [RouterLink, TopNavBar, BottomNavBar],
+  imports: [RouterLink, TopNavBar, BottomNavBar, LocationPickerComponent],
   template: `
     <app-top-nav-bar />
 
@@ -151,17 +152,25 @@ import { formatCurrency } from '../../core/format/format';
               <h2 class="text-3xl font-headline font-bold tracking-tight text-on-surface">
                 Ubicación
               </h2>
-              <div
-                class="w-full h-80 rounded-xl overflow-hidden shadow-inner grayscale opacity-90 border border-outline-variant/10"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=600&fit=crop"
-                  alt="Location Map"
-                  class="w-full h-full object-cover"
-                />
-              </div>
+
+              @if (event()!.latitude && event()!.longitude) {
+                <div class="w-full h-80 rounded-xl overflow-hidden shadow-lg border border-outline-variant/10">
+                  <app-location-picker
+                    [initialLat]="event()!.latitude!"
+                    [initialLng]="event()!.longitude!"
+                    [readOnly]="true"
+                    [showSearch]="false"
+                  />
+                </div>
+              } @else {
+                <div class="w-full h-80 rounded-xl bg-surface-container-high flex flex-col items-center justify-center text-on-surface-variant">
+                  <span class="material-symbols-outlined text-5xl mb-3 opacity-30">location_off</span>
+                  <p class="font-bold text-sm">Ubicación exacta no disponible</p>
+                </div>
+              }
+
               <div class="flex items-center gap-2 text-on-surface-variant">
-                <span class="material-symbols-outlined text-primary">directions</span>
+                <span class="material-symbols-outlined text-primary">location_on</span>
                 <span class="text-sm">{{ event()!.location }}</span>
               </div>
             </section>

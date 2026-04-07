@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { LeafletModule } from '@bluehalo/ngx-leaflet';
+import { DecimalPipe } from '@angular/common';
 import * as L from 'leaflet';
 import 'leaflet-control-geocoder';
-import { CommonModule } from '@angular/common';
 
 // Fix Leaflet icon paths for Angular
 delete (L.Icon.Default as any).prototype._getIconUrl;
@@ -18,7 +18,10 @@ const DEFAULT_ZOOM = 6;
 
 @Component({
   selector: 'app-location-picker',
-  imports: [LeafletModule, CommonModule],
+  imports: [LeafletModule, DecimalPipe],
+  host: {
+    '[class.read-only-map]': 'readOnly',
+  },
   template: `
     <div class="location-picker-container" [id]="'location-picker-' + pickerId">
       @if (renderMap) {
@@ -28,19 +31,23 @@ const DEFAULT_ZOOM = 6;
              (leafletMapReady)="onMapReady($event)">
         </div>
       }
-      <div class="location-info" *ngIf="currentLat && currentLng">
-        <p class="text-sm font-medium text-on-surface mb-0.5">📍 Ubicación seleccionada:</p>
-        <small class="text-on-surface-variant">Lat: {{ currentLat | number:'1.5-5' }}, Lng: {{ currentLng | number:'1.5-5' }}</small>
-      </div>
+      @if (!readOnly && currentLat && currentLng) {
+        <div class="location-info">
+          <p class="text-sm font-medium text-on-surface mb-0.5">📍 Ubicación seleccionada:</p>
+          <small class="text-on-surface-variant">Lat: {{ currentLat | number:'1.5-5' }}, Lng: {{ currentLng | number:'1.5-5' }}</small>
+        </div>
+      }
     </div>
   `,
   styles: [`
     :host {
       display: block;
       width: 100%;
+      height: 100%;
     }
     .location-picker-container {
       width: 100%;
+      height: 100%;
     }
     .map-container {
       height: 100%;
@@ -49,6 +56,9 @@ const DEFAULT_ZOOM = 6;
       border-radius: 0.75rem;
       z-index: 1;
       overflow: hidden;
+    }
+    :host.read-only-map .map-container {
+      min-height: 200px;
     }
     .location-info {
       margin-top: 0.5rem;
@@ -132,6 +142,10 @@ const DEFAULT_ZOOM = 6;
 export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() initialLat: number = 0;
   @Input() initialLng: number = 0;
+  /** When true, the marker is not draggable and no location events are emitted. */
+  @Input() readOnly: boolean = false;
+  /** When false, the geocoder/search bar is not added to the map. */
+  @Input() showSearch: boolean = true;
   @Output() locationChange = new EventEmitter<{ lat: number; lng: number }>();
 
   // Unique ID to prevent container reuse issues
@@ -177,30 +191,32 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
     this.map = map;
     this.isMapReady = true;
 
-    // Configure Geocoder
-    this.geocoder = (L.Control as any).geocoder({
-      defaultMarkGeocode: false,
-      position: 'topright',
-      collapsed: true
-    })
-      .on('markgeocode', (e: any) => {
-        const bbox = e.geocode.bbox;
-        const center = e.geocode.center;
-        const lat = center.lat;
-        const lng = center.lng;
-
-        this.updateMarker(lat, lng);
-
-        // Collapse the geocoder after selection
-        if (this.geocoder && this.geocoder._collapse) {
-          this.geocoder._collapse();
-        }
-
-        if (bbox) {
-          map.fitBounds(bbox);
-        }
+    // Configure Geocoder only when search is enabled and not in read-only mode
+    if (this.showSearch && !this.readOnly) {
+      this.geocoder = (L.Control as any).geocoder({
+        defaultMarkGeocode: false,
+        position: 'topright',
+        collapsed: true
       })
-      .addTo(map);
+        .on('markgeocode', (e: any) => {
+          const bbox = e.geocode.bbox;
+          const center = e.geocode.center;
+          const lat = center.lat;
+          const lng = center.lng;
+
+          this.updateMarker(lat, lng);
+
+          // Collapse the geocoder after selection
+          if (this.geocoder && this.geocoder._collapse) {
+            this.geocoder._collapse();
+          }
+
+          if (bbox) {
+            map.fitBounds(bbox);
+          }
+        })
+        .addTo(map);
+    }
 
     // If there's initial location, place marker
     if (this.currentLat && this.currentLng) {
@@ -211,7 +227,11 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
   updateMarker(lat: number, lng: number) {
     this.currentLat = lat;
     this.currentLng = lng;
-    this.locationChange.emit({ lat, lng });
+
+    // Only emit in editable mode
+    if (!this.readOnly) {
+      this.locationChange.emit({ lat, lng });
+    }
 
     if (!this.map) return;
 
@@ -219,15 +239,18 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
       this.marker.setLatLng([lat, lng]);
     } else {
       this.marker = L.marker([lat, lng], {
-        draggable: true
+        draggable: !this.readOnly
       }).addTo(this.map!);
 
-      this.marker.on('dragend', (e: any) => {
-        const pos = e.target.getLatLng();
-        this.currentLat = pos.lat;
-        this.currentLng = pos.lng;
-        this.locationChange.emit({ lat: pos.lat, lng: pos.lng });
-      });
+      // Only add drag listener in editable mode
+      if (!this.readOnly) {
+        this.marker.on('dragend', (e: any) => {
+          const pos = e.target.getLatLng();
+          this.currentLat = pos.lat;
+          this.currentLng = pos.lng;
+          this.locationChange.emit({ lat: pos.lat, lng: pos.lng });
+        });
+      }
     }
 
     this.map.setView([lat, lng], 15);
