@@ -21,11 +21,13 @@ const DEFAULT_ZOOM = 6;
   imports: [LeafletModule, CommonModule],
   template: `
     <div class="location-picker-container" [id]="'location-picker-' + pickerId">
-      <div class="map-container" 
-           leaflet 
-           [leafletOptions]="options" 
-           (leafletMapReady)="onMapReady($event)">
-      </div>
+      @if (renderMap) {
+        <div class="map-container"
+             leaflet
+             [leafletOptions]="options"
+             (leafletMapReady)="onMapReady($event)">
+        </div>
+      }
       <div class="location-info" *ngIf="currentLat && currentLng">
         <p class="text-sm font-medium text-on-surface mb-0.5">📍 Ubicación seleccionada:</p>
         <small class="text-on-surface-variant">Lat: {{ currentLat | number:'1.5-5' }}, Lng: {{ currentLng | number:'1.5-5' }}</small>
@@ -54,6 +56,77 @@ const DEFAULT_ZOOM = 6;
       background: #f3f4f6;
       border-radius: 0.375rem;
     }
+
+    /* ===== Geocoder overrides ===== */
+    /* Use ::ng-deep because Leaflet renders the geocoder outside this component's DOM */
+    :host ::ng-deep .leaflet-control-geocoder {
+      background: #fff !important;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18) !important;
+      width: 260px !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-form {
+      width: 100% !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-form input {
+      background: #fff !important;
+      color: #1f2937 !important;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 6px 12px;
+      font-size: 13px;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-form input::placeholder {
+      color: #9ca3af !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-alternatives {
+      background: #fff !important;
+      border-radius: 0 0 0.75rem 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12) !important;
+      width: 260px !important;
+      left: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      list-style: none !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-alternatives li {
+      height: 80px !important;
+      min-height: 80px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      border-bottom: 1px solid #f3f4f6 !important;
+      display: block !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-alternatives li:last-child {
+      border-bottom: none !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-alternatives a {
+      color: #1f2937 !important;
+      padding: 10px 12px !important;
+      font-size: 13px;
+      line-height: 1.5;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      display: block !important;
+      text-decoration: none !important;
+      background: transparent !important;
+      border: none !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-alternatives a:hover,
+    :host ::ng-deep .leaflet-control-geocoder-alternatives li:hover {
+      background: #f0f4ff !important;
+      color: #4a40e0 !important;
+    }
+    :host ::ng-deep .leaflet-control-geocoder-alternatives .leaflet-control-geocoder-address-detail {
+      color: #6b7280 !important;
+      font-size: 12px;
+    }
   `]
 })
 export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -63,6 +136,7 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
 
   // Unique ID to prevent container reuse issues
   pickerId = Math.random().toString(36).substring(2, 9);
+  renderMap = true; // Used to force recreation on HMR
 
   map: L.Map | null = null;
   marker: L.Marker | null = null;
@@ -106,7 +180,8 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
     // Configure Geocoder
     this.geocoder = (L.Control as any).geocoder({
       defaultMarkGeocode: false,
-      position: 'topright'
+      position: 'topright',
+      collapsed: true
     })
       .on('markgeocode', (e: any) => {
         const bbox = e.geocode.bbox;
@@ -115,6 +190,11 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
         const lng = center.lng;
 
         this.updateMarker(lat, lng);
+
+        // Collapse the geocoder after selection
+        if (this.geocoder && this.geocoder._collapse) {
+          this.geocoder._collapse();
+        }
 
         if (bbox) {
           map.fitBounds(bbox);
@@ -155,13 +235,18 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
 
   ngOnDestroy() {
     this.isMapReady = false;
+    this.renderMap = false; // Signal Angular to destroy the container
     if (this.marker) {
-      this.marker.off('dragend');
-      this.marker.remove();
+      try {
+        this.marker.off('dragend');
+        this.marker.remove();
+      } catch (e) { /* ignore if already removed */ }
       this.marker = null;
     }
     if (this.map) {
-      this.map.remove();
+      try {
+        this.map.remove();
+      } catch (e) { /* ignore if HMR already removed container */ }
       this.map = null;
     }
   }

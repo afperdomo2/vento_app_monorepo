@@ -29,7 +29,7 @@ export interface EventFormData {
     >
       <!-- Dialog -->
       <div
-        class="bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+        class="bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
         (click)="$event.stopPropagation()"
       >
         <!-- Header -->
