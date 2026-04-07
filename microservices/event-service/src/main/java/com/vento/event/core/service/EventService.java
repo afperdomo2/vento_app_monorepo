@@ -43,6 +43,8 @@ public class EventService {
                 .totalCapacity(request.getTotalCapacity())
                 .availableTickets(request.getTotalCapacity())
                 .price(request.getPrice())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
                 .build();
 
         Event savedEvent = eventRepository.save(event);
@@ -202,6 +204,8 @@ public class EventService {
                 .totalCapacity(event.getTotalCapacity())
                 .availableTickets(event.getAvailableTickets())
                 .price(event.getPrice())
+                .latitude(event.getLatitude())
+                .longitude(event.getLongitude())
                 .createdAt(event.getCreatedAt())
                 .updatedAt(event.getUpdatedAt())
                 .build();

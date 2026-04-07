@@ -79,7 +79,9 @@ class EventServiceTest {
                 eventDate,
                 "Estadio Nacional",
                 1000,
-                BigDecimal.valueOf(50.00)
+                BigDecimal.valueOf(50.00),
+                4.6097,
+                -74.0817
         );
 
         updateRequest = new UpdateEventRequest();

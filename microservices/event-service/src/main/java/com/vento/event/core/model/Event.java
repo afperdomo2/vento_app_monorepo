@@ -51,6 +51,12 @@ public class Event extends AuditableEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     @PrePersist
     protected void onCreate() {
         super.onCreate();

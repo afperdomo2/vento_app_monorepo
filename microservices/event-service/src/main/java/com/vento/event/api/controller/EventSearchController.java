@@ -43,12 +43,20 @@ public class EventSearchController {
             @ModelAttribute EventSearchRequest request,
             @PageableDefault(size = 10) Pageable pageable) {
         
-        // Si no se pasan filtros, delegar a searchByText para consistencia
-        if (request.getQ() != null && !request.getQ().isBlank()) {
-            return searchByText(request.getQ(), pageable);
-        }
-
         Page<EventDto> result = searchService.searchAdvanced(request)
+                .map(eventService::mapToDto);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/search/nearby")
+    @Operation(summary = "Búsqueda por geolocalización", description = "Busca eventos cercanos a una ubicación dada.")
+    public ResponseEntity<Page<EventDto>> searchNearby(
+            @Parameter(description = "Latitud") @RequestParam Double lat,
+            @Parameter(description = "Longitud") @RequestParam Double lon,
+            @Parameter(description = "Distancia (ej. 5km, 10mi)") @RequestParam(defaultValue = "10km") String distance,
+            @PageableDefault(size = 10) Pageable pageable) {
+        
+        Page<EventDto> result = searchService.searchNearby(lat, lon, distance, pageable)
                 .map(eventService::mapToDto);
         return ResponseEntity.ok(result);
     }

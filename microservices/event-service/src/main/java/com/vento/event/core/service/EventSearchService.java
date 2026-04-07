@@ -1,5 +1,7 @@
 package com.vento.event.core.service;
 
+import co.elastic.clients.elasticsearch._types.GeoDistanceType;
+import co.elastic.clients.elasticsearch._types.GeoLine;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import com.vento.common.dto.event.EventSearchRequest;
@@ -145,10 +147,39 @@ public class EventSearchService {
     }
 
     /**
+     * Búsqueda de eventos cercanos por geolocalización.
+     */
+    public Page<Event> searchNearby(Double lat, Double lon, String distance, Pageable pageable) {
+        if (lat == null || lon == null || distance == null) {
+            return Page.empty(pageable);
+        }
+
+        log.info("📍 Búsqueda nearby en ES: lat={}, lon={}, distance={}", lat, lon, distance);
+
+        var searchQuery = NativeQuery.builder()
+                .withQuery(q -> q.geoDistance(g -> g
+                        .field("location")
+                        .location(l -> l.latlon(ll -> ll.lat(lat).lon(lon)))
+                        .distance(distance)
+                ))
+                .withPageable(pageable)
+                .build();
+
+        SearchHits<EventDocument> hits = elasticsearchOperations.search(searchQuery, EventDocument.class);
+
+        List<Event> events = hits.stream()
+                .map(SearchHit::getContent)
+                .map(this::mapToEntity)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(events, pageable, hits.getTotalHits());
+    }
+
+    /**
      * Mapeo de Document -> Entity (JPA).
      */
     private Event mapToEntity(EventDocument doc) {
-        return Event.builder()
+        Event.EventBuilder builder = Event.builder()
                 .id(UUID.fromString(doc.getId()))
                 .name(doc.getName())
                 .description(doc.getDescription())
@@ -156,7 +187,13 @@ public class EventSearchService {
                 .eventDate(LocalDateTime.ofInstant(doc.getEventDate(), ZoneId.systemDefault()))
                 .price(BigDecimal.valueOf(doc.getPrice()))
                 .totalCapacity(doc.getTotalCapacity())
-                .availableTickets(doc.getAvailableTickets())
-                .build();
+                .availableTickets(doc.getAvailableTickets());
+
+        if (doc.getLocation() != null && doc.getLocation().contains(",")) {
+            String[] parts = doc.getLocation().split(",");
+            builder.latitude(Double.parseDouble(parts[0])).longitude(Double.parseDouble(parts[1]));
+        }
+
+        return builder.build();
     }
 }

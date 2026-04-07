@@ -44,13 +44,13 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] Métodos: `searchByText()` y `searchAdvanced()`
 
 ### 7.4 - Búsqueda por Geolocalización
-- [ ] **Geo Point Support**:
-  - Agregar campo `latitude` y `longitude` en Event entity
-  - Mapear a `geo_point` en Elasticsearch
-- [ ] **Nearby Search**:
-  - Input: lat, lon, radius (km)
-  - Output: eventos ordenados por distancia
-  - Usar geo_distance query
+- [x] **Geo Point Support**:
+  - [x] Agregados campos `latitude` y `longitude` en Event entity y DTOs
+  - [x] Mapeado a `location` (String "lat,lon") con `@GeoPointField` en Elasticsearch
+- [x] **Nearby Search**:
+  - [x] Endpoint: `GET /api/events/search/nearby?lat=...&lon=...&distance=5km`
+  - [x] Output: eventos ordenados por distancia
+  - [x] Implementado con `GeoDistanceQuery` nativo de ES 8.x
 
 ---
 

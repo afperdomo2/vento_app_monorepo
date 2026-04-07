@@ -49,4 +49,10 @@ public class CreateEventRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor a 0")
     @Schema(description = "Precio por ticket", example = "150.00")
     private BigDecimal price;
+
+    @Schema(description = "Latitud del lugar", example = "4.6097")
+    private Double latitude;
+
+    @Schema(description = "Longitud del lugar", example = "-74.0817")
+    private Double longitude;
 }

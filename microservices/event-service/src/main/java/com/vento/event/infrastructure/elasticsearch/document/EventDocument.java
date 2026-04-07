@@ -39,7 +39,7 @@ public class EventDocument {
     private String venue;
 
     @GeoPointField
-    private String location;
+    private String location; // Formato "lat,lon"
 
     @Field(type = FieldType.Date)
     private Instant eventDate;

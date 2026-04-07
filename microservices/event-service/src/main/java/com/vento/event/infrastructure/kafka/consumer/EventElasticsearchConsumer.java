@@ -96,6 +96,9 @@ public class EventElasticsearchConsumer {
                 .name(event.getName())
                 .description(event.getDescription())
                 .venue(event.getVenue())
+                .location(event.getLatitude() != null && event.getLongitude() != null 
+                        ? event.getLatitude() + "," + event.getLongitude() 
+                        : null)
                 .eventDate(event.getEventDate().atZone(java.time.ZoneId.systemDefault()).toInstant())
                 .price(event.getPrice().doubleValue())
                 .totalCapacity(event.getTotalCapacity())

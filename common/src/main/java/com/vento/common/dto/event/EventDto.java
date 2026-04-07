@@ -23,6 +23,8 @@ public class EventDto {
     private Integer totalCapacity;
     private Integer availableTickets;
     private BigDecimal price;
+    private Double latitude;
+    private Double longitude;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
