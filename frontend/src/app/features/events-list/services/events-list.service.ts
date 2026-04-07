@@ -101,8 +101,13 @@ export class EventsListService {
     this.state.update(s => ({ ...s, loading: true, error: null, events: [], currentPage: 0 }));
 
     const query = this.buildQuery(0);
+    const hasSearch = this.state().searchTerm.trim().length > 0;
 
-    this.eventService.listEvents(query).pipe(
+    const request$ = hasSearch
+      ? this.eventService.searchEvents({ q: query.search!, page: 0, size: query.size! })
+      : this.eventService.listEvents(query);
+
+    request$.pipe(
       tap(response => {
         this.state.update(s => ({
           ...s,
@@ -127,8 +132,13 @@ export class EventsListService {
     this.state.update(s => ({ ...s, loadingMore: true }));
 
     const query = this.buildQuery(nextPage);
+    const hasSearch = this.state().searchTerm.trim().length > 0;
 
-    this.eventService.listEvents(query).pipe(
+    const request$ = hasSearch
+      ? this.eventService.searchEvents({ q: query.search!, page: nextPage, size: query.size! })
+      : this.eventService.listEvents(query);
+
+    request$.pipe(
       tap(response => {
         this.state.update(s => ({
           ...s,
@@ -208,7 +218,8 @@ export class EventsListService {
       sortDir: filters.sortDir || 'ASC',
     };
 
-    // Add search term if present
+    // Add search term if present (mapped to 'search' for standard endpoint,
+    // but 'q' is used when routing to ES searchEvents())
     if (searchTerm && searchTerm.trim()) {
       query.search = searchTerm.trim();
     }

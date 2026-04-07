@@ -9,6 +9,7 @@ import {
   BackendEvent,
   Event,
   ListEventsParams,
+  SearchEventsParams,
   CreateEventRequest,
   UpdateEventRequest,
 } from '../models/event.models';
@@ -81,6 +82,30 @@ export class EventService {
 
     return this.http
       .get<ApiResponse<PagedResponse<BackendEvent>>>(this.apiUrl, {
+        params: queryParams,
+      })
+      .pipe(
+        map((response) => ({
+          ...response.data,
+          content: mapBackendEventsToEvents(response.data.content),
+        })),
+        catchError(this.handleError),
+      );
+  }
+
+  /**
+   * Search events using Elasticsearch endpoint (full-text search).
+   * Used when there's a search term; returns Page.empty() for blank queries.
+   */
+  searchEvents(params: SearchEventsParams): Observable<PagedResponse<Event>> {
+    const queryParams: Record<string, string | number> = {
+      q: params.q,
+      page: params.page,
+      size: params.size,
+    };
+
+    return this.http
+      .get<ApiResponse<PagedResponse<BackendEvent>>>(`${this.apiUrl}/search`, {
         params: queryParams,
       })
       .pipe(

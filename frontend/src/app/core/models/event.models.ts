@@ -38,6 +38,12 @@ export interface ListEventsParams {
   search?: string;
 }
 
+export interface SearchEventsParams {
+  page: number;
+  size: number;
+  q: string;
+}
+
 export interface CreateEventRequest {
   name: string;
   description: string;
