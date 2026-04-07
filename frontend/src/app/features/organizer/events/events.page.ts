@@ -337,6 +337,10 @@ const initialState: EventsState = {
       :host {
         display: block;
       }
+
+      input:focus {
+        outline: none;
+      }
     `,
   ],
 })
@@ -453,7 +457,7 @@ export class EventsPage implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
-    this.searchControl.setValue('');
+    this.searchControl.setValue('', { emitEvent: false });
     this.updateSearchTerm('');
   }
 

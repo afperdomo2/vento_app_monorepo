@@ -108,7 +108,7 @@ export class SearchBarComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
-    this.searchControl.setValue('');
+    this.searchControl.setValue('', { emitEvent: false });
     this.eventsListService.clearSearch();
   }
 }
