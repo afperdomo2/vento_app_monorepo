@@ -1,6 +1,6 @@
-package com.vento.event.repository;
+package com.vento.event.infrastructure.persistence.repository;
 
-import com.vento.event.model.Event;
+import com.vento.event.core.model.Event;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

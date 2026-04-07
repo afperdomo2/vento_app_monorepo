@@ -1,4 +1,4 @@
-package com.vento.event.controller;
+package com.vento.event.api.controller;
 
 import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.CreateEventRequest;
@@ -6,7 +6,7 @@ import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
 import com.vento.common.exception.ResourceNotFoundException;
-import com.vento.event.service.EventService;
+import com.vento.event.core.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

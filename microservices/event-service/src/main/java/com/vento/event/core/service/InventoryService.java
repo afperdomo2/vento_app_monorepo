@@ -1,6 +1,6 @@
-package com.vento.event.service;
+package com.vento.event.core.service;
 
-import com.vento.event.repository.EventRepository;
+import com.vento.event.infrastructure.persistence.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

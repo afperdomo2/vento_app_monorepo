@@ -1,4 +1,4 @@
-package com.vento.event.service;
+package com.vento.event.core.service;
 
 import com.vento.common.dto.event.CreateEventRequest;
 import com.vento.common.dto.event.EventAvailabilityDto;
@@ -6,8 +6,9 @@ import com.vento.common.dto.event.EventDto;
 import com.vento.common.dto.event.UpdateEventRequest;
 import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.ResourceNotFoundException;
-import com.vento.event.model.Event;
-import com.vento.event.repository.EventRepository;
+import com.vento.event.core.model.Event;
+import com.vento.event.infrastructure.kafka.producer.EventPublisher;
+import com.vento.event.infrastructure.persistence.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

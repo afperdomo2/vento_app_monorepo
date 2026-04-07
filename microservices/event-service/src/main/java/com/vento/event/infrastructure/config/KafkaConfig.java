@@ -1,4 +1,4 @@
-package com.vento.event.config;
+package com.vento.event.infrastructure.config;
 
 import com.vento.common.dto.kafka.OrderConfirmedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

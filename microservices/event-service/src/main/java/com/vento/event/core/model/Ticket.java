@@ -1,4 +1,4 @@
-package com.vento.event.model;
+package com.vento.event.core.model;
 
 import com.vento.common.enums.TicketStatus;
 import com.vento.common.model.AuditableEntity;

@@ -1,6 +1,6 @@
-package com.vento.event.repository;
+package com.vento.event.infrastructure.persistence.repository;
 
-import com.vento.event.model.Ticket;
+import com.vento.event.core.model.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

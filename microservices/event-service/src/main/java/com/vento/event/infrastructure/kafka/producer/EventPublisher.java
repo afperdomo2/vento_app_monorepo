@@ -1,6 +1,6 @@
-package com.vento.event.service;
+package com.vento.event.infrastructure.kafka.producer;
 
-import com.vento.event.model.Event;
+import com.vento.event.core.model.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

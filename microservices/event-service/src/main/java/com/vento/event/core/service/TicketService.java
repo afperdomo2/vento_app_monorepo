@@ -1,10 +1,10 @@
-package com.vento.event.service;
+package com.vento.event.core.service;
 
 import com.vento.common.dto.event.TicketDto;
 import com.vento.common.dto.kafka.OrderConfirmedEvent;
 import com.vento.common.enums.TicketStatus;
-import com.vento.event.model.Ticket;
-import com.vento.event.repository.TicketRepository;
+import com.vento.event.core.model.Ticket;
+import com.vento.event.infrastructure.persistence.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

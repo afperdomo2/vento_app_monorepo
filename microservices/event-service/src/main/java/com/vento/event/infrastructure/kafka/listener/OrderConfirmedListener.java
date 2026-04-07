@@ -1,8 +1,8 @@
-package com.vento.event.kafka;
+package com.vento.event.infrastructure.kafka.listener;
 
 import com.vento.common.config.KafkaTopics;
 import com.vento.common.dto.kafka.OrderConfirmedEvent;
-import com.vento.event.service.TicketService;
+import com.vento.event.core.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

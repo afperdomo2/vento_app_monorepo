@@ -1,4 +1,4 @@
-package com.vento.event.config;
+package com.vento.event.infrastructure.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
