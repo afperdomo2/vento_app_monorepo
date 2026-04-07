@@ -15,40 +15,21 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] Crear índice `events` con init-elasticsearch.sh
   - [x] Configurar mappings apropiados (text, geo_point, date, etc.)
   - [x] Configurar analyzers para búsqueda de texto (autocomplete)
-- [ ] **Elasticsearch Client**:
-  - [ ] Agregar spring-data-elasticsearch en event-service
-  - [ ] Configurar client connection
-  - [ ] Configurar serializers
+- [x] **Elasticsearch Client**:
+  - [x] Agregar spring-data-elasticsearch en event-service
+  - [x] Configurar client connection
+  - [x] Configurar serializers
 
 ### 7.2 - Sincronización PostgreSQL → Elasticsearch
-- [ ] **Event Index Mapping**:
-  ```json
-  {
-    "mappings": {
-      "properties": {
-        "id": { "type": "keyword" },
-        "name": { "type": "text", "analyzer": "standard" },
-        "description": { "type": "text", "analyzer": "standard" },
-        "venue": { "type": "text" },
-        "location": { "type": "geo_point" },
-        "eventDate": { "type": "date" },
-        "price": { "type": "float" },
-        "availableTickets": { "type": "integer" },
-        "status": { "type": "keyword" },
-        "createdAt": { "type": "date" }
-      }
-    }
-  }
-  ```
-- [ ] **Sync Strategy (River/CDC Pattern)**:
-  - Opción A: Scheduled job que sincroniza cada X minutos
-  - Opción B: Escuchar eventos de Kafka y actualizar índice
-  - Recomendado: Usar Debezium o JDBC connector (opcional, complejidad)
-  - Implementar inicialmente: Scheduled sync + event-driven updates
-- [ ] **Event-driven Updates**:
-  - Publicar evento a topic `event.sync`
-  - Consumer actualiza índice Elasticsearch
-  - Manejar fallos con retry y DLQ
+- [x] **Event Index Mapping**:
+  - [x] Implementado en EventDocument.java con anotaciones @Field
+  - [x] Campos: id, name, description, venue, location (geo_point), eventDate, price, etc.
+- [x] **Sync Strategy (Event-Driven via Kafka)**:
+  - [x] Implementado: Event-driven updates via Kafka
+  - [x] Topics: event.created, event.updated, event.deleted
+  - [x] EventPublisher publica eventos cuando hay cambios
+  - [x] EventElasticsearchConsumer consume y actualiza Elasticsearch
+  - [x] Manejo de fallos con retry exponencial y DLQ
 
 ### 7.3 - Búsqueda Avanzada API
 - [ ] **Endpoints de Búsqueda**:

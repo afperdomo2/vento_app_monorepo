@@ -8,6 +8,7 @@ import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.event.model.Event;
 import com.vento.event.repository.EventRepository;
+import com.vento.event.service.EventPublisher;
 import com.vento.event.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +40,9 @@ class EventServiceTest {
 
     @Mock
     private InventoryService inventoryService;
+
+    @Mock
+    private EventPublisher eventPublisher;
 
     @InjectMocks
     private EventService eventService;

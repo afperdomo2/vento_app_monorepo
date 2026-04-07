@@ -28,6 +28,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final InventoryService inventoryService;
+    private final EventPublisher eventPublisher;
 
     @Transactional
     public EventDto createEvent(CreateEventRequest request) {
@@ -47,6 +48,9 @@ public class EventService {
         log.info("✅ Evento creado con ID: {}", savedEvent.getId());
 
         inventoryService.initializeInventory(savedEvent.getId(), savedEvent.getAvailableTickets());
+        
+        // Publicar evento a Kafka para sincronización con Elasticsearch
+        eventPublisher.publishEventCreated(savedEvent);
 
         return mapToDto(savedEvent);
     }
@@ -121,6 +125,10 @@ public class EventService {
 
                     Event updatedEvent = eventRepository.save(event);
                     log.info("✅ Evento actualizado: {}", updatedEvent.getId());
+                    
+                    // Publicar evento a Kafka para sincronización con Elasticsearch
+                    eventPublisher.publishEventUpdated(updatedEvent);
+                    
                     return mapToDto(updatedEvent);
                 });
     }
@@ -172,6 +180,9 @@ public class EventService {
     public boolean deleteEvent(UUID id) {
         return eventRepository.findById(id)
                 .map(event -> {
+                    // Publicar evento a Kafka antes de eliminar (para que ES pueda eliminar el documento)
+                    eventPublisher.publishEventDeleted(event);
+                    
                     eventRepository.delete(event);
                     inventoryService.removeInventory(id);
                     log.info("✅ Evento eliminado: {}", id);
