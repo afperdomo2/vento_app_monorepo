@@ -1,11 +1,15 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { EventService } from '../../../core/services/event.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { formatCurrency } from '../../../core/format/format';
 import { Event } from '../../../core/models/event.models';
 import { EventFormDialog } from '../../../shared/components/event-form-dialog/event-form-dialog.component';
 import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { FiltersBarComponent } from '../../events-list/components/filters-bar';
 
 interface EventsState {
   events: Event[];
@@ -19,6 +23,9 @@ interface EventsState {
   editingEvent: Event | null;
   deletingEvent: Event | null;
   isDeleting: boolean;
+  searchTerm: string;
+  sortBy: string;
+  sortDir: 'ASC' | 'DESC';
 }
 
 const initialState: EventsState = {
@@ -33,12 +40,22 @@ const initialState: EventsState = {
   editingEvent: null,
   deletingEvent: null,
   isDeleting: false,
+  searchTerm: '',
+  sortBy: 'eventDate',
+  sortDir: 'ASC',
 };
 
 @Component({
   selector: 'app-organizer-events',
   standalone: true,
-  imports: [CommonModule, EventFormDialog, ConfirmDialog],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    EventFormDialog,
+    ConfirmDialog,
+    FiltersBarComponent,
+  ],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -46,7 +63,11 @@ const initialState: EventsState = {
         <div>
           <h2 class="font-headline text-2xl font-bold text-on-surface">Mis Eventos</h2>
           <p class="text-on-surface-variant text-sm">
-            {{ totalElements() }} evento{{ totalElements() !== 1 ? 's' : '' }} en total
+            @if (isSearching() && searchTerm()) {
+              {{ totalElements() }} resultados para "<strong class="text-on-surface">{{ searchTerm() }}</strong>"
+            } @else {
+              {{ totalElements() }} evento{{ totalElements() !== 1 ? 's' : '' }} en total
+            }
           </p>
         </div>
         <button
@@ -58,6 +79,47 @@ const initialState: EventsState = {
           Crear Evento
         </button>
       </header>
+
+      <!-- Search Bar -->
+      <div class="bg-surface-container-low rounded-xl p-4">
+        <div class="flex items-center gap-3">
+          <!-- Search Icon -->
+          <span class="material-symbols-outlined text-on-surface-variant text-lg">
+            @if (isLoading()) {
+              <span class="animate-spin">progress_activity</span>
+            } @else {
+              search
+            }
+          </span>
+
+          <!-- Search Input -->
+          <input
+            [formControl]="searchControl"
+            type="text"
+            placeholder="Buscar eventos por nombre, ubicación..."
+            class="flex-1 bg-transparent border-none focus:ring-0 text-on-surface font-body text-base placeholder:text-on-surface-variant/50"
+          />
+
+          <!-- Clear Button -->
+          @if (searchControl.value) {
+            <button
+              (click)="clearSearch()"
+              class="p-1.5 hover:bg-surface-container-high rounded-full transition-colors"
+              [attr.aria-label]="'Limpiar búsqueda'"
+            >
+              <span class="material-symbols-outlined text-on-surface-variant text-sm">close</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Filters Bar (Desktop) -->
+      <div class="hidden md:block">
+        <app-filters-bar
+          (sortChange)="applySort($event)"
+          (reset)="resetFilters()"
+        />
+      </div>
 
       <!-- Loading State -->
       @if (isLoading()) {
@@ -278,9 +340,12 @@ const initialState: EventsState = {
     `,
   ],
 })
-export class EventsPage implements OnInit {
+export class EventsPage implements OnInit, OnDestroy {
   private eventService = inject(EventService);
   private notification = inject(NotificationService);
+  private destroy$ = new Subject<void>();
+
+  searchControl = new FormControl('');
 
   private state = signal<EventsState>(initialState);
 
@@ -295,17 +360,51 @@ export class EventsPage implements OnInit {
   readonly editingEvent = computed(() => this.state().editingEvent);
   readonly deletingEvent = computed(() => this.state().deletingEvent);
   readonly isDeleting = computed(() => this.state().isDeleting);
+  readonly searchTerm = computed(() => this.state().searchTerm);
+  readonly sortBy = computed(() => this.state().sortBy);
+  readonly sortDir = computed(() => this.state().sortDir);
+  readonly isSearching = computed(() => 
+    this.state().searchTerm.trim().length > 0 && this.state().isLoading
+  );
 
   ngOnInit(): void {
+    this.setupSearchControl();
     this.loadEvents();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupSearchControl(): void {
+    this.searchControl.valueChanges
+      .pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(term => {
+        this.updateSearchTerm(term || '');
+      });
   }
 
   loadEvents(): void {
     const page = this.state().currentPage;
     const size = this.state().pageSize;
+    const search = this.state().searchTerm;
+    const sortBy = this.state().sortBy;
+    const sortDir = this.state().sortDir;
+
     this.state.update((s) => ({ ...s, isLoading: true, error: null }));
 
-    this.eventService.listEvents({ page, size, sortBy: 'eventDate', sortDir: 'ASC' }).subscribe({
+    const hasSearch = search && search.trim().length > 0;
+
+    const request$ = hasSearch
+      ? this.eventService.searchEvents({ q: search.trim(), page, size })
+      : this.eventService.listEvents({ page, size, sortBy, sortDir });
+
+    request$.subscribe({
       next: (pageData) => {
         this.state.update((s) => ({
           ...s,
@@ -320,6 +419,42 @@ export class EventsPage implements OnInit {
         this.state.update((s) => ({ ...s, isLoading: false, error: err.message }));
       },
     });
+  }
+
+  applySort(sort: { sortBy: string; sortDir: string }): void {
+    this.state.update((s) => ({
+      ...s,
+      sortBy: sort.sortBy,
+      sortDir: sort.sortDir as 'ASC' | 'DESC',
+      currentPage: 0,
+    }));
+    this.loadEvents();
+  }
+
+  resetFilters(): void {
+    this.state.update((s) => ({
+      ...s,
+      sortBy: 'eventDate',
+      sortDir: 'ASC',
+      searchTerm: '',
+      currentPage: 0,
+    }));
+    this.searchControl.setValue('');
+    this.loadEvents();
+  }
+
+  updateSearchTerm(term: string): void {
+    this.state.update((s) => ({
+      ...s,
+      searchTerm: term,
+      currentPage: 0,
+    }));
+    this.loadEvents();
+  }
+
+  clearSearch(): void {
+    this.searchControl.setValue('');
+    this.updateSearchTerm('');
   }
 
   goToPage(page: number): void {
