@@ -1,7 +1,7 @@
-package com.vento.order.kafka;
+package com.vento.order.infrastructure.kafka.consumer;
 
 import com.vento.common.config.KafkaTopics;
-import com.vento.order.service.DlqService;
+import com.vento.order.core.service.DlqService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

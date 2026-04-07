@@ -1,8 +1,8 @@
 package com.vento.order.kafka;
 
-import com.vento.order.model.FailedEvent;
-import com.vento.order.repository.FailedEventRepository;
-import com.vento.order.service.DlqService;
+import com.vento.order.core.model.FailedEvent;
+import com.vento.order.infrastructure.persistence.repository.FailedEventRepository;
+import com.vento.order.core.service.DlqService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

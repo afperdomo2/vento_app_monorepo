@@ -1,6 +1,6 @@
-package com.vento.order.repository;
+package com.vento.order.infrastructure.persistence.repository;
 
-import com.vento.order.model.FailedEvent;
+import com.vento.order.core.model.FailedEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.vento.order.config;
+package com.vento.order.infrastructure.config;
 
 import com.vento.common.dto.kafka.PaymentFailedEvent;
 import com.vento.common.dto.kafka.PaymentProcessedEvent;

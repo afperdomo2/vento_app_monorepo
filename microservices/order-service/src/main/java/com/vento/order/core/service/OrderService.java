@@ -1,4 +1,4 @@
-package com.vento.order.service;
+package com.vento.order.core.service;
 
 import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.EventAvailabilityDto;
@@ -9,9 +9,9 @@ import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.ConflictResolutionService;
 import com.vento.common.exception.ExternalServiceException;
 import com.vento.common.exception.ResourceNotFoundException;
-import com.vento.order.client.EventClient;
-import com.vento.order.model.Order;
-import com.vento.order.repository.OrderRepository;
+import com.vento.order.infrastructure.client.EventClient;
+import com.vento.order.core.model.Order;
+import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.vento.order.service;
+package com.vento.order.core.service;
 
 import com.vento.common.exception.InsufficientTicketsException;
 import lombok.RequiredArgsConstructor;

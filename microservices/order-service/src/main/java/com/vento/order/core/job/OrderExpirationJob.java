@@ -1,8 +1,9 @@
-package com.vento.order.service;
+package com.vento.order.core.job;
 
 import com.vento.common.enums.OrderStatus;
-import com.vento.order.model.Order;
-import com.vento.order.repository.OrderRepository;
+import com.vento.order.core.model.Order;
+import com.vento.order.core.service.OrderService;
+import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

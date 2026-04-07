@@ -1,4 +1,4 @@
-package com.vento.order.config;
+package com.vento.order.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

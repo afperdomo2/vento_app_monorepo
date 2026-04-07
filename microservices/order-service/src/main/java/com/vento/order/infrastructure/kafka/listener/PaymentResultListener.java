@@ -1,4 +1,4 @@
-package com.vento.order.kafka;
+package com.vento.order.infrastructure.kafka.listener;
 
 import com.vento.common.config.KafkaTopics;
 import com.vento.common.dto.kafka.OrderCancelledEvent;
@@ -7,10 +7,10 @@ import com.vento.common.dto.kafka.PaymentFailedEvent;
 import com.vento.common.dto.kafka.PaymentProcessedEvent;
 import com.vento.common.enums.OrderStatus;
 import com.vento.common.exception.ResourceNotFoundException;
-import com.vento.order.model.Order;
-import com.vento.order.repository.OrderRepository;
-import com.vento.order.service.ReservationService;
-import com.vento.order.service.TicketInventoryService;
+import com.vento.order.core.model.Order;
+import com.vento.order.infrastructure.persistence.repository.OrderRepository;
+import com.vento.order.core.service.ReservationService;
+import com.vento.order.core.service.TicketInventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

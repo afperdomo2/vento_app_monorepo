@@ -1,7 +1,7 @@
-package com.vento.order.repository;
+package com.vento.order.infrastructure.persistence.repository;
 
 import com.vento.common.enums.OrderStatus;
-import com.vento.order.model.Order;
+import com.vento.order.core.model.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

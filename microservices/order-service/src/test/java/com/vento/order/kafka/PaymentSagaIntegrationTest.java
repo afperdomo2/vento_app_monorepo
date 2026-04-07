@@ -1,8 +1,8 @@
 package com.vento.order.kafka;
 
 import com.vento.common.enums.OrderStatus;
-import com.vento.order.model.Order;
-import com.vento.order.repository.OrderRepository;
+import com.vento.order.core.model.Order;
+import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

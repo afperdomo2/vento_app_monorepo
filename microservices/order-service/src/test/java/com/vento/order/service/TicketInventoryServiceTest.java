@@ -1,6 +1,7 @@
 package com.vento.order.service;
 
 import com.vento.common.exception.InsufficientTicketsException;
+import com.vento.order.core.service.TicketInventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -1,7 +1,7 @@
-package com.vento.order.service;
+package com.vento.order.core.service;
 
-import com.vento.order.model.FailedEvent;
-import com.vento.order.repository.FailedEventRepository;
+import com.vento.order.core.model.FailedEvent;
+import com.vento.order.infrastructure.persistence.repository.FailedEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

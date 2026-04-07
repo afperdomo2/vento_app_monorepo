@@ -1,4 +1,4 @@
-package com.vento.order.model;
+package com.vento.order.core.model;
 
 import com.vento.common.enums.OrderStatus;
 import com.vento.common.model.AuditableEntity;

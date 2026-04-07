@@ -1,4 +1,4 @@
-package com.vento.order.client;
+package com.vento.order.infrastructure.client;
 
 import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.EventAvailabilityDto;
