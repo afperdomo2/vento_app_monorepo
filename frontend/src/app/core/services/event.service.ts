@@ -10,6 +10,7 @@ import {
   Event,
   ListEventsParams,
   SearchEventsParams,
+  NearbyEventsParams,
   CreateEventRequest,
   UpdateEventRequest,
 } from '../models/event.models';
@@ -101,6 +102,32 @@ export class EventService {
 
     return this.http
       .get<ApiResponse<PagedResponse<BackendEvent>>>(`${this.apiUrl}/search`, {
+        params: queryParams,
+      })
+      .pipe(
+        map((response) => ({
+          ...response.data,
+          content: mapBackendEventsToEvents(response.data.content),
+        })),
+        catchError(this.handleError),
+      );
+  }
+
+  /**
+   * Search events by geographic proximity using Elasticsearch geo-distance query.
+   * Returns events within a specified radius of the given coordinates.
+   */
+  searchNearbyEvents(params: NearbyEventsParams): Observable<PagedResponse<Event>> {
+    const queryParams: Record<string, string | number> = {
+      lat: params.lat,
+      lon: params.lon,
+      distance: params.distance || '10km',
+      page: params.page,
+      size: params.size,
+    };
+
+    return this.http
+      .get<ApiResponse<PagedResponse<BackendEvent>>>(`${this.apiUrl}/search/nearby`, {
         params: queryParams,
       })
       .pipe(

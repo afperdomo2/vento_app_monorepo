@@ -10,6 +10,7 @@ import { EventsPage } from './features/organizer/events/events.page';
 import { TicketingPage } from './features/organizer/ticketing/ticketing.page';
 import { SettingsPage } from './features/organizer/settings/settings.page';
 import { EventsListPage } from './features/events-list/events-list.page';
+import { NearbyEventsPage } from './features/nearby/nearby.page';
 import { ProfilePage } from './features/profile/profile.page';
 import { MyOrdersPage } from './features/my-orders/my-orders.page';
 import { MyOrdersDetailPage } from './features/my-orders/my-orders-detail.page';
@@ -23,6 +24,7 @@ export const routes: Routes = [
   { path: 'home', component: HomePage },
   { path: 'events', component: EventsListPage },
   { path: 'events/:id', component: EventDetailPage },
+  { path: 'nearby', component: NearbyEventsPage },
   {
     path: 'login',
     component: LoginPage,

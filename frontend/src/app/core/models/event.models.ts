@@ -43,6 +43,14 @@ export interface SearchEventsParams {
   q: string;
 }
 
+export interface NearbyEventsParams {
+  lat: number;
+  lon: number;
+  distance?: string;
+  page: number;
+  size: number;
+}
+
 export interface CreateEventRequest {
   name: string;
   description: string;
