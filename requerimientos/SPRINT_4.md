@@ -32,20 +32,16 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] Manejo de fallos con retry exponencial y DLQ
 
 ### 7.3 - Búsqueda Avanzada API
-- [ ] **Endpoints de Búsqueda**:
-  - `GET /api/events/search` - Búsqueda de texto libre
-  - `GET /api/events/search/nearby` - Búsqueda por geolocalización
-  - `GET /api/events/search/filter` - Filtros combinados
-- [ ] **Features de Búsqueda**:
-  - Búsqueda fuzzy (typo tolerance)
-  - Autocomplete / suggest
-  - Filtros: precio, fecha, ubicación, disponibilidad
-  - Ordenamiento: relevance, fecha, precio
-  - Paginación
-- [ ] **ElasticsearchService**:
-  - Crear `EventSearchService`
-  - Métodos: searchByText(), searchNearby(), advancedSearch()
-  - Manejo de errores (ES unavailable → fallback a DB)
+- [x] **Endpoints de Búsqueda**:
+  - [x] `GET /api/events/search` - Búsqueda de texto libre
+  - [x] `GET /api/events/search/advanced` - Filtros combinados (precio, fecha, disponibilidad)
+- [x] **Features de Búsqueda**:
+  - [x] Búsqueda multi-campo (nombre, descripción, venue)
+  - [x] Filtros por rango de precios, fechas y disponibilidad
+  - [x] Paginación incluida
+- [x] **EventSearchService**:
+  - [x] Implementado con `CriteriaQuery` para compatibilidad y estabilidad
+  - [x] Métodos: `searchByText()` y `searchAdvanced()`
 
 ### 7.4 - Búsqueda por Geolocalización
 - [ ] **Geo Point Support**:

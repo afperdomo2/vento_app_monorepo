@@ -192,7 +192,7 @@ public class EventService {
                 .orElse(false);
     }
 
-    private EventDto mapToDto(Event event) {
+    public EventDto mapToDto(Event event) {
         return EventDto.builder()
                 .id(event.getId())
                 .name(event.getName())

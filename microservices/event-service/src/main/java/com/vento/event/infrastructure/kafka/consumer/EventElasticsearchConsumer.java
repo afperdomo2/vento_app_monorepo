@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneOffset;
+
 /**
  * Consumer que escucha eventos de Kafka y sincroniza con Elasticsearch.
  *
@@ -94,13 +96,13 @@ public class EventElasticsearchConsumer {
                 .name(event.getName())
                 .description(event.getDescription())
                 .venue(event.getVenue())
-                .eventDate(event.getEventDate())
-                .price(event.getPrice())
+                .eventDate(event.getEventDate().atZone(java.time.ZoneId.systemDefault()).toInstant())
+                .price(event.getPrice().doubleValue())
                 .totalCapacity(event.getTotalCapacity())
                 .availableTickets(event.getAvailableTickets())
-                .status("ACTIVE") // Por defecto, se puede mejorar después
-                .createdAt(event.getCreatedAt())
-                .updatedAt(event.getUpdatedAt())
+                .status("ACTIVE")
+                .createdAt(event.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant())
+                .updatedAt(event.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant())
                 .build();
     }
 }

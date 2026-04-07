@@ -11,8 +11,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.GeoPointField;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -43,10 +42,10 @@ public class EventDocument {
     private String location;
 
     @Field(type = FieldType.Date)
-    private LocalDateTime eventDate;
+    private Instant eventDate;
 
-    @Field(type = FieldType.Float)
-    private BigDecimal price;
+    @Field(type = FieldType.Double)
+    private Double price;
 
     @Field(type = FieldType.Integer)
     private Integer totalCapacity;
@@ -58,8 +57,8 @@ public class EventDocument {
     private String status;
 
     @Field(type = FieldType.Date)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Field(type = FieldType.Date)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 }
