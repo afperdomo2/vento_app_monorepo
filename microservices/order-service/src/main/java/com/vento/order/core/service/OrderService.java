@@ -47,14 +47,17 @@ public class OrderService {
 
     @PostConstruct
     public void init() {
-        ordersCreatedCounter = registerCounter("vento.orders.created", "Total number of orders created");
-        ordersConfirmedCounter = registerCounter("vento.orders.confirmed", "Total number of orders confirmed");
-        ordersCancelledCounter = registerCounter("vento.orders.cancelled", "Total number of orders cancelled");
-    }
-
-    private Counter registerCounter(String name, String description) {
-        return Counter.builder(name)
-                .description(description)
+        ordersCreatedCounter = Counter.builder("vento.orders.count")
+                .tag("type", "created")
+                .description("Total number of orders")
+                .register(meterRegistry);
+        ordersConfirmedCounter = Counter.builder("vento.orders.count")
+                .tag("type", "confirmed")
+                .description("Total number of orders")
+                .register(meterRegistry);
+        ordersCancelledCounter = Counter.builder("vento.orders.count")
+                .tag("type", "cancelled")
+                .description("Total number of orders")
                 .register(meterRegistry);
     }
 

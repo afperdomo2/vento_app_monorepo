@@ -11,6 +11,9 @@ import com.vento.order.core.model.Order;
 import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import com.vento.order.core.service.ReservationService;
 import com.vento.order.core.service.TicketInventoryService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -39,6 +42,22 @@ public class PaymentResultListener {
     private final ReservationService reservationService;
     private final TicketInventoryService ticketInventoryService;
     private final KafkaTemplate<String, Object> orderKafkaTemplate;
+    private final MeterRegistry meterRegistry;
+
+    private Counter ordersConfirmedCounter;
+    private Counter ordersCancelledCounter;
+
+    @PostConstruct
+    public void init() {
+        ordersConfirmedCounter = Counter.builder("vento.orders.count")
+                .tag("type", "confirmed")
+                .description("Total number of orders")
+                .register(meterRegistry);
+        ordersCancelledCounter = Counter.builder("vento.orders.count")
+                .tag("type", "cancelled")
+                .description("Total number of orders")
+                .register(meterRegistry);
+    }
 
     /**
      * Escucha pagos exitosos y confirma la orden.
@@ -65,6 +84,7 @@ public class PaymentResultListener {
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
         log.info("✅ Orden {} confirmada tras pago exitoso.", event.orderId());
+        ordersConfirmedCounter.increment();
 
         // Eliminar reserva temporal en Redis
         reservationService.removeReservation(order.getId());
@@ -109,6 +129,7 @@ public class PaymentResultListener {
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
         log.info("✅ Orden {} cancelada tras pago fallido.", event.orderId());
+        ordersCancelledCounter.increment();
 
         // Liberar tickets en Redis
         ticketInventoryService.releaseTickets(order.getEventId(), order.getQuantity());

@@ -103,7 +103,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(vento_orders_confirmed_total[1m])",
+          "expr": "rate(vento_orders_count_total{type=\"confirmed\"}[5m])",
           "legendFormat": "Órdenes confirmadas/min",
           "refId": "A"
         }
@@ -173,7 +173,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "vento_orders_created_total",
+          "expr": "vento_orders_count_total{type=\"created\"}",
           "legendFormat": "Creadas",
           "refId": "A"
         },
@@ -182,7 +182,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "vento_orders_confirmed_total",
+          "expr": "vento_orders_count_total{type=\"confirmed\"}",
           "hide": false,
           "legendFormat": "Confirmadas",
           "refId": "B"
@@ -192,25 +192,13 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "vento_orders_cancelled_total",
+          "expr": "vento_orders_count_total{type=\"cancelled\"}",
           "hide": false,
           "legendFormat": "Canceladas",
           "refId": "C"
         }
       ],
       "title": "Órdenes por Estado",
-      "transformations": [
-        {
-          "id": "reduce",
-          "options": {
-            "includeTimeField": false,
-            "mode": "seriesToRows",
-            "reducers": [
-              "lastNotNull"
-            ]
-          }
-        }
-      ],
       "type": "stat"
     },
     {
@@ -500,15 +488,6 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "percentChange": {
-          "color": [
-            "#B877FF",
-            "#73BF69",
-            "#F2495C"
-          ],
-          "downs": true,
-          "ups": true
-        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -516,7 +495,7 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": true,
+        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },

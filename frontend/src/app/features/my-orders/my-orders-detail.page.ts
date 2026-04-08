@@ -388,16 +388,15 @@ export class MyOrdersDetailPage implements OnInit {
   tickets = signal<TicketWithQR[]>([]);
   ticketsLoading = signal(false);
 
+  private readonly loadTicketsEffect = effect(() => {
+    const order = this.order();
+    if (order?.status === 'CONFIRMED') {
+      this.loadTickets();
+    }
+  });
+
   ngOnInit(): void {
     this.loadOrder();
-
-    // Auto-load tickets when order is confirmed
-    effect(() => {
-      const order = this.order();
-      if (order?.status === 'CONFIRMED') {
-        this.loadTickets();
-      }
-    });
   }
 
   loadOrder(): void {
