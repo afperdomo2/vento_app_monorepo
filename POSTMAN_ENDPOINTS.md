@@ -701,6 +701,97 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 
 ---
 
+### 📊 Metrics
+
+#### API Gateway Metrics
+
+- **Método:** `GET`
+- **URL:** `{{base_url}}/actuator/prometheus`
+- **Headers:**
+  ```
+  Accept: text/plain
+  ```
+- **Respuesta exitosa:** `200 OK` (formato Prometheus text)
+- **Métricas incluidas:**
+  - HTTP requests: count, latency, errors
+  - JVM metrics: memory, GC, threads
+  - Spring metrics: datasource, cache
+
+---
+
+#### Event Service Metrics
+
+- **Método:** `GET`
+- **URL:** `http://localhost:8082/actuator/prometheus`
+- **Headers:**
+  ```
+  Accept: text/plain
+  ```
+- **Respuesta exitosa:** `200 OK` (formato Prometheus text)
+- **Métricas custom incluidas:**
+  - `vento_events_created_total` - Total de eventos creados
+  - HTTP requests: count, latency, errors
+  - JVM metrics: memory, GC, threads
+
+---
+
+#### Order Service Metrics
+
+- **Método:** `GET`
+- **URL:** `http://localhost:8083/actuator/prometheus`
+- **Headers:**
+  ```
+  Accept: text/plain
+  ```
+- **Respuesta exitosa:** `200 OK` (formato Prometheus text)
+- **Métricas custom incluidas:**
+  - `vento_orders_created_total` - Total de órdenes creadas
+  - `vento_orders_confirmed_total` - Total de órdenes confirmadas
+  - `vento_orders_cancelled_total` - Total de órdenes canceladas
+  - HTTP requests: count, latency, errors
+  - JVM metrics: memory, GC, threads
+
+---
+
+#### Payment Service Metrics
+
+- **Método:** `GET`
+- **URL:** `http://localhost:8084/actuator/prometheus`
+- **Headers:**
+  ```
+  Accept: text/plain
+  ```
+- **Respuesta exitosa:** `200 OK` (formato Prometheus text)
+- **Métricas custom incluidas:**
+  - `vento_payments_success_total` - Total de pagos exitosos
+  - `vento_payments_failed_total` - Total de pagos fallidos
+  - HTTP requests: count, latency, errors
+  - JVM metrics: memory, GC, threads
+
+---
+
+#### Prometheus UI
+
+- **Método:** `GET`
+- **URL:** `http://localhost:9090`
+- **Descripción:** Interfaz web de Prometheus para consultar métricas
+- **Ejemplos de consultas PromQL:**
+  ```
+  # Órdenes creadas por minuto
+  rate(vento_orders_created_total[1m])
+  
+  # Tasa de éxito de pagos
+  rate(vento_payments_success_total[5m]) / (rate(vento_payments_success_total[5m]) + rate(vento_payments_failed_total[5m]))
+  
+  # Latencia p99 de APIs
+  histogram_quantile(0.99, rate(http_server_requests_seconds_bucket[5m]))
+  
+  # Eventos creados totales
+  vento_events_created_total
+  ```
+
+---
+
 ## 📊 Códigos de Respuesta
 
 | Código                      | Significado        | Causas Comunes                                 |

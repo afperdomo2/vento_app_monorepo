@@ -13,12 +13,12 @@ import com.vento.order.core.service.TicketInventoryService;
 import com.vento.order.infrastructure.client.EventClient;
 import com.vento.order.core.model.Order;
 import com.vento.order.infrastructure.persistence.repository.OrderRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -57,7 +57,8 @@ class OrderServiceTest {
     @Mock
     private ReservationService reservationService;
 
-    @InjectMocks
+    private SimpleMeterRegistry meterRegistry;
+
     private OrderService orderService;
 
     private UUID orderId;
@@ -69,6 +70,9 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        orderService = new OrderService(orderRepository, eventClient, ticketInventoryService, reservationService, meterRegistry);
+        
         orderId = UUID.randomUUID();
         userId = UUID.randomUUID();
         eventId = UUID.randomUUID();

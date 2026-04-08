@@ -13,6 +13,8 @@ import com.vento.order.infrastructure.client.EventClient;
 import com.vento.order.core.model.Order;
 import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import feign.FeignException;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +30,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OrderService {
 
@@ -36,6 +37,33 @@ public class OrderService {
     private final EventClient eventClient;
     private final TicketInventoryService ticketInventoryService;
     private final ReservationService reservationService;
+
+    private final Counter ordersCreatedCounter;
+    private final Counter ordersConfirmedCounter;
+    private final Counter ordersCancelledCounter;
+
+    public OrderService(OrderRepository orderRepository,
+                        EventClient eventClient,
+                        TicketInventoryService ticketInventoryService,
+                        ReservationService reservationService,
+                        MeterRegistry meterRegistry) {
+        this.orderRepository = orderRepository;
+        this.eventClient = eventClient;
+        this.ticketInventoryService = ticketInventoryService;
+        this.reservationService = reservationService;
+
+        this.ordersCreatedCounter = Counter.builder("vento.orders.created")
+                .description("Total number of orders created")
+                .register(meterRegistry);
+
+        this.ordersConfirmedCounter = Counter.builder("vento.orders.confirmed")
+                .description("Total number of orders confirmed")
+                .register(meterRegistry);
+
+        this.ordersCancelledCounter = Counter.builder("vento.orders.cancelled")
+                .description("Total number of orders cancelled")
+                .register(meterRegistry);
+    }
 
     @Value("${vento.reservation.max-retries:3}")
     private int maxRetries;
@@ -90,6 +118,7 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("✅ Pedido creado con ID: {}", savedOrder.getId());
+        ordersCreatedCounter.increment();
 
         // 4. Crear reserva temporal en Redis con TTL
         reservationService.createReservation(savedOrder.getId());
@@ -156,6 +185,7 @@ public class OrderService {
                     order.setStatus(OrderStatus.CANCELLED);
                     Order cancelledOrder = orderRepository.save(order);
                     log.info("✅ Pedido cancelado en DB: {}", cancelledOrder.getId());
+                    ordersCancelledCounter.increment();
 
                     // Liberar tickets en Redis
                     ticketInventoryService.releaseTickets(order.getEventId(), order.getQuantity());
@@ -197,6 +227,7 @@ public class OrderService {
                     order.setStatus(OrderStatus.CONFIRMED);
                     Order confirmedOrder = orderRepository.save(order);
                     log.info("✅ Pedido confirmado: {}", confirmedOrder.getId());
+                    ordersConfirmedCounter.increment();
 
                     // Eliminar reserva temporal en Redis
                     reservationService.removeReservation(order.getId());

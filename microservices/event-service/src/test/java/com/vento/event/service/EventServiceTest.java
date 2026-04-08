@@ -11,11 +11,11 @@ import com.vento.event.infrastructure.persistence.repository.EventRepository;
 import com.vento.event.infrastructure.kafka.producer.EventPublisher;
 import com.vento.event.core.service.InventoryService;
 import com.vento.event.core.service.EventService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,7 +45,8 @@ class EventServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
-    @InjectMocks
+    private SimpleMeterRegistry meterRegistry;
+
     private EventService eventService;
 
     private UUID eventId;
@@ -56,6 +57,9 @@ class EventServiceTest {
     @BeforeEach
     void setUp() {
         reset(eventRepository);
+        meterRegistry = new SimpleMeterRegistry();
+        eventService = new EventService(eventRepository, inventoryService, eventPublisher, meterRegistry);
+        
         eventId = UUID.randomUUID();
         LocalDateTime eventDate = LocalDateTime.of(2026, 12, 25, 20, 0);
         LocalDateTime now = LocalDateTime.now();

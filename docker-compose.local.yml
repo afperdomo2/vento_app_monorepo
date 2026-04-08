@@ -199,6 +199,28 @@ services:
       retries: 5
       start_period: 60s
 
+  # Prometheus para métricas de los microservicios
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data-local:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 networks:
   vento-network:
     driver: bridge
@@ -217,4 +239,6 @@ volumes:
   kafka-data-local:
     driver: local
   elasticsearch-data-local:
+    driver: local
+  prometheus-data-local:
     driver: local

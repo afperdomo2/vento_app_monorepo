@@ -1004,6 +1004,127 @@
         }
       ],
       "description": "Endpoints de health check para monitoreo"
+    },
+    {
+      "name": "📊 Metrics",
+      "item": [
+        {
+          "name": "API Gateway Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/actuator/prometheus",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "prometheus"
+              ]
+            },
+            "description": "Obtiene métricas del API Gateway en formato Prometheus.\n\nIncluye métricas HTTP, JVM y custom.\n\nNo requiere autenticación."
+          },
+          "response": []
+        },
+        {
+          "name": "Event Service Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8082/actuator/prometheus",
+              "host": [
+                "http://localhost:8082"
+              ],
+              "path": [
+                "actuator",
+                "prometheus"
+              ]
+            },
+            "description": "Obtiene métricas del Event Service en formato Prometheus.\n\nIncluye métricas HTTP, JVM, events created y más.\n\nNo requiere autenticación (acceso directo al servicio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Order Service Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8083/actuator/prometheus",
+              "host": [
+                "http://localhost:8083"
+              ],
+              "path": [
+                "actuator",
+                "prometheus"
+              ]
+            },
+            "description": "Obtiene métricas del Order Service en formato Prometheus.\n\nIncluye métricas HTTP, JVM, orders created/confirmed/cancelled y más.\n\nNo requiere autenticación (acceso directo al servicio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Payment Service Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8084/actuator/prometheus",
+              "host": [
+                "http://localhost:8084"
+              ],
+              "path": [
+                "actuator",
+                "prometheus"
+              ]
+            },
+            "description": "Obtiene métricas del Payment Service en formato Prometheus.\n\nIncluye métricas HTTP, JVM, payments success/failed y más.\n\nNo requiere autenticación (acceso directo al servicio)."
+          },
+          "response": []
+        },
+        {
+          "name": "Prometheus UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090",
+              "host": [
+                "http://localhost:9090"
+              ]
+            },
+            "description": "Abre la interfaz web de Prometheus para consultar métricas.\n\nURL: http://localhost:9090\n\nDesde aquí puedes ejecutar consultas PromQL y verificar el estado de los targets."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para obtener métricas de los microservicios en formato Prometheus"
     }
   ]
 }

@@ -9,6 +9,8 @@ import com.vento.common.exception.ResourceNotFoundException;
 import com.vento.event.core.model.Event;
 import com.vento.event.infrastructure.kafka.producer.EventPublisher;
 import com.vento.event.infrastructure.persistence.repository.EventRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,13 +25,26 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EventService {
 
     private final EventRepository eventRepository;
     private final InventoryService inventoryService;
     private final EventPublisher eventPublisher;
+
+    private final Counter eventsCreatedCounter;
+
+    public EventService(EventRepository eventRepository,
+                        InventoryService inventoryService,
+                        EventPublisher eventPublisher,
+                        MeterRegistry meterRegistry) {
+        this.eventRepository = eventRepository;
+        this.inventoryService = inventoryService;
+        this.eventPublisher = eventPublisher;
+        this.eventsCreatedCounter = Counter.builder("vento.events.created")
+                .description("Total number of events created")
+                .register(meterRegistry);
+    }
 
     @Transactional
     public EventDto createEvent(CreateEventRequest request) {
@@ -49,6 +64,7 @@ public class EventService {
 
         Event savedEvent = eventRepository.save(event);
         log.info("✅ Evento creado con ID: {}", savedEvent.getId());
+        eventsCreatedCounter.increment();
 
         inventoryService.initializeInventory(savedEvent.getId(), savedEvent.getAvailableTickets());
         

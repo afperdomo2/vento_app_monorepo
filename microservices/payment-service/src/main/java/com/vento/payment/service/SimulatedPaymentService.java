@@ -3,6 +3,8 @@ package com.vento.payment.service;
 import com.vento.common.dto.payment.PaymentRequest;
 import com.vento.common.dto.payment.PaymentDto;
 import com.vento.common.exception.PaymentFailedException;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,19 @@ public class SimulatedPaymentService {
             "Transacción bloqueada por seguridad",
             "Error en la verificación 3D Secure"
     };
+
+    private final Counter paymentsSuccessCounter;
+    private final Counter paymentsFailedCounter;
+
+    public SimulatedPaymentService(MeterRegistry meterRegistry) {
+        this.paymentsSuccessCounter = Counter.builder("vento.payments.success")
+                .description("Total number of successful payments")
+                .register(meterRegistry);
+
+        this.paymentsFailedCounter = Counter.builder("vento.payments.failed")
+                .description("Total number of failed payments")
+                .register(meterRegistry);
+    }
 
     /**
      * Simula el procesamiento de un pago con 80% de éxito y 20% de fallo.
@@ -46,6 +61,7 @@ public class SimulatedPaymentService {
         if (success) {
             String transactionId = "txn_" + UUID.randomUUID().toString().substring(0, 12);
             log.info("✅ Pago exitoso para orden: {}, transacción: {}", request.getOrderId(), transactionId);
+            paymentsSuccessCounter.increment();
 
             return PaymentDto.builder()
                     .orderId(request.getOrderId())
@@ -55,6 +71,7 @@ public class SimulatedPaymentService {
         } else {
             String reason = FAILURE_REASONS[ThreadLocalRandom.current().nextInt(FAILURE_REASONS.length)];
             log.warn("❌ Pago fallido para orden: {}, razón: {}", request.getOrderId(), reason);
+            paymentsFailedCounter.increment();
 
             throw new PaymentFailedException(request.getOrderId(), reason);
         }
