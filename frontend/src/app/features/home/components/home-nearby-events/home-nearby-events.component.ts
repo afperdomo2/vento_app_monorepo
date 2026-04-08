@@ -1,9 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { formatCurrency } from '../../../../core/format/format';
-import { Event } from '../../../../core/models/event.models';
-import { EventService } from '../../../../core/services/event.service';
-import { GeolocationService, GeoPosition } from '../../../../core/services/geolocation.service';
+import { formatCurrency } from '@core/format/format';
+import { Event } from '@core/models/event.models';
+import { EventService } from '@core/services/event.service';
+import { GeolocationService, GeoPosition } from '@core/services/geolocation.service';
 
 interface NearbySectionState {
   position: GeoPosition | null;

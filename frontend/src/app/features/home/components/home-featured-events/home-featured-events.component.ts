@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Event } from '../../../../core/models/event.models';
-import { EventService } from '../../../../core/services/event.service';
-import { EventCard } from '../../../../shared/components/event-card/event-card';
+import { Event } from '@core/models/event.models';
+import { EventService } from '@core/services/event.service';
+import { EventCard } from '@shared/components/event-card/event-card';
 
 @Component({
   selector: 'app-home-featured-events',

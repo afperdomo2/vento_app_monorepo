@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { HomeHeroBanner } from './components/home-hero-banner/home-hero-banner.component';
-import { HomeFeaturedEvents } from './components/home-featured-events/home-featured-events.component';
-import { HomeNearbyEvents } from './components/home-nearby-events/home-nearby-events.component';
-import { HomeNewsletterCta } from './components/home-newsletter-cta/home-newsletter-cta.component';
-import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
-import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
+import { HomeHeroBanner } from '@features/home/components/home-hero-banner/home-hero-banner.component';
+import { HomeFeaturedEvents } from '@features/home/components/home-featured-events/home-featured-events.component';
+import { HomeNearbyEvents } from '@features/home/components/home-nearby-events/home-nearby-events.component';
+import { HomeNewsletterCta } from '@features/home/components/home-newsletter-cta/home-newsletter-cta.component';
+import { BottomNavBar } from '@shared/ui/bottom-nav-bar/bottom-nav-bar';
+import { TopNavBar } from '@shared/ui/top-nav-bar/top-nav-bar';
 
 @Component({
   selector: 'app-home',
