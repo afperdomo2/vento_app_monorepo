@@ -5,6 +5,8 @@ import com.vento.common.dto.payment.PaymentDto;
 import com.vento.common.exception.PaymentFailedException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class SimulatedPaymentService {
 
@@ -26,16 +29,20 @@ public class SimulatedPaymentService {
             "Error en la verificación 3D Secure"
     };
 
-    private final Counter paymentsSuccessCounter;
-    private final Counter paymentsFailedCounter;
+    private final MeterRegistry meterRegistry;
 
-    public SimulatedPaymentService(MeterRegistry meterRegistry) {
-        this.paymentsSuccessCounter = Counter.builder("vento.payments.success")
-                .description("Total number of successful payments")
-                .register(meterRegistry);
+    private Counter paymentsSuccessCounter;
+    private Counter paymentsFailedCounter;
 
-        this.paymentsFailedCounter = Counter.builder("vento.payments.failed")
-                .description("Total number of failed payments")
+    @PostConstruct
+    public void init() {
+        paymentsSuccessCounter = registerCounter("vento.payments.success", "Total number of successful payments");
+        paymentsFailedCounter = registerCounter("vento.payments.failed", "Total number of failed payments");
+    }
+
+    private Counter registerCounter(String name, String description) {
+        return Counter.builder(name)
+                .description(description)
                 .register(meterRegistry);
     }
 

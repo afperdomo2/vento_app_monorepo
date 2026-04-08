@@ -11,6 +11,7 @@ import com.vento.event.infrastructure.kafka.producer.EventPublisher;
 import com.vento.event.infrastructure.persistence.repository.EventRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,24 +26,25 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class EventService {
 
     private final EventRepository eventRepository;
     private final InventoryService inventoryService;
     private final EventPublisher eventPublisher;
+    private final MeterRegistry meterRegistry;
 
-    private final Counter eventsCreatedCounter;
+    private Counter eventsCreatedCounter;
 
-    public EventService(EventRepository eventRepository,
-                        InventoryService inventoryService,
-                        EventPublisher eventPublisher,
-                        MeterRegistry meterRegistry) {
-        this.eventRepository = eventRepository;
-        this.inventoryService = inventoryService;
-        this.eventPublisher = eventPublisher;
-        this.eventsCreatedCounter = Counter.builder("vento.events.created")
-                .description("Total number of events created")
+    @PostConstruct
+    public void init() {
+        eventsCreatedCounter = registerCounter("vento.events.created", "Total number of events created");
+    }
+
+    private Counter registerCounter(String name, String description) {
+        return Counter.builder(name)
+                .description(description)
                 .register(meterRegistry);
     }
 

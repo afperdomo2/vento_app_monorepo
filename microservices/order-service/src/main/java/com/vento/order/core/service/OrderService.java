@@ -15,6 +15,7 @@ import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import feign.FeignException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class OrderService {
 
@@ -37,31 +39,22 @@ public class OrderService {
     private final EventClient eventClient;
     private final TicketInventoryService ticketInventoryService;
     private final ReservationService reservationService;
+    private final MeterRegistry meterRegistry;
 
-    private final Counter ordersCreatedCounter;
-    private final Counter ordersConfirmedCounter;
-    private final Counter ordersCancelledCounter;
+    private Counter ordersCreatedCounter;
+    private Counter ordersConfirmedCounter;
+    private Counter ordersCancelledCounter;
 
-    public OrderService(OrderRepository orderRepository,
-                        EventClient eventClient,
-                        TicketInventoryService ticketInventoryService,
-                        ReservationService reservationService,
-                        MeterRegistry meterRegistry) {
-        this.orderRepository = orderRepository;
-        this.eventClient = eventClient;
-        this.ticketInventoryService = ticketInventoryService;
-        this.reservationService = reservationService;
+    @PostConstruct
+    public void init() {
+        ordersCreatedCounter = registerCounter("vento.orders.created", "Total number of orders created");
+        ordersConfirmedCounter = registerCounter("vento.orders.confirmed", "Total number of orders confirmed");
+        ordersCancelledCounter = registerCounter("vento.orders.cancelled", "Total number of orders cancelled");
+    }
 
-        this.ordersCreatedCounter = Counter.builder("vento.orders.created")
-                .description("Total number of orders created")
-                .register(meterRegistry);
-
-        this.ordersConfirmedCounter = Counter.builder("vento.orders.confirmed")
-                .description("Total number of orders confirmed")
-                .register(meterRegistry);
-
-        this.ordersCancelledCounter = Counter.builder("vento.orders.cancelled")
-                .description("Total number of orders cancelled")
+    private Counter registerCounter(String name, String description) {
+        return Counter.builder(name)
+                .description(description)
                 .register(meterRegistry);
     }
 

@@ -59,6 +59,7 @@ class EventServiceTest {
         reset(eventRepository);
         meterRegistry = new SimpleMeterRegistry();
         eventService = new EventService(eventRepository, inventoryService, eventPublisher, meterRegistry);
+        eventService.init(); // Call @PostConstruct manually
         
         eventId = UUID.randomUUID();
         LocalDateTime eventDate = LocalDateTime.of(2026, 12, 25, 20, 0);

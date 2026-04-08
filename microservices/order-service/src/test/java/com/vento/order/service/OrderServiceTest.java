@@ -72,6 +72,7 @@ class OrderServiceTest {
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
         orderService = new OrderService(orderRepository, eventClient, ticketInventoryService, reservationService, meterRegistry);
+        orderService.init(); // Call @PostConstruct manually
         
         orderId = UUID.randomUUID();
         userId = UUID.randomUUID();
