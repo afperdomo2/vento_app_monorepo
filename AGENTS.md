@@ -1,41 +1,65 @@
 # AGENTS.md - Vento App Monorepo
 
-## Proyecto
+## Stack de versiones exactas
 
-Monorepo Spring Boot + Gradle con microservicios: `common/`, `api-gateway/` (8080), `event-service/` (8082),
-`order-service/` (8083), `payment-service/` (8084), **frontend/** (Angular 21, 4200).
-Stack: Java 25, Gradle 9.4, Spring Boot 3.5.0, Spring Cloud 2025.0.0, Angular 21.2, pnpm 10.
-Infraestructura: PostgreSQL, Redis, Keycloak, Kafka, Elasticsearch (9200), Kibana (5601).
+| Componente | Versión | Fuente |
+|---|---|---|
+| Java | 25 | `build.gradle` (allprojects), Dockerfiles `eclipse-temurin:25` |
+| Gradle | 9.4.0 (full distribution) | `gradle/wrapper/gradle-wrapper.properties` |
+| Spring Boot | 3.5.0 | root `build.gradle` plugin |
+| Spring Cloud | 2025.0.0 | **`gradle.properties`** (no `build.gradle`) |
+| Angular | ^21.2.0 | `frontend/package.json` |
+| pnpm | 10.30.3 exacto | `frontend/package.json` campo `packageManager` |
+| TypeScript | ~5.9.2 | `frontend/package.json` |
+| Node.js | 22+ | docker-compose.dev.yml usa `node:22-alpine` |
+| Tailwind CSS | v4 (`@tailwindcss/postcss`) | `frontend/package.json` (no v3, sin `tailwind.config.js`) |
+
+## Módulos Gradle
+
+`settings.gradle` incluye solo:
+```
+common
+microservices:api-gateway
+microservices:event-service
+microservices:order-service
+microservices:payment-service
+```
+**Frontend no es módulo Gradle.** No existe `libs.versions.toml`; versiones en `gradle.properties` + bloque `ext` del `build.gradle` raíz.
+
+`gradle.properties` activa caching, parallel build y daemon — no modificar.
 
 ## Comandos
 
 ### Backend (Gradle)
 
 ```bash
-./gradlew build                              # Compilar todo con tests
-./gradlew build -x test                      # Compilar sin tests
-./gradlew :microservices:event-service:build # Modulo especifico
-./gradlew :common:build                      # Modulo common
-./gradlew test                               # Todos los tests
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"       # Test class completa
-./gradlew :microservices:event-service:test --tests "*EventServiceTest*"             # Test por nombre
-./gradlew :microservices:event-service:test --tests "*EventServiceTest.testCreate*"  # Test individual
-./gradlew test --info                        # Tests con output detallado
-./gradlew :microservices:event-service:bootRun  # Ejecutar servicio
-./gradlew clean                              # Limpiar builds
+./gradlew build                              # Todo con tests
+./gradlew build -x test                      # Sin tests
+./gradlew :microservices:event-service:build # Módulo específico
+./gradlew :common:build
+./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
+./gradlew :microservices:event-service:test --tests "*EventServiceTest.testCreate*"
+./gradlew test --info                        # Output detallado
+./gradlew :microservices:event-service:bootRun  # Usa perfil `local` por defecto
+./gradlew clean
 ```
 
-### Frontend (Angular 21)
+El flag `-parameters` se agrega globalmente en el `build.gradle` raíz — requerido por Spring MVC/Security.
+
+### Frontend (Angular 21) — ejecutar desde `frontend/`
 
 ```bash
-cd frontend
-pnpm install                                 # Instalar dependencias
-pnpm start                                   # Dev server (localhost:4200)
-pnpm build                                   # Build produccion
-pnpm test                                    # ng test (Karma/Jasmine)
-pnpm ng test -- --include='**/some.spec.ts'  # Test individual
-pnpm ng generate component features/<f>/components/<name>  # Generar componente
-pnpm exec prettier --write "src/**/*.{ts,html,scss}"       # Formatear codigo
+pnpm install
+pnpm start           # dev server localhost:4200
+pnpm build           # PRODUCCIÓN por defecto (defaultConfiguration: "production" en angular.json)
+pnpm build -- --configuration development
+pnpm test            # Karma/Jasmine
+pnpm ng test -- --include='**/some.spec.ts'
+pnpm run setup:env   # cp .env.example .env  (ejecutar una vez)
+pnpm lint
+pnpm lint:fix
+pnpm exec prettier --write "src/**/*.{ts,html,scss}"
+pnpm ng generate component features/<feature>/components/<name>
 ```
 
 ### Docker
@@ -48,74 +72,137 @@ docker compose logs -f <servicio>
 docker compose down
 ```
 
+## Infraestructura — puertos completos
+
+| Servicio | Puerto externo | Notas |
+|---|---|---|
+| api-gateway | 8080 | — |
+| event-service | 8082 | Swagger: `/swagger-ui.html` |
+| order-service | 8083 | Swagger: `/swagger-ui.html` |
+| payment-service | 8084 | Swagger: `/swagger-ui.html` |
+| frontend | 4200 | — |
+| postgres-events | 5432 | — |
+| postgres-orders | 5433 | → interno 5432 |
+| postgres-payments | 5434 | → interno 5432 |
+| redis | 6379 | — |
+| keycloak | 8180 | → interno 8080 |
+| kafka (containers) | 9092 | `INTERNAL://kafka:9092` |
+| kafka (host) | **9093** | `EXTERNAL://localhost:9093` — usar este desde Gradle local |
+| kafka-ui (Provectus) | 8089 | — |
+| elasticsearch | 9200 | xpack.security deshabilitado |
+| kibana | 5601 | — |
+| prometheus | 9090 | — |
+| debug JVM (event) | 5005 | JDWP, solo Docker dev |
+| debug JVM (gateway) | 5007 | JDWP, solo Docker dev |
+| debug JVM (order) | 5006 | JDWP, solo Docker dev |
+| debug JVM (payment) | 5009 | JDWP, solo Docker dev |
+
+## Kafka — gotchas críticos
+
+- `KAFKA_AUTO_CREATE_TOPICS_ENABLE=false` — los topics deben existir antes de arrancar los servicios.
+- En Docker local/dev el contenedor `kafka-init` crea los topics automáticamente al primer `up`.
+- Si se recrea el contenedor de Kafka, re-ejecutar manualmente:
+  ```bash
+  docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
+  ```
+- Microservicios corriendo con Gradle (fuera de Docker) deben conectar a `localhost:9093`, no `9092`.
+- Paquetes de confianza para deserialización JSON: `com.vento.common.dto.kafka` — ya configurado en `application.yml` de cada servicio.
+
+### Topics (3 particiones c/u salvo DLQ con 1)
+`payment.processed`, `payment.failed`, `order.confirmed`, `order.cancelled`,
+`event.created`, `event.updated`, `event.deleted`,
+`payment.processed.DLQ`, `payment.failed.DLQ`
+
+## Elasticsearch — setup manual requerido
+
+El script `scripts/init-elasticsearch.sh` **no se ejecuta automáticamente** (a diferencia de kafka-init). Crear el índice `events` manualmente después de que Elasticsearch esté healthy:
+
+```bash
+bash scripts/init-elasticsearch.sh
+```
+
+Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `geo_point`. Sin esto las búsquedas de eventos fallan.
+
+## Módulo `common/`
+
+- Plugin `java-library` (no `java`) — los consumidores acceden via `implementation project(':common')`.
+- Contiene: DTOs compartidos, Enums (`OrderStatus`, `PaymentStatus`, `TicketStatus`), todas las excepciones de dominio, `GlobalExceptionHandler` (RFC 9457 Problem Details), `KafkaTopics` (fuente única de nombres de topics), `UserContext`, `AuditableEntity`.
+- Spring starters declarados `compileOnly` — no se propagan a los runtimes de los servicios.
+- `ExceptionHandlerAutoConfiguration` registra `GlobalExceptionHandler` automáticamente en cada servicio via Spring auto-configuration.
+
+## Perfiles de Spring Boot
+
+- Default en todos los servicios: `local` (`${SPRING_PROFILES_ACTIVE:local}`).
+- `application-local.yml` usa credenciales hardcodeadas para localhost.
+- `application-dev.yml` usa variables de entorno (necesario para Docker dev).
+- Correr `bootRun` sin definir `SPRING_PROFILES_ACTIVE` usa `local`.
+
+## Arquitectura de seguridad
+
+- **api-gateway** valida JWT (OAuth2 resource server vs Keycloak). Extrae `sub` → `X-User-Id` y `realm_access.roles` → `X-User-Roles` y los propaga como headers.
+- **Microservicios** confían en esos headers directamente — **no validan JWT**. Una llamada directa que bypasee el gateway es efectivamente no autenticada.
+- **Frontend** usa Keycloak **Direct Access Grant** (Resource Owner Password Credentials), no Authorization Code Flow. El cliente `vento-frontend` en Keycloak debe tener "Direct Access Grants Enabled". Tokens en `localStorage`.
+- Token se considera expirado 5 minutos antes del `exp` real (buffer de 300s).
+
+## Frontend — quirks importantes
+
+- **`pnpm build` compila en producción** (`defaultConfiguration: "production"` en `angular.json`). Para dev: añadir `-- --configuration development`.
+- **`ng generate` nunca crea `.spec.ts`** — `skipTests: true` en todos los schematics de `angular.json`. Los specs deben crearse manualmente.
+- **Config de entorno runtime**: se inyecta via `window.__env` en `index.html`, no via `environments/*.ts`. Los helpers están en `src/environments/env.config.ts`. Ejecutar `pnpm run setup:env` para crear `.env` desde `.env.example`.
+- **Tailwind v4**: configuración CSS-first, entry point `src/tailwind.css`. No existe `tailwind.config.js`.
+- **Rutas NO son lazy-loaded** a pesar de lo que sugiere la estructura — todos los componentes están importados estáticamente en `app.routes.ts`.
+- **`auth.service.ts` usa `BehaviorSubject`** para `authChanged$` — excepción a la regla de Signals (código legacy, no cambiar a signals sin refactor completo).
+- **ESLint prohíbe `any`** (`no-explicit-any: error`) — no usar `any` en TypeScript.
+- **Librerías UI de terceros**: `@bluehalo/ngx-leaflet` + `leaflet` + `leaflet-control-geocoder` (mapas), `qrcode` (tickets).
+- Estilos en `angular.json` en orden: `src/tailwind.css` → `src/styles.scss` → `leaflet.css`. El orden importa.
+
+## Redis
+
+- Keys: `vento:event:{id}:available_tickets` (tickets disponibles), `vento:reservation:{orderId}` (TTL 5min)
+- Order states: `PENDING` → `CONFIRMED` | `CANCELLED` | `EXPIRED`
+
+## Jobs en background
+
+- `ElasticsearchSyncJob` (event-service): sincronización completa PostgreSQL→ES cada 5min (delay inicial 1min). Configurable via `vento.elasticsearch.sync.sync-interval-ms`.
+- `OrderExpirationJob` (order-service): expira órdenes PENDING cada 60s (delay inicial 30s).
+
+## Tests — quirks
+
+- Unit tests usan solo `@ExtendWith(MockitoExtension.class)`, sin Spring context.
+- `EventServiceTest` debe llamar `eventService.init()` manualmente (el `@PostConstruct` no se ejecuta sin contexto).
+- Tests de integración Kafka usan `EmbeddedKafka` de `spring-kafka-test` (no Testcontainers).
+- api-gateway **no tiene directorio de tests**.
+- Reports HTML: `microservices/*/build/reports/tests/test/index.html`
+
+## Agregar microservicio
+
+1. Crear `microservices/<nombre>/` con estructura de paquetes estándar.
+2. Copiar `build.gradle` de event-service, ajustar dependencias.
+3. Agregar en `settings.gradle`: `include 'microservices:<nombre>'`
+4. Configurar ruta en `api-gateway/src/main/resources/application.yml`.
+5. Crear `application.yml` con perfiles `local`/`dev`/`prod`.
+6. Agregar en `docker-compose.local.yml` si necesita infraestructura.
+7. Dockerfiles usan `context: .` (repo raíz) — el build copia todo el monorepo.
+
 ## Code Style
 
 ### Backend (Java/Spring Boot)
 
-- **Paquetes**: `com.vento.<modulo>/` con `controller/`, `service/`, `repository/`, `model/`, `dto/`, `config/`, `exception/`
-- **Nombres**: Clases PascalCase, metodos/variables camelCase, constantes UPPER_SNAKE_CASE, paquetes minusculas en singular
-- **Imports**: Explicitos (nunca `.*`), orden: static > java > javax > org.springframework > otros > terceros
-- **Inyeccion**: `@Autowired` en constructores (no en campos), preferir inyeccion por constructor
-- **Anotaciones**: `@Service`, `@Repository`, `@RestController`, `@Transactional` en metodos que modifican datos
-- **DTOs**: Inmutables con `@Value` o records, usar `@Builder` (Lombok) para objetos complejos
-- **Entidades JPA**: Usar Lombok `@Data`, `@Entity`, `@Table`, campos con `@Id`, `@GeneratedValue`
-- **Errores**: Excepciones extienden `RuntimeException`, usar `GlobalExceptionHandler` con `@ControllerAdvice`, codigos HTTP apropiados (400, 404, 409, 500)
-- **Logging**: `@Slf4j` (Lombok), niveles: ERROR (excepciones), WARN (warnings esperados), INFO (operaciones importantes), DEBUG (detalles), nunca loggear datos sensibles
-- **Config**: `application.yml` + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`), properties en kebab-case, secrets en variables de entorno
-- **Validacion**: Usar `jakarta.validation` annotations (`@NotNull`, `@NotBlank`, `@Size`, etc.) en DTOs
-- **API Docs**: `springdoc-openapi` con `@Operation`, `@ApiResponses` en controllers
-
-### Backend Tests
-
-- **Framework**: JUnit 5 (`@Test`, `@BeforeEach`, `@DisplayName`)
-- **Mocks**: Mockito (`@Mock`, `@InjectMocks`, `when().thenReturn()`, `verify()`)
-- **Integracion**: `@SpringBootTest`, `@DataJpaTest`, `@WebMvcTest` segun corresponda
-- **Patron**: AAA (Arrange, Act, Assert)
-- **Nombres**: `*Test.java`, metodos descriptivos: `shouldReturnEventWhenExists()`
-- **H2**: Usar H2 en memoria para tests de repositorio
+- Paquetes: `com.vento.<modulo>/` con `controller/` (o `api/controller/`), `service/`, `repository/`, `model/`, `dto/`, `config/`, `exception/`
+- Inyección por constructor (no `@Autowired` en campos), o `@RequiredArgsConstructor` de Lombok
+- `@Transactional` en métodos que modifican datos
+- DTOs: records o `@Value` (Lombok) inmutables, `@Builder` para objetos complejos
+- Entidades JPA: `@Data`, `@Entity`, `@Table`, extender `AuditableEntity` del módulo `common`
+- Excepciones: extender las del módulo `common`; usar `GlobalExceptionHandler` (ya registrado automáticamente)
+- Logging: `@Slf4j`, nunca loggear datos sensibles
 
 ### Frontend (Angular 21)
 
-- **Arquitectura**: Feature-First con `core/` (global), `shared/` (reutilizable), `features/` (lazy-loaded)
-- **Estado**: Signals (`signal()`, `computed()`, `effect()`) para estado reactivo, NO RxJS BehaviorSubject
-- **Componentes**: Standalone (sin NgModules), usar `imports: []` en decorator
-- **Inyeccion**: `inject()` function (no constructor injection)
-- **HTTP**: Usar `httpResource()` o `inject(HttpClient)` con signals
-- **Estilos**: SCSS, Tailwind CSS v4 con utility classes
-- **Nomenclatura**: `*.page.ts` paginas principales, `*.component.ts` componentes hijos, `*.service.ts` servicios
-- **Templates**: Inline o archivos `.html` separados segun complejidad, usar `@if/@for/@switch` nativo (no `*ngIf/*ngFor`)
-
-### Frontend Formatting
-
-- **Prettier**: printWidth 100, single quotes, parser angular para HTML
-- **EditorConfig**: 2 spaces indent, UTF-8, final newline, trim trailing whitespace
-- **TypeScript**: strict mode, noImplicitOverride, noImplicitReturns, noFallthroughCasesInSwitch, strictTemplates
-- **Quotes**: Single quotes para strings y template literals
-
-## Estructura Frontend
-
-```
-src/app/
-├── core/                     # Global singleton services (auth, guards, interceptors)
-├── shared/                   # Reusable components, directives, pipes, ui
-└── features/                 # Business modules (lazy-loaded)
-    └── <feature>/
-        ├── components/       # Feature-specific components
-        ├── services/         # Feature services
-        └── <feature>.page.ts # Main page
-```
-
-## Puertos & Redis
-
-- **Puertos**: api-gateway:8080, event-service:8082, order-service:8083, payment-service:8084, frontend:4200, postgres:5432/5433, redis:6379, keycloak:8180
-- **Redis Keys**: `vento:event:{id}:available_tickets` (tickets), `vento:reservation:{orderId}` (5min TTL)
-- **Order States**: `PENDING` → `CONFIRMED` | `CANCELLED` | `EXPIRED`
-
-## Agregar Microservicio
-
-1. Crear `microservices/<nombre>/` con estructura de paquetes estandar
-2. Copiar `build.gradle` de event-service, ajustar dependencias
-3. Agregar en `settings.gradle`: `include 'microservices:<nombre>'`
-4. Configurar ruta en `api-gateway` application.yml
-5. Crear `application.yml` con perfiles local/dev/prod
-6. Agregar en `docker-compose.local.yml` si necesita infraestructura
+- Componentes standalone (`imports: []`, sin NgModules)
+- `inject()` function (no constructor injection)
+- Signals para estado reactivo: `signal()`, `computed()`, `effect()` — no `BehaviorSubject` (excepto auth legacy)
+- `@if/@for/@switch` nativo, nunca `*ngIf/*ngFor`
+- Nomenclatura: `*.page.ts` páginas, `*.component.ts` hijos, `*.service.ts` servicios
+- Selector components: `app-` prefix, kebab-case. Directives: `app` prefix, camelCase (ESLint lo enforcea)
+- Prettier: printWidth 100, single quotes, parser angular para HTML
+- TypeScript strict mode + `strictTemplates`

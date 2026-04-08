@@ -1,8 +1,8 @@
-# Vento App Monorepo - Contexto del Proyecto
+# Vento App Monorepo — Contexto de Qwen
 
 ## Resumen del Proyecto
 
-**Vento App** es una plataforma de gestión de eventos basada en microservicios, construida con Spring Boot 3.5.0 y Angular 21. La aplicación permite crear eventos, gestionar inventario de tickets y procesar reservas con un sistema de reservas temporales.
+**Vento App** es una plataforma de gestión de eventos construida como un monorepo de Spring Boot + Gradle con arquitectura de microservicios y un frontend en Angular 21. La aplicación permite crear eventos, gestionar inventario de tickets y procesar reservas con un sistema de reservas temporales respaldado por TTL de Redis.
 
 ### Arquitectura
 
@@ -11,11 +11,11 @@ vento_app_monorepo/
 ├── common/                      # Módulo compartido (DTOs, excepciones, utilerías)
 ├── microservices/
 │   ├── api-gateway/             # Spring Cloud Gateway (puerto 8080)
-│   ├── event-service/           # Gestión de eventos (puerto 8082)
+│   ├── event-service/           # CRUD de eventos + inventario de tickets (puerto 8082)
 │   ├── order-service/           # Gestión de pedidos/reservas (puerto 8083)
-│   └── payment-service/         # Procesamiento de pagos (puerto 8084)
-├── frontend/                    # Aplicación Angular 21 (puerto 4200)
-└── database/                    # Scripts y migraciones de base de datos
+│   └── payment-service/         # Procesamiento de pagos simulado (puerto 8084)
+├── frontend/                    # SPA Angular 21 (puerto 4200)
+└── database/                    # Scripts SQL y migraciones
 ```
 
 ### Stack Tecnológico
@@ -32,19 +32,12 @@ vento_app_monorepo/
 | **Frontend** | Angular | 21.2 |
 | | TypeScript | 5.9 |
 | | Tailwind CSS | 4.x |
-| | pnpm | 10.x |
-| **Infraestructura** | Docker Compose | Multi-entorno |
-| | Node.js | 22+ |
-
-### Características Principales
-
-- **Gestión de Eventos**: Operaciones CRUD con inventario de tickets
-- **Sistema de Pedidos**: Reservas temporales con TTL de 5 minutos en Redis
-- **Procesamiento de Pagos**: Simulación de gateway de pago con 80% éxito, 20% fallo
-- **Seguridad OAuth2**: Integración con Keycloak y validación JWT en API Gateway
-- **Patrón Microservicios**: Enrutamiento por Gateway, aislamiento de servicios
-- **Caché Redis**: Seguimiento de disponibilidad de tickets y reservas temporales
-- **Multi-entorno**: Local (hot reload), Dev (Docker), Prod (Docker optimizado)
+| | pnpm | 10 |
+| | ESLint | 10 + Angular ESLint 21 |
+| **Infra** | Docker Compose | Multi-entorno |
+| | Kafka | 9092/9093 |
+| | Elasticsearch | 9200 |
+| | Kibana | 5601 |
 
 ---
 
@@ -62,22 +55,16 @@ nvm install 22
 npm install -g pnpm
 ```
 
-### Inicio Rápido - Stack Completo (Desarrollo)
+### Inicio Rápido — Stack Completo (Desarrollo Local)
 
 ```bash
 # Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak, Elasticsearch)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
-# Terminal 2: Event Service
+# Terminales 2-5: Microservicios
 ./gradlew :microservices:event-service:bootRun
-
-# Terminal 3: Order Service
 ./gradlew :microservices:order-service:bootRun
-
-# Terminal 4: Payment Service
 ./gradlew :microservices:payment-service:bootRun
-
-# Terminal 5: API Gateway
 ./gradlew :microservices:api-gateway:bootRun
 
 # Terminal 6: Frontend
@@ -87,69 +74,50 @@ cd frontend && pnpm start
 **Puntos de Acceso:**
 - 🌐 Frontend: http://localhost:4200
 - 🔌 API Gateway: http://localhost:8080
-- 📖 Swagger Event Service: http://localhost:8082/swagger-ui.html
-- 📖 Swagger Order Service: http://localhost:8083/swagger-ui.html
-- 📖 Swagger Payment Service: http://localhost:8084/swagger-ui.html
-- 🔐 Keycloak Dashboard: http://localhost:8180
+- 📖 Swagger (event): http://localhost:8082/swagger-ui.html
+- 📖 Swagger (order): http://localhost:8083/swagger-ui.html
+- 📖 Swagger (payment): http://localhost:8084/swagger-ui.html
+- 🔐 Keycloak: http://localhost:8180 (admin/admin)
 - 🔍 Elasticsearch: http://localhost:9200
 - 📊 Kibana: http://localhost:5601
 
 ### Comandos del Backend
 
 ```bash
-# Construir todo
-./gradlew build
-
-# Construir sin tests
-./gradlew build -x test
-
-# Construir módulo específico
-./gradlew :microservices:event-service:build
-
-# Ejecutar tests
-./gradlew test
-
-# Ejecutar test específico
-./gradlew :microservices:event-service:test --tests "com.vento.event.SomeTest"
-
-# Ejecutar servicio
-./gradlew :microservices:event-service:bootRun
-
-# Limpiar build
-./gradlew clean
+./gradlew build                              # Compilar todo con tests
+./gradlew build -x test                      # Compilar sin tests
+./gradlew :microservices:event-service:build # Módulo específico
+./gradlew test                               # Ejecutar todos los tests
+./gradlew :microservices:event-service:test --tests "*SomeTest*"  # Test específico
+./gradlew test --info                        # Tests con salida detallada
+./gradlew :microservices:event-service:bootRun  # Ejecutar un servicio
+./gradlew clean                              # Limpiar builds
 ```
 
 ### Comandos del Frontend
 
 ```bash
 cd frontend
-
-# Instalar dependencias
-pnpm install
-
-# Servidor de desarrollo
-pnpm start
-
-# Build producción
-pnpm build
-
-# Ejecutar tests
-pnpm test
-
-# Generar componente
-pnpm ng generate component features/<feature>/components/<name>
+pnpm install                                 # Instalar dependencias
+pnpm start                                   # Servidor de desarrollo (localhost:4200)
+pnpm build                                   # Build de producción
+pnpm test                                    # ng test (Karma/Jasmine)
+pnpm lint                                    # Verificación ESLint
+pnpm lint:fix                                # Auto-corrección ESLint
+pnpm ng generate component features/<f>/components/<name>  # Generar componente
+pnpm exec prettier --write "src/**/*.{ts,html,scss}"       # Formatear código
 ```
 
-### Comandos Docker
+### Entornos Docker
 
 ```bash
-# Entorno local (solo infraestructura)
+# Local (solo infraestructura, servicios vía Gradle)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
-# Entorno dev (todos los servicios en Docker)
+# Dev (todos los servicios en Docker)
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-# Entorno producción
+# Prod (Docker optimizado, volúmenes persistentes)
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # Ver logs
@@ -161,11 +129,126 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
 
 ---
 
-## Convenciones de Desarrollo
+## Arquitectura del Frontend
 
-### Backend (Java/Spring)
+### Path Aliases
 
-#### Estructura de Paquetes
+Usa imports absolutos — nunca uses `../../`:
+
+```typescript
+import { EventService } from '@core/services/event.service';
+import { EventCard } from '@shared/components/event-card/event-card';
+import { formatCurrency } from '@core/format/format';
+import { HomePage } from '@features/home/home.page';
+import { ENV } from '@env/environment';
+```
+
+Aliases disponibles (configurados en `tsconfig.app.json`):
+- `@app/*` → `src/app/*`
+- `@core/*` → `src/app/core/*`
+- `@shared/*` → `src/app/shared/*`
+- `@features/*` → `src/app/features/*`
+- `@env/*` → `src/environments/*`
+
+### Estructura de Features
+
+```
+src/app/
+├── core/                     # Servicios globales singleton (auth, guards, interceptors)
+├── shared/                   # Componentes, directivas, pipes, UI reutilizables
+└── features/                 # Módulos de negocio (lazy-loaded)
+    └── <feature>/
+        ├── components/       # Componentes hijos específicos del feature
+        ├── services/         # Servicios del feature
+        └── <feature>.page.ts # Página principal (orquestador)
+```
+
+### Componentización de la Home Page
+
+La home page se compone de 4 componentes hijos (patrón smart/presentational):
+
+```
+home/
+├── home.page.ts                          # Orquestador (~30 líneas)
+└── components/
+    ├── home-hero-banner/                 # Dumb — banner hero estático
+    ├── home-featured-events/             # Smart — carga eventos vía EventService
+    ├── home-nearby-events/               # Smart — geolocalización + eventos cercanos
+    └── home-newsletter-cta/              # Dumb — sección newsletter
+```
+
+### Todos los Features
+
+| Feature | Descripción |
+|---------|-------------|
+| `home/` | Landing page con hero, eventos destacados, eventos cercanos, newsletter |
+| `events-list/` | Listado completo con búsqueda, filtros, scroll infinito |
+| `event-detail/` | Vista individual de evento con reserva de tickets |
+| `checkout/` | Flujo de revisión de pedido y pago |
+| `my-orders/` | Historial de pedidos del usuario y detalle con tickets QR |
+| `nearby/` | Descubrimiento de eventos cercanos basado en mapa |
+| `login/` | Página de autenticación |
+| `profile/` | Gestión de perfil de usuario |
+| `organizer/` | Dashboard del organizador de eventos |
+
+### Gestión de Estado
+
+- **Signals** (`signal()`, `computed()`, `effect()`) para estado reactivo — NO usar RxJS BehaviorSubject
+- **Servicios** inyectados vía función `inject()` — NO inyección por constructor
+- **HTTP** vía `httpResource()` o `inject(HttpClient)` con signals
+- **Componentes** standalone (sin NgModules)
+
+### Formato de Código
+
+- **Prettier**: printWidth 100, comillas simples, parser Angular para HTML
+- **EditorConfig**: 2 espacios, UTF-8, newline final, trim trailing whitespace
+- **TypeScript**: strict mode, noImplicitOverride, strictTemplates
+
+---
+
+## Configuración de ESLint
+
+El proyecto usa **ESLint 10** con **Angular ESLint 21** y **TypeScript ESLint 8**.
+
+### Archivo de Config: `frontend/eslint.config.js`
+
+Usa flat config con:
+- `@typescript-eslint/recommended` + `stylistic`
+- `@angular-eslint/tsRecommended` + `templateRecommended` + `templateAccessibility`
+- Procesamiento de templates inline para componentes Angular
+
+### Reglas Clave
+
+| Regla | Nivel | Notas |
+|-------|-------|-------|
+| `@typescript-eslint/no-explicit-any` | **error** | Prohibir tipo `any` |
+| `@typescript-eslint/no-unused-vars` | **error** | Variables/imports sin uso (args que empiezan con `_` permitidos) |
+| `@typescript-eslint/no-non-null-assertion` | **warn** | Evitar operador `!` |
+| `@typescript-eslint/explicit-function-return-type` | **warn** | Agregar tipos de retorno (expresiones y funcs tipadas exentas) |
+| `@angular-eslint/component-selector` | **error** | Debe usar prefijo `app-`, kebab-case |
+| `@angular-eslint/directive-selector` | **error** | Debe usar prefijo `app`, camelCase |
+
+### Ejecutar ESLint
+
+```bash
+cd frontend
+pnpm lint       # Verificar problemas
+pnpm lint:fix   # Auto-corregir lo posible
+```
+
+### Patrones Comunes a Evitar (fallarán el lint)
+
+- **Tipos `any`** → Usar interfaces propias, `unknown` con type guards, o tipos de librería
+- **Aserciones `!`** → Usar `@if (signal(); as localVar)` en templates, type narrowing en TS
+- **Imports sin uso** → Eliminar inmediatamente, el auto-import del IDE frecuentemente deja imports muertos
+- **Return types faltantes en métodos** → Agregar `: void`, `: Type` a métodos de clases
+- **Código muerto** → Eliminar Subjects, signals, métodos que nunca se llaman
+
+---
+
+## Convenciones del Backend
+
+### Estructura de Paquetes
 
 ```
 microservices/<servicio>/src/main/java/com/vento/<modulo>/
@@ -175,10 +258,10 @@ microservices/<servicio>/src/main/java/com/vento/<modulo>/
 ├── model/           # Entidades JPA
 ├── dto/             # Objetos de Transferencia de Datos
 ├── config/          # Clases de configuración
-└── exception/       # Excepciones y handlers personalizados
+└── exception/       # Excepciones personalizadas y handlers
 ```
 
-#### Convenciones de Nombres
+### Convenciones de Nombres
 
 | Tipo | Convención | Ejemplo |
 |------|------------|---------|
@@ -187,157 +270,73 @@ microservices/<servicio>/src/main/java/com/vento/<modulo>/
 | Constantes | UPPER_SNAKE_CASE | `DEFAULT_PAGE_SIZE`, `REDIS_TTL` |
 | Paquetes | minúsculas singular | `com.vento.event.controller` |
 
-#### Estilo de Código
+### Estilo de Código
 
 - **Imports**: Explícitos (nunca `.*`), orden: static > java > javax > org.springframework > otros > terceros
-- **Anotaciones**: `@Autowired` en constructores, `@Transactional` en métodos que modifican datos
-- **DTOs**: Inmutables con `@Value` o records, usar `@Builder` para objetos complejos
-- **Excepciones**: Extienden `RuntimeException`, usar `@ControllerAdvice` para manejo global
-- **Logging**: `@Slf4j` (Lombok), niveles: ERROR (excepciones), WARN (warnings), INFO (operacional)
-- **Config**: `application.yml` con perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`)
+- **Inyección**: `@Autowired` en constructores (no en campos), preferir inyección por constructor
+- **Anotaciones**: `@Service`, `@Repository`, `@RestController`, `@Transactional` en métodos que modifican datos
+- **DTOs**: Inmutables con `@Value` o records, usar `@Builder` (Lombok) para objetos complejos
+- **Entidades JPA**: Usar Lombok `@Data`, `@Entity`, `@Table`, campos con `@Id`, `@GeneratedValue`
+- **Errores**: Excepciones extienden `RuntimeException`, usar `@ControllerAdvice` para manejo global, códigos HTTP apropiados (400, 404, 409, 500)
+- **Logging**: `@Slf4j` (Lombok), niveles: ERROR (excepciones), WARN (warnings esperados), INFO (operacional), DEBUG (detalles), nunca loggear datos sensibles
+- **Config**: `application.yml` + perfiles (`-local.yml`, `-dev.yml`, `-prod.yml`), properties en kebab-case, secretos en variables de entorno
+- **Validación**: Usar anotaciones `jakarta.validation` (`@NotNull`, `@NotBlank`, `@Size`, etc.) en DTOs
+- **API Docs**: `springdoc-openapi` con `@Operation`, `@ApiResponses` en controllers
 
-#### Ejemplo de Patrón Service
+### Testing del Backend
 
-```java
-@Service
-@RequiredArgsConstructor
-public class EventService {
-    private final EventRepository eventRepository;
-    private final TicketInventoryService ticketInventoryService;
-
-    @Transactional
-    public EventDTO createEvent(CreateEventRequest request) {
-        // Lógica de negocio
-    }
-}
-```
-
-#### Prácticas de Testing
-
-- **Framework**: JUnit 5, Mockito
+- **Framework**: JUnit 5 (`@Test`, `@BeforeEach`, `@DisplayName`)
+- **Mocks**: Mockito (`@Mock`, `@InjectMocks`, `when().thenReturn()`, `verify()`)
+- **Integración**: `@SpringBootTest`, `@DataJpaTest`, `@WebMvcTest` según corresponda
 - **Patrón**: AAA (Arrange, Act, Assert)
-- **Nombres**: `*Test.java` para clases de test
-- **Tests Integración**: `@SpringBootTest`
-- **Tests Unitarios**: Mockear dependencias con Mockito
-
-### Frontend (Angular)
-
-#### Arquitectura: Feature-First
-
-```
-src/app/
-├── core/                     # Servicios globales singleton
-│   ├── auth/                 # Autenticación, manejo JWT
-│   ├── guards/               # Guards de rutas (canActivate)
-│   ├── interceptors/         # Interceptores HTTP
-│   └── services/             # Servicios globales
-├── shared/                   # Componentes reutilizables
-│   ├── components/           # Componentes UI (event-card, etc.)
-│   ├── directives/           # Directivas personalizadas
-│   ├── pipes/                # Transformadores de datos
-│   └── ui/                   # Componentes de layout
-└── features/                 # Módulos de negocio (lazy-loaded)
-    └── <feature>/
-        ├── components/       # Componentes específicos del feature
-        ├── services/         # Servicios del feature
-        └── <feature>.page.ts # Componente página principal
-```
-
-#### Convenciones de Nombres
-
-| Tipo | Convención | Ejemplo |
-|------|------------|---------|
-| Páginas | `*.page.ts` | `home.page.ts`, `login.page.ts` |
-| Componentes | `*.component.ts` | `event-card.component.ts` |
-| Servicios | `*.service.ts` | `auth.service.ts` |
-| Guards | `*.guard.ts` | `auth.guard.ts` |
-| Interceptors | `*.interceptor.ts` | `jwt.interceptor.ts` |
-
-#### Estilo de Código
-
-- **Componentes**: Standalone (sin NgModules), usar `imports: []` en decorator
-- **Gestión de Estado**: Signals (`signal()`, `computed()`, `effect()`)
-- **Inyección de Dependencias**: Función `inject()` (no constructor injection)
-- **Estilos**: SCSS con Tailwind CSS v4
-- **Formato**: Prettier (printWidth: 100, comillas simples, 2 espacios)
-- **TypeScript**: strict mode, noImplicitOverride, strictTemplates
-
-#### Ejemplo de Patrón Componente
-
-```typescript
-@Component({
-  selector: 'app-event-list',
-  standalone: true,
-  imports: [CommonModule, EventCardComponent],
-  templateUrl: './event-list.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class EventListComponent {
-  private eventService = inject(EventService);
-  
-  events = this.eventService.events;
-  isLoading = signal(false);
-
-  loadEvents() {
-    this.isLoading.set(true);
-    this.eventService.loadEvents();
-  }
-}
-```
+- **Nombres**: `*Test.java`, métodos descriptivos: `shouldReturnEventWhenExists()`
+- **H2**: Usar H2 en memoria para tests de repositorio
 
 ---
 
-## Referencia de la API
+## Datos y Estado Clave
 
-### Rutas del API Gateway (Puerto 8080)
+### Puertos
 
-| Endpoint | Método | Servicio | Descripción |
-|----------|--------|----------|-------------|
-| `/api/events/**` | Todos | event-service:8082 | Gestión de eventos |
-| `/api/orders/**` | Todos | order-service:8083 | Gestión de pedidos |
-| `/api/payments/**` | Todos | payment-service:8084 | Procesamiento de pagos |
-| `/ui/*` | GET | frontend:4200 | Aplicación frontend |
+| Servicio | Puerto | Propósito |
+|----------|--------|-----------|
+| API Gateway | 8080 | Enrutamiento de peticiones |
+| Event Service | 8082 | Gestión de eventos |
+| Order Service | 8083 | Gestión de pedidos/reservas |
+| Payment Service | 8084 | Procesamiento de pagos |
+| Frontend | 4200 | SPA Angular |
+| PostgreSQL Events | 5432 | DB de event-service |
+| PostgreSQL Orders | 5433 | DB de order-service |
+| PostgreSQL Payments | 5434 | DB de payment-service |
+| Redis | 6379 | Caché + reservas temporales |
+| Keycloak | 8180 | Proveedor OAuth2/OIDC |
+| Kafka | 9092/9093 | Message broker |
+| Elasticsearch | 9200 | Búsqueda full-text |
+| Kibana | 5601 | UI de Elasticsearch |
 
-### Endpoints del Event Service
+### Claves de Redis
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/events` | Crear evento |
-| GET | `/api/events/{id}` | Obtener evento por UUID |
-| GET | `/api/events` | Listar eventos (paginado) |
-| GET | `/api/events/featured` | Eventos destacados |
-| PUT | `/api/events/{id}` | Actualizar evento |
-| DELETE | `/api/events/{id}` | Eliminar evento |
-| PUT | `/api/events/{id}/tickets/release` | Liberar tickets en Redis |
+| Patrón | Propósito | TTL |
+|--------|-----------|-----|
+| `vento:event:{id}:available_tickets` | Inventario de tickets | Persistente |
+| `vento:reservation:{orderId}` | Reserva temporal | 5 minutos |
 
-### Endpoints del Order Service
+### Estados de Pedido
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/orders` | Crear reserva (TTL 5 min) |
-| GET | `/api/orders/{id}` | Obtener pedido por ID |
-| GET | `/api/orders/my-orders` | Pedidos del usuario autenticado |
-| PUT | `/api/orders/{id}/cancel` | Cancelar pedido |
-| PUT | `/api/orders/{id}/confirm` | Confirmar pedido |
-
-### Endpoints del Payment Service
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/payments/process` | Procesar pago simulado (80% éxito, 20% fallo, ~2s delay) |
-
-**Respuestas:**
-- **200 OK** — Pago exitoso: `{ "success": true, "data": { "orderId", "transactionId", "amount" } }`
-- **402 Payment Required** — Pago fallido (RFC 9457): `{ "type": "https://vento.app/errors/payment-failed", "title", "status", "detail", "orderId" }`
+```
+PENDING → CONFIRMED (pago exitoso)
+        → CANCELLED (usuario canceló)
+        → EXPIRED (timeout de 5 min)
+```
 
 ### Seguridad (Keycloak)
 
 | Escenario | Respuesta |
 |-----------|-----------|
-| Request sin token | `401 Unauthorized` |
+| Sin token | `401 Unauthorized` |
 | Token inválido/expirado | `401 Unauthorized` |
-| Token válido sin rol | `403 Forbidden` |
-| Token válido con rol | `200 OK` |
+| Token válido, sin rol | `403 Forbidden` |
+| Token válido, con rol | `200 OK` |
 
 **Headers propagados a microservicios:**
 - `X-User-Id`: ID del usuario desde claim `sub` del JWT
@@ -345,41 +344,7 @@ export class EventListComponent {
 
 ---
 
-## Datos y Estado
-
-### Claves de Redis
-
-| Patrón | Propósito | TTL |
-|--------|-----------|-----|
-| `vento:event:{id}:available_tickets` | Inventario de tickets | Persistente |
-| `vento:reservation:{orderId}` | Reserva de pedido | 5 minutos |
-
-### Estados de Pedido
-
-```
-PENDING → CONFIRMED (pago exitoso)
-        → CANCELLED (usuario canceló)
-        → EXPIRED (timeout 5 min)
-```
-
-### Puertos de Infraestructura
-
-| Servicio | Puerto | Propósito |
-|----------|--------|-----------|
-| PostgreSQL Events | 5432 | event-service |
-| PostgreSQL Orders | 5433 | order-service |
-| PostgreSQL Payments | 5434 | payment-service |
-| Redis | 6379 | Caché y reservas temporales |
-| Kafka | 9092/9093 | Message broker |
-| Kafka UI | 8089 | Debugging de Kafka |
-| Elasticsearch | 9200 | Búsqueda avanzada |
-| Kibana | 5601 | UI de Elasticsearch |
-
----
-
 ## Variables de Entorno
-
-### Archivos de Configuración
 
 | Archivo | Propósito | Versionado |
 |---------|-----------|------------|
@@ -387,7 +352,7 @@ PENDING → CONFIRMED (pago exitoso)
 | `.env` | Desarrollo local | ❌ No |
 | `.env.prod` | Producción | ❌ No |
 
-### Variables Principales
+### Variables Clave
 
 ```bash
 # PostgreSQL
@@ -409,26 +374,12 @@ CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3000
 
 ---
 
-## Agregar un Nuevo Microservicio
-
-1. Crear carpeta en `microservices/<nombre>/`
-2. Copiar `build.gradle` de un servicio existente, ajustar dependencias
-3. Crear estructura de paquetes siguiendo convenciones
-4. Agregar en `settings.gradle`:
-   ```groovy
-   include 'microservices:<nombre>'
-   ```
-5. Configurar ruta en `api-gateway/application.yml`
-6. Crear `application.yml` con configs específicas por perfil
-
----
-
 ## Troubleshooting
 
-### Problemas de Conexión a BD (Local)
+### Los servicios no se conectan a la BD (Local)
 
 ```bash
-# Verificar infraestructura corriendo
+# Verificar que la infraestructura esté corriendo
 docker compose -f docker-compose.yml -f docker-compose.local.yml ps
 
 # Ver logs de la BD
@@ -437,7 +388,7 @@ docker compose logs postgres-events
 
 ### API Gateway "Connection Refused"
 
-El Gateway en modo local apunta a `localhost:8082` y `localhost:8083`. Asegúrate que los servicios estén corriendo:
+El Gateway en modo local apunta a `localhost:8082` y `localhost:8083`. Verificar que los servicios estén corriendo:
 
 ```bash
 curl http://localhost:8082/actuator/health
@@ -460,62 +411,22 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 ---
 
-## Referencia de Estructura del Proyecto
+## Agregar un Nuevo Microservicio
 
-### Archivos Raíz
-
-| Archivo | Propósito |
-|---------|-----------|
-| `build.gradle` | Configuración Gradle raíz |
-| `settings.gradle` | Definición de módulos del proyecto |
-| `gradle.properties` | Configuración y versiones de Gradle |
-| `docker-compose*.yml` | Configuraciones de entorno Docker |
-| `.env.example` | Plantilla de variables de entorno |
-
-### Directorios Principales
-
-| Directorio | Contenido |
-|------------|-----------|
-| `common/` | DTOs compartidos, excepciones, utilerías |
-| `microservices/` | Todos los servicios backend (api-gateway, event-service, order-service, payment-service) |
-| `frontend/` | Aplicación Angular |
-| `database/` | Scripts SQL, migraciones |
-| `requerimientos/` | Documentación de requisitos |
+1. Crear carpeta en `microservices/<nombre>/`
+2. Copiar `build.gradle` de un servicio existente, ajustar dependencias
+3. Crear estructura de paquetes Java estándar
+4. Agregar en `settings.gradle`:
+   ```groovy
+   include 'microservices:<nombre>'
+   ```
+5. Configurar ruta en `api-gateway/application.yml`
+6. Crear `application.yml` con configs por perfil (local/dev/prod)
+7. Agregar en `docker-compose.local.yml` si necesita infraestructura
 
 ---
 
-## Testing
-
-### Tests del Backend
-
-```bash
-# Todos los tests
-./gradlew test
-
-# Tests de un módulo
-./gradlew :microservices:event-service:test
-
-# Output detallado
-./gradlew test --info
-```
-
-**Cobertura de Tests:**
-- EventService: 6 tests ✅
-- OrderService: 9 tests ✅
-- TicketInventoryService: 3 tests ✅
-- ConflictResolutionService: 3 tests ✅
-- PaymentFailedException: tests pendientes
-
-### Tests del Frontend
-
-```bash
-cd frontend
-pnpm test
-```
-
----
-
-## Documentación Relacionada
+## Referencias
 
 - **[README.md](./README.md)**: Guía completa de usuario
 - **[AGENTS.md](./AGENTS.md)**: Referencia rápida para agentes AI
