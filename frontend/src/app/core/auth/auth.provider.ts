@@ -1,4 +1,4 @@
-import { Provider, signal, computed, inject, effect, Signal } from '@angular/core';
+import { Provider, signal, computed, inject, effect } from '@angular/core';
 
 import { AuthService } from './auth.service';
 import { User, AuthState, initialAuthState } from './auth.model';

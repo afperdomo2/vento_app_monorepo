@@ -7,6 +7,17 @@ import { getEnvValue } from '../../../../environments/env.config';
 const KEYCLOAK_URL = getEnvValue('KEYCLOAK_URL');
 const KEYCLOAK_REALM = getEnvValue('KEYCLOAK_REALM');
 
+interface DecodedToken {
+  sub: string;
+  preferred_username: string;
+  email: string;
+  given_name?: string;
+  family_name?: string;
+  name?: string;
+  realm_access?: { roles: string[] };
+  email_verified?: boolean;
+}
+
 /**
  * Profile Service
  *
@@ -89,7 +100,7 @@ export class ProfileService {
   /**
    * Decode JWT token
    */
-  private decodeToken(token: string): any {
+  private decodeToken(token: string): DecodedToken {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -99,8 +110,8 @@ export class ProfileService {
           .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')
       );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
+      return JSON.parse(jsonPayload) as DecodedToken;
+    } catch {
       throw new Error('Invalid token');
     }
   }

@@ -1,8 +1,8 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
-import { AuthStateService, injectAuthState } from '../../../core/auth/auth.provider';
+import { injectAuthState } from '../../../core/auth/auth.provider';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 
@@ -72,12 +72,18 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
                 class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
                 [attr.aria-label]="'Menu de usuario de ' + (authState.userName() || 'Usuario')"
               >
-                @if (currentUser()?.avatarUrl) {
-                  <img
-                    [src]="currentUser()!.avatarUrl!"
-                    [alt]="authState.userName() || 'Usuario'"
-                    class="w-full h-full object-cover"
-                  />
+                @if (currentUser(); as user) {
+                  @if (user.avatarUrl) {
+                    <img
+                      [src]="user.avatarUrl"
+                      [alt]="authState.userName() || 'Usuario'"
+                      class="w-full h-full object-cover"
+                    />
+                  } @else {
+                    <div class="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                      {{ authState.userInitials() }}
+                    </div>
+                  }
                 } @else {
                   <div class="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                     {{ authState.userInitials() }}
@@ -154,15 +160,15 @@ export class TopNavBar {
 
   currentUser = this.authState.currentUser;
 
-  toggleUserMenu() {
+  toggleUserMenu(): void {
     this.isUserMenuOpen.update(open => !open);
   }
 
-  closeUserMenu() {
+  closeUserMenu(): void {
     this.isUserMenuOpen.set(false);
   }
 
-  logout() {
+  logout(): void {
     this.authService.logout();
     this.closeUserMenu();
     this.router.navigate(['/home']);

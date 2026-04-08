@@ -5,7 +5,6 @@ import {
   FormBuilder,
   Validators,
   FormGroup,
-  ValidationErrors,
 } from '@angular/forms';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -294,15 +293,15 @@ export class LoginPage {
     });
   }
 
-  togglePasswordVisibility() {
+  togglePasswordVisibility(): void {
     this.showPassword.update(value => !value);
   }
 
-  clearError() {
+  clearError(): void {
     this.errorMessage.set(null);
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -325,7 +324,7 @@ export class LoginPage {
     });
   }
 
-  private redirectAfterLogin() {
+  private redirectAfterLogin(): void {
     // Get return URL from sessionStorage (set by authGuard)
     const returnUrl = getAndClearReturnUrl();
 

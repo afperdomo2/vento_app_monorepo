@@ -1,8 +1,6 @@
-import { Component, inject, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 import { NearbyEventsService } from './services/nearby-events.service';
 import { RadiusSelectorComponent } from './components/radius-selector';
@@ -194,9 +192,8 @@ import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
     `,
   ],
 })
-export class NearbyEventsPage implements OnInit, OnDestroy {
+export class NearbyEventsPage implements OnInit {
   readonly nearbyEventsService = inject(NearbyEventsService);
-  private destroy$ = new Subject<void>();
 
   readonly events = this.nearbyEventsService.events;
   readonly loading = this.nearbyEventsService.loading;
@@ -210,11 +207,6 @@ export class NearbyEventsPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.nearbyEventsService.initialize();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   @HostListener('window:scroll')

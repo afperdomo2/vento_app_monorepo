@@ -224,7 +224,7 @@ export class LocationPickerComponent implements OnInit, OnDestroy, AfterViewInit
     }
   }
 
-  updateMarker(lat: number, lng: number) {
+  updateMarker(lat: number, lng: number): void {
     this.currentLat = lat;
     this.currentLng = lng;
 

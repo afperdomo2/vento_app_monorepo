@@ -93,7 +93,7 @@ const initialNearbyState: NearbySectionState = {
           }
 
           <!-- State: With Position and Events -->
-          @if (nearbyState().position && !nearbyState().loading) {
+          @if (!nearbyState().loading && nearbyState().position; as pos) {
             <div class="space-y-4">
               <div
                 class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10"
@@ -106,8 +106,8 @@ const initialNearbyState: NearbySectionState = {
                 <div class="flex-1">
                   <h4 class="font-bold">Ubicación activa</h4>
                   <p class="text-sm text-on-surface-variant">
-                    {{ nearbyState().position!.lat.toFixed(4) }},
-                    {{ nearbyState().position!.lon.toFixed(4) }}
+                    {{ pos.lat.toFixed(4) }},
+                    {{ pos.lon.toFixed(4) }}
                   </p>
                 </div>
               </div>

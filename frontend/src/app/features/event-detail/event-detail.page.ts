@@ -46,7 +46,7 @@ import { formatCurrency } from '../../core/format/format';
             </a>
           </div>
         </div>
-      } @else if (event()) {
+      } @else if (event(); as evt) {
         <!-- Event Detail Content -->
         <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 mt-12">
           <!-- Main Content Area -->
@@ -70,13 +70,13 @@ import { formatCurrency } from '../../core/format/format';
                 <a routerLink="/events" class="hover:text-white transition-colors">Eventos</a>
                 <span class="mx-2">›</span>
                 <span class="text-white font-medium truncate max-w-xs inline-block">{{
-                  event()?.title
+                  evt.title
                 }}</span>
               </div>
 
               <img
-                [src]="event()!.imageUrl"
-                [alt]="event()!.title"
+                [src]="evt.imageUrl"
+                [alt]="evt.title"
                 class="w-full h-full object-cover"
               />
               <div
@@ -86,12 +86,12 @@ import { formatCurrency } from '../../core/format/format';
                 <span
                   class="inline-block px-4 py-1 rounded-full bg-primary text-on-primary text-xs font-bold uppercase tracking-widest mb-4"
                 >
-                  {{ event()!.category }}
+                  {{ evt.category }}
                 </span>
                 <h1
                   class="text-3xl md:text-5xl font-headline font-extrabold text-white tracking-tighter leading-none"
                 >
-                  {{ event()!.title }}
+                  {{ evt.title }}
                 </h1>
               </div>
             </section>
@@ -108,7 +108,7 @@ import { formatCurrency } from '../../core/format/format';
                   <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                     Fecha
                   </p>
-                  <p class="font-bold text-on-surface">{{ event()!.date }}</p>
+                  <p class="font-bold text-on-surface">{{ evt.date }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-4 border-l border-outline-variant/20 pl-8">
@@ -121,7 +121,7 @@ import { formatCurrency } from '../../core/format/format';
                   <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                     Hora
                   </p>
-                  <p class="font-bold text-on-surface">{{ event()!.time }}</p>
+                  <p class="font-bold text-on-surface">{{ evt.time }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-4 border-l border-outline-variant/20 pl-8">
@@ -134,7 +134,7 @@ import { formatCurrency } from '../../core/format/format';
                   <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                     Ubicación
                   </p>
-                  <p class="font-bold text-on-surface">{{ event()!.location }}</p>
+                  <p class="font-bold text-on-surface">{{ evt.location }}</p>
                 </div>
               </div>
             </div>
@@ -143,7 +143,7 @@ import { formatCurrency } from '../../core/format/format';
             <article class="space-y-6">
               <h2 class="text-3xl font-headline font-bold tracking-tight">Sobre el Evento</h2>
               <p class="text-on-surface-variant text-lg leading-relaxed">
-                {{ event()!.description }}
+                {{ evt.description }}
               </p>
             </article>
 
@@ -153,11 +153,11 @@ import { formatCurrency } from '../../core/format/format';
                 Ubicación
               </h2>
 
-              @if (event()!.latitude && event()!.longitude) {
+              @if (evt.latitude && evt.longitude) {
                 <div class="w-full h-80 rounded-xl overflow-hidden shadow-lg border border-outline-variant/10">
                   <app-location-picker
-                    [initialLat]="event()!.latitude!"
-                    [initialLng]="event()!.longitude!"
+                    [initialLat]="evt.latitude"
+                    [initialLng]="evt.longitude"
                     [readOnly]="true"
                     [showSearch]="false"
                   />
@@ -171,7 +171,7 @@ import { formatCurrency } from '../../core/format/format';
 
               <div class="flex items-center gap-2 text-on-surface-variant">
                 <span class="material-symbols-outlined text-primary">location_on</span>
-                <span class="text-sm">{{ event()!.location }}</span>
+                <span class="text-sm">{{ evt.location }}</span>
               </div>
             </section>
           </div>
@@ -184,12 +184,12 @@ import { formatCurrency } from '../../core/format/format';
               >
                 <div class="flex justify-between items-start mb-8">
                   <h2 class="text-2xl font-headline font-extrabold tracking-tight">Entradas</h2>
-                  @if (event()!.ticketsLeft && event()!.ticketsLeft! < 50) {
+                  @if (evt.ticketsLeft && evt.ticketsLeft < 50) {
                     <span
                       class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-widest animate-pulse"
                     >
                       <span class="w-2 h-2 rounded-full bg-tertiary"></span>
-                      ¡Últimas {{ event()!.ticketsLeft }}!
+                      ¡Últimas {{ evt.ticketsLeft }}!
                     </span>
                   }
                 </div>
@@ -207,7 +207,7 @@ import { formatCurrency } from '../../core/format/format';
                       </div>
                       <div class="text-right">
                         <p class="text-xl font-headline font-extrabold text-primary">
-                          {{ formatPrice(event()!.price) }}
+                          {{ formatPrice(evt.price) }}
                         </p>
                       </div>
                     </div>
@@ -232,7 +232,7 @@ import { formatCurrency } from '../../core/format/format';
                       <span class="font-bold text-lg w-4 text-center">{{ quantity() }}</span>
                       <button
                         (click)="incrementQuantity()"
-                        [disabled]="event()!.ticketsLeft && quantity() >= event()!.ticketsLeft!"
+                        [disabled]="evt.ticketsLeft && quantity() >= evt.ticketsLeft"
                         class="w-8 h-8 flex items-center justify-center text-primary-dim hover:bg-white rounded-full transition-colors disabled:opacity-30"
                         type="button"
                       >
@@ -340,7 +340,6 @@ export class EventDetailPage implements OnInit {
   isCreating = signal(false);
   creationError = signal<string | null>(null);
   showErrorModal = signal(false);
-  createdOrder = signal<Order | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -388,7 +387,6 @@ export class EventDetailPage implements OnInit {
       quantity: this.quantity(),
     }).subscribe({
       next: (order) => {
-        this.createdOrder.set(order);
         this.isCreating.set(false);
         this.router.navigate(['/checkout'], {
           queryParams: { orderId: order.id },
@@ -429,11 +427,11 @@ export class EventDetailPage implements OnInit {
     this.goBack();
   }
 
-  incrementQuantity() {
+  incrementQuantity(): void {
     this.quantity.update((q) => q + 1);
   }
 
-  decrementQuantity() {
+  decrementQuantity(): void {
     this.quantity.update((q) => Math.max(1, q - 1));
   }
 

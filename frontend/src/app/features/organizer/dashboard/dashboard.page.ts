@@ -202,7 +202,6 @@ export class DashboardPage implements OnInit {
 
   readonly events = this.organizerService.events;
   readonly notifications = this.organizerService.notifications;
-  readonly kpis = this.organizerService.kpis;
 
   ngOnInit(): void {
     this.organizerService.loadDashboardData();

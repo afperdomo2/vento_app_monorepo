@@ -8,18 +8,18 @@ import { UserProfile } from '../../models/profile.model';
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (profile()) {
+    @if (profile(); as p) {
       <div class="space-y-6">
         <!-- Avatar and Basic Info -->
         <div class="flex items-center gap-6 pb-6 border-b border-outline-variant/10">
           <img
-            [src]="profile()!.avatarUrl"
-            [alt]="profile()!.fullName || profile()!.username"
+            [src]="p.avatarUrl"
+            [alt]="p.fullName || p.username"
             class="w-24 h-24 rounded-full shadow-lg"
           />
           <div>
-            <h2 class="text-2xl font-bold text-on-surface">{{ profile()!.fullName || profile()!.username }}</h2>
-            <p class="text-on-surface-variant">@{{ profile()!.username }}</p>
+            <h2 class="text-2xl font-bold text-on-surface">{{ p.fullName || p.username }}</h2>
+            <p class="text-on-surface-variant">@{{ p.username }}</p>
             <div class="flex gap-2 mt-2">
               @for (role of getUserRoles(); track role) {
                 <span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
@@ -41,8 +41,8 @@ import { UserProfile } from '../../models/profile.model';
               </span>
               <div class="flex-1">
                 <p class="text-sm text-on-surface-variant font-bold uppercase tracking-wider mb-1">Email</p>
-                <p class="text-on-surface">{{ profile()!.email }}</p>
-                @if (profile()!.emailVerified) {
+                <p class="text-on-surface">{{ p.email }}</p>
+                @if (p.emailVerified) {
                   <span class="inline-flex items-center gap-1 text-xs text-primary mt-1">
                     <span class="material-symbols-outlined text-sm">verified</span>
                     Verificado
@@ -58,7 +58,7 @@ import { UserProfile } from '../../models/profile.model';
               </span>
               <div class="flex-1">
                 <p class="text-sm text-on-surface-variant font-bold uppercase tracking-wider mb-1">Nombre de Usuario</p>
-                <p class="text-on-surface">{{ profile()!.username }}</p>
+                <p class="text-on-surface">{{ p.username }}</p>
               </div>
             </div>
 
@@ -69,7 +69,7 @@ import { UserProfile } from '../../models/profile.model';
               </span>
               <div class="flex-1">
                 <p class="text-sm text-on-surface-variant font-bold uppercase tracking-wider mb-1">ID de Usuario</p>
-                <p class="text-on-surface font-mono text-sm">{{ profile()!.id }}</p>
+                <p class="text-on-surface font-mono text-sm">{{ p.id }}</p>
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ import { UserProfile } from '../../models/profile.model';
         <div>
           <h3 class="text-lg font-bold text-on-surface mb-4">Roles y Permisos</h3>
           <div class="flex flex-wrap gap-2">
-            @for (role of profile()!.roles; track role) {
+            @for (role of p.roles; track role) {
               <span class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface text-sm font-bold border border-outline-variant/20">
                 {{ role }}
               </span>

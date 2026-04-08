@@ -73,33 +73,33 @@ interface TicketWithQR extends Ticket {
         }
 
         <!-- Detail Content -->
-        @if (order()) {
+        @if (order(); as ord) {
           <div class="space-y-6">
             <!-- Event Hero Image -->
             <div class="relative rounded-2xl overflow-hidden shadow-lg">
               <img
-                [src]="order()!.eventImageUrl"
-                [alt]="order()!.eventTitle"
+                [src]="ord.eventImageUrl"
+                [alt]="ord.eventTitle"
                 class="w-full h-64 object-cover"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               <div class="absolute bottom-4 left-4 right-4">
                 <h2 class="text-white font-headline text-xl font-bold">
-                  {{ order()!.eventTitle }}
+                  {{ ord.eventTitle }}
                 </h2>
                 <div class="flex items-center gap-4 mt-2 text-white/90 text-sm">
                   <span class="flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">calendar_today</span>
-                    {{ order()!.eventDate }}
+                    {{ ord.eventDate }}
                   </span>
                   <span class="flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">schedule</span>
-                    {{ order()!.eventTime }}
+                    {{ ord.eventTime }}
                   </span>
                 </div>
                 <div class="flex items-center gap-1 mt-1 text-white/80 text-sm">
                   <span class="material-symbols-outlined text-sm">location_on</span>
-                  {{ order()!.eventVenue }}
+                  {{ ord.eventVenue }}
                 </div>
               </div>
             </div>
@@ -120,68 +120,68 @@ interface TicketWithQR extends Ticket {
                 <div class="flex flex-col items-center gap-2">
                   <div
                     class="w-8 h-8 rounded-full flex items-center justify-center"
-                    [class.bg-primary]="order()?.status === 'PENDING'"
+                    [class.bg-primary]="ord.status === 'PENDING'"
                     [class.bg-primary-container]="
-                      order()?.status !== 'PENDING' &&
-                      order()?.status !== 'CANCELLED' &&
-                      order()?.status !== 'EXPIRED'
+                      ord.status !== 'PENDING' &&
+                      ord.status !== 'CANCELLED' &&
+                      ord.status !== 'EXPIRED'
                     "
                     [class.bg-surface-container-high]="
-                      order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                      ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                     "
                   >
                     <span
                       class="material-symbols-outlined text-sm"
-                      [class.text-white]="order()?.status === 'PENDING'"
+                      [class.text-white]="ord.status === 'PENDING'"
                       [class.text-primary]="
-                        order()?.status !== 'PENDING' &&
-                        order()?.status !== 'CANCELLED' &&
-                        order()?.status !== 'EXPIRED'
+                        ord.status !== 'PENDING' &&
+                        ord.status !== 'CANCELLED' &&
+                        ord.status !== 'EXPIRED'
                       "
                       [class.text-on-surface-variant]="
-                        order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                        ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                       "
                     >
-                      {{ order()?.status === 'PENDING' ? 'hourglass_top' : 'check_circle' }}
+                      {{ ord.status === 'PENDING' ? 'hourglass_top' : 'check_circle' }}
                     </span>
                   </div>
                   <span
                     class="text-xs font-semibold"
-                    [class.text-primary]="order()?.status === 'PENDING'"
-                    [class.text-primary]="order()?.status === 'CONFIRMED'"
+                    [class.text-primary]="ord.status === 'PENDING'"
+                    [class.text-primary]="ord.status === 'CONFIRMED'"
                     [class.text-on-surface-variant]="
-                      order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                      ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                     "
                   >
-                    {{ order()?.status === 'PENDING' ? 'Pendiente' : 'Procesado' }}
+                    {{ ord.status === 'PENDING' ? 'Pendiente' : 'Procesado' }}
                   </span>
                 </div>
                 <div
                   class="flex-1 h-0.5 mx-2"
-                  [class.bg-primary]="order()?.status === 'CONFIRMED'"
-                  [class.bg-surface-container-high]="order()?.status !== 'CONFIRMED'"
+                  [class.bg-primary]="ord.status === 'CONFIRMED'"
+                  [class.bg-surface-container-high]="ord.status !== 'CONFIRMED'"
                 ></div>
                 <div class="flex flex-col items-center gap-2">
                   <div
                     class="w-8 h-8 rounded-full flex items-center justify-center"
-                    [class.bg-primary-container]="order()?.status === 'CONFIRMED'"
+                    [class.bg-primary-container]="ord.status === 'CONFIRMED'"
                     [class.bg-error-container]="
-                      order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                      ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                     "
-                    [class.bg-surface-container-high]="order()?.status === 'PENDING'"
+                    [class.bg-surface-container-high]="ord.status === 'PENDING'"
                   >
                     <span
                       class="material-symbols-outlined text-sm"
-                      [class.text-primary]="order()?.status === 'CONFIRMED'"
+                      [class.text-primary]="ord.status === 'CONFIRMED'"
                       [class.text-error]="
-                        order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                        ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                       "
-                      [class.text-on-surface-variant]="order()?.status === 'PENDING'"
+                      [class.text-on-surface-variant]="ord.status === 'PENDING'"
                     >
                       {{
-                        order()?.status === 'CONFIRMED'
+                        ord.status === 'CONFIRMED'
                           ? 'check_circle'
-                          : order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                          : ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                             ? 'cancel'
                             : 'hourglass_empty'
                       }}
@@ -189,13 +189,13 @@ interface TicketWithQR extends Ticket {
                   </div>
                   <span
                     class="text-xs font-semibold"
-                    [class.text-primary]="order()?.status === 'CONFIRMED'"
+                    [class.text-primary]="ord.status === 'CONFIRMED'"
                     [class.text-error]="
-                      order()?.status === 'CANCELLED' || order()?.status === 'EXPIRED'
+                      ord.status === 'CANCELLED' || ord.status === 'EXPIRED'
                     "
-                    [class.text-on-surface-variant]="order()?.status === 'PENDING'"
+                    [class.text-on-surface-variant]="ord.status === 'PENDING'"
                   >
-                    {{ getStatusLabel(order()?.status) }}
+                    {{ getStatusLabel(ord.status) }}
                   </span>
                 </div>
               </div>
@@ -210,45 +210,45 @@ interface TicketWithQR extends Ticket {
                 <div class="flex justify-between items-center">
                   <span class="text-on-surface-variant text-sm">ID del Pedido</span>
                   <span class="font-mono text-sm text-on-surface">{{
-                    formatOrderId(order()!.id)
+                    formatOrderId(ord.id)
                   }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-on-surface-variant text-sm">Estado</span>
                   <span
                     class="px-3 py-1 rounded-full text-xs font-bold"
-                    [class]="getStatusBadgeClass(order()!.status)"
+                    [class]="getStatusBadgeClass(ord.status)"
                   >
-                    {{ getStatusLabel(order()!.status) }}
+                    {{ getStatusLabel(ord.status) }}
                   </span>
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-on-surface-variant text-sm">Cantidad de Tickets</span>
-                  <span class="font-bold text-on-surface">{{ order()!.quantity }}</span>
+                  <span class="font-bold text-on-surface">{{ ord.quantity }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-on-surface-variant text-sm">Precio por Ticket</span>
-                  <span class="text-on-surface">{{ order()!.eventPrice }}</span>
+                  <span class="text-on-surface">{{ ord.eventPrice }}</span>
                 </div>
                 <div
                   class="border-t border-outline-variant/10 pt-4 flex justify-between items-center"
                 >
                   <span class="font-bold text-on-surface">Total</span>
                   <span class="font-headline text-xl font-bold text-primary">{{
-                    formatTotal(order()!.totalAmount)
+                    formatTotal(ord.totalAmount)
                   }}</span>
                 </div>
                 <div class="flex justify-between items-center text-xs">
                   <span class="text-on-surface-variant">Creado</span>
                   <span class="text-on-surface-variant">{{
-                    formatDateTime(order()!.createdAt)
+                    formatDateTime(ord.createdAt)
                   }}</span>
                 </div>
-                @if (order()!.updatedAt !== order()!.createdAt) {
+                @if (ord.updatedAt !== ord.createdAt) {
                   <div class="flex justify-between items-center text-xs">
                     <span class="text-on-surface-variant">Última actualización</span>
                     <span class="text-on-surface-variant">{{
-                      formatDateTime(order()!.updatedAt)
+                      formatDateTime(ord.updatedAt)
                     }}</span>
                   </div>
                 }
@@ -256,7 +256,7 @@ interface TicketWithQR extends Ticket {
             </div>
 
             <!-- Tickets Section (only for CONFIRMED orders) -->
-            @if (order()?.status === 'CONFIRMED') {
+            @if (ord.status === 'CONFIRMED') {
               @if (ticketsLoading()) {
                 <div class="bg-surface-container rounded-2xl p-6">
                   <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Tus Entradas</h3>
@@ -303,21 +303,21 @@ interface TicketWithQR extends Ticket {
                           <div class="flex-1 p-5 sm:border-r border-dashed border-outline-variant/30">
                             <div class="flex items-start gap-3">
                               <img
-                                [src]="order()!.eventImageUrl"
-                                [alt]="order()!.eventTitle"
+                                [src]="ord.eventImageUrl"
+                                [alt]="ord.eventTitle"
                                 class="w-16 h-16 rounded-xl object-cover flex-shrink-0"
                               />
                               <div class="min-w-0">
                                 <p class="font-bold text-on-surface text-sm truncate">
-                                  {{ order()!.eventTitle }}
+                                  {{ ord.eventTitle }}
                                 </p>
                                 <div class="flex items-center gap-1 mt-1 text-on-surface-variant text-xs">
                                   <span class="material-symbols-outlined text-sm">calendar_today</span>
-                                  {{ order()!.eventDate }}
+                                  {{ ord.eventDate }}
                                 </div>
                                 <div class="flex items-center gap-1 text-on-surface-variant text-xs">
                                   <span class="material-symbols-outlined text-sm">location_on</span>
-                                  {{ order()!.eventVenue }}
+                                  {{ ord.eventVenue }}
                                 </div>
                               </div>
                             </div>
@@ -345,7 +345,7 @@ interface TicketWithQR extends Ticket {
             <!-- Actions -->
             <div class="flex gap-3">
               <a
-                [routerLink]="'/events/' + order()!.eventId"
+                [routerLink]="'/events/' + ord.eventId"
                 class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors"
               >
                 <span class="material-symbols-outlined text-lg">event</span>
@@ -390,14 +390,15 @@ export class MyOrdersDetailPage implements OnInit {
 
   ngOnInit(): void {
     this.loadOrder();
-  }
 
-  private orderEffect = effect(() => {
-    const order = this.order();
-    if (order?.status === 'CONFIRMED') {
-      this.loadTickets();
-    }
-  });
+    // Auto-load tickets when order is confirmed
+    effect(() => {
+      const order = this.order();
+      if (order?.status === 'CONFIRMED') {
+        this.loadTickets();
+      }
+    });
+  }
 
   loadOrder(): void {
     const id = this.route.snapshot.paramMap.get('id');

@@ -85,7 +85,7 @@ export class OrderSummary {
   order = input.required<Order>();
   event = input.required<Event>();
 
-  showLowStock = () => {
+  showLowStock = (): boolean => {
     const ticketsLeft = this.event().ticketsLeft;
     return ticketsLeft !== undefined && ticketsLeft < 50;
   };

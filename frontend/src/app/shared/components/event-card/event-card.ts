@@ -115,7 +115,7 @@ export class EventCard {
 
   private eventsListService = inject(EventsListService);
 
-  saveScrollPosition() {
+  saveScrollPosition(): void {
     this.eventsListService.saveScrollPosition();
   }
 

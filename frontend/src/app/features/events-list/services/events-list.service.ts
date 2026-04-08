@@ -100,11 +100,11 @@ export class EventsListService {
   loadEvents(): void {
     this.state.update(s => ({ ...s, loading: true, error: null, events: [], currentPage: 0 }));
 
+    const searchTerm = this.state().searchTerm.trim();
     const query = this.buildQuery(0);
-    const hasSearch = this.state().searchTerm.trim().length > 0;
 
-    const request$ = hasSearch
-      ? this.eventService.searchEvents({ q: query.search!, page: 0, size: query.size! })
+    const request$ = searchTerm
+      ? this.eventService.searchEvents({ q: searchTerm, page: 0, size: query.size })
       : this.eventService.listEvents(query);
 
     request$.pipe(
@@ -131,11 +131,11 @@ export class EventsListService {
     const nextPage = this.state().currentPage + 1;
     this.state.update(s => ({ ...s, loadingMore: true }));
 
+    const searchTerm = this.state().searchTerm.trim();
     const query = this.buildQuery(nextPage);
-    const hasSearch = this.state().searchTerm.trim().length > 0;
 
-    const request$ = hasSearch
-      ? this.eventService.searchEvents({ q: query.search!, page: nextPage, size: query.size! })
+    const request$ = searchTerm
+      ? this.eventService.searchEvents({ q: searchTerm, page: nextPage, size: query.size })
       : this.eventService.listEvents(query);
 
     request$.pipe(
@@ -241,15 +241,19 @@ export class EventsListService {
   }
 
   // Handle errors
-  private handleError(error: any): Observable<never> {
+  private handleError(error: unknown): Observable<never> {
     let errorMessage = 'Ocurrió un error al cargar los eventos';
 
-    if (error.error instanceof ErrorEvent) {
+    const httpError = error && typeof error === 'object' && 'error' in error
+      ? error as { error: { message?: string }; status?: number }
+      : null;
+
+    if (httpError?.error instanceof ErrorEvent) {
       // Client-side error
-      errorMessage = error.error.message;
-    } else {
+      errorMessage = httpError.error.message || errorMessage;
+    } else if (httpError?.status) {
       // Server-side error
-      switch (error.status) {
+      switch (httpError.status) {
         case 0:
           errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.';
           break;
@@ -260,7 +264,7 @@ export class EventsListService {
           errorMessage = 'Error interno del servidor';
           break;
         default:
-          errorMessage = `Error: ${error.status}`;
+          errorMessage = `Error: ${httpError.status}`;
       }
     }
 

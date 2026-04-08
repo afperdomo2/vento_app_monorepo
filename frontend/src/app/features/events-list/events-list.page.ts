@@ -1,7 +1,5 @@
-import { Component, inject, OnInit, OnDestroy, HostListener, signal, AfterViewInit } from '@angular/core';
+import { Component, inject, HostListener, signal, AfterViewInit, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
@@ -170,9 +168,8 @@ import { SearchBarComponent } from './components/search-bar';
     <app-bottom-nav-bar />
   `
 })
-export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
+export class EventsListPage implements OnInit, AfterViewInit {
   private eventsListService = inject(EventsListService);
-  private destroy$ = new Subject<void>();
 
   // Signals from service (public for template access)
   events = this.eventsListService.events;
@@ -195,11 +192,6 @@ export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
     this.eventsListService.restoreScrollPosition();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   // Scroll detection for infinite scroll
   @HostListener('window:scroll')
   onScroll(): void {
@@ -211,11 +203,7 @@ export class EventsListPage implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  // Save scroll position before navigating to event detail
-  saveScrollPosition(): void {
-    this.eventsListService.saveScrollPosition();
-  }
-
+  // Load events (reload/reset)
   loadEvents(): void {
     this.eventsListService.loadEvents();
   }
