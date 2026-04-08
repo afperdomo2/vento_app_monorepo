@@ -506,7 +506,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "vento_events_created_total",
+          "expr": "vento_events_count_total{type=\"created\"}",
           "legendFormat": "Eventos creados",
           "refId": "A"
         }

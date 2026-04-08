@@ -39,12 +39,9 @@ public class EventService {
 
     @PostConstruct
     public void init() {
-        eventsCreatedCounter = registerCounter("vento.events.created", "Total number of events created");
-    }
-
-    private Counter registerCounter(String name, String description) {
-        return Counter.builder(name)
-                .description(description)
+        eventsCreatedCounter = Counter.builder("vento.events.count")
+                .tag("type", "created")
+                .description("Total number of events")
                 .register(meterRegistry);
     }
 
