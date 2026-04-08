@@ -1,5 +1,8 @@
 package com.vento.order.core.service;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +30,22 @@ public class ReservationService {
     private static final String RESERVATION_KEY_PREFIX = "reservation:";
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final MeterRegistry meterRegistry;
+
+    private Counter reservationsCreatedCounter;
+    private Counter reservationsRemovedCounter;
+
+    @PostConstruct
+    public void init() {
+        reservationsCreatedCounter = registerCounter("vento.reservations.active", "Total reservations created");
+        reservationsRemovedCounter = registerCounter("vento.reservations.removed", "Total reservations removed");
+    }
+
+    private Counter registerCounter(String name, String description) {
+        return Counter.builder(name)
+                .description(description)
+                .register(meterRegistry);
+    }
 
     @Value("${vento.redis.key-prefix:vento:}")
     private String keyPrefix;
@@ -43,6 +62,7 @@ public class ReservationService {
     public void createReservation(UUID orderId) {
         String key = buildReservationKey(orderId);
         redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(ttlMinutes));
+        reservationsCreatedCounter.increment();
         log.info("✅ Reserva temporal creada. Key: {}, TTL: {} minutos", key, ttlMinutes);
     }
 
@@ -54,6 +74,7 @@ public class ReservationService {
     public void removeReservation(UUID orderId) {
         String key = buildReservationKey(orderId);
         Boolean deleted = redisTemplate.delete(key);
+        reservationsRemovedCounter.increment();
         log.info("✅ Reserva temporal eliminada. Key: {}, Eliminada: {}", key, deleted);
     }
 

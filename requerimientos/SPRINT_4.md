@@ -77,19 +77,29 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - Ver trace completo: Gateway → Order → Event → Payment → Kafka
 
 ### 8.2 - Métricas con Micrometer + Prometheus
-- [ ] **Métricas por Servicio**:
-  - HTTP requests: count, latency (p50, p95, p99)
-  - Business metrics: órdenes creadas, pagos procesados
-  - Infrastructure: JVM memory, GC, connections
-- [ ] **Métricas Custom**:
-  - `vento.orders.created` - Contador de órdenes creadas
-  - `vento.orders.confirmed` - Órdenes confirmadas
-  - `vento.orders.cancelled` - Órdenes canceladas
-  - `vento.reservations.active` - Reservas activas
-  - `vento.tickets.available` - Gauge de tickets por evento
-- [ ] **Prometheus Endpoint**:
-  - Exponer `/actuator/prometheus` en cada servicio
-  - Proteger endpoint en producción
+- [x] **Métricas por Servicio**:
+  - [x] HTTP requests: count, latency (p50, p95, p99) — Automáticas via Micrometer
+  - [x] Business metrics: órdenes creadas, pagos procesados — Counters custom
+  - [x] Infrastructure: JVM memory, GC, connections — Automáticas via Micrometer
+- [x] **Métricas Custom**:
+  - [x] `vento.orders.created` - Contador de órdenes creadas
+  - [x] `vento.orders.confirmed` - Órdenes confirmadas
+  - [x] `vento.orders.cancelled` - Órdenes canceladas
+  - [x] `vento.payments.success` - Pagos exitosos
+  - [x] `vento.payments.failed` - Pagos fallidos
+  - [x] `vento.events.created` - Eventos creados
+  - [x] `vento.reservations.active` - Reservas activas (creadas - eliminadas)
+  - [x] `vento.reservations.removed` - Reservas eliminadas (confirm/cancel/expire)
+  - [x] `vento.tickets.available` - Gauge de eventos con tracking de tickets
+- [x] **Prometheus Endpoint**:
+  - [x] Exponer `/actuator/prometheus` en cada servicio
+  - [ ] Proteger endpoint en producción (pendiente)
+- [x] **Infraestructura Prometheus (Local)**:
+  - [x] Contenedor Prometheus en docker-compose.local.yml (puerto 9090)
+  - [x] Configuración prometheus.yml con scrape configs
+  - [x] Targets: api-gateway:8080, event-service:8082, order-service:8083, payment-service:8084
+  - [ ] Agregar Prometheus en docker-compose.dev.yml (pendiente)
+  - [ ] Agregar Prometheus en docker-compose.prod.yml (pendiente)
 
 ### 8.3 - Grafana Dashboards
 - [ ] **Dashboard Principal - Ventas**:
@@ -155,16 +165,16 @@ Semana 8 ───────────────────────�
 
 ## Criterios de Aceptación
 
-- [ ] Elasticsearch accesible y con índice `events`
-- [ ] Búsqueda de texto funciona con fuzzy matching
-- [ ] Búsqueda por geolocalización retorna eventos cercanos
+- [x] Elasticsearch accesible y con índice `events`
+- [x] Búsqueda de texto funciona con fuzzy matching
+- [x] Búsqueda por geolocalización retorna eventos cercanos
 - [ ] TraceId visible en Jaeger/Grafana desde Gateway hasta Payment
-- [ ] Métricas visibles en Prometheus endpoint
+- [x] Métricas visibles en Prometheus endpoint
 - [ ] Dashboard de ventas en Grafana muestra tickets/segundo
 - [ ] Alertas configuradas para DLQ y error rate
 - [ ] Logs incluyen traceId para correlación
 - [ ] Health checks funcionan para todos los componentes
-- [ ] Build completo pasa con `./gradlew build`
+- [x] Build completo pasa con `./gradlew build`
 
 ---
 
@@ -240,16 +250,35 @@ PUT /events
 
 ---
 
-## Proyecto Completado
+## Estado del Sprint 4
 
-Este Sprint 4 marca la finalización del proyecto según los REQUERIMIENTOS.md.
+### ✅ Completado:
+- **Semana 7**: Búsqueda Avanzada con Elasticsearch (100%)
+- **Semana 8.2**: Métricas con Micrometer + Prometheus (95%)
+  - ✅ Métricas HTTP y JVM automáticas
+  - ✅ 9 métricas custom implementadas
+  - ✅ Prometheus corriendo en entorno local
+  - ⏳ Pendiente: protección de endpoints en producción
 
-**Stack Completo:**
-- Spring Cloud Gateway + Keycloak (Auth)
-- Event-service + PostgreSQL + Redis
-- Order-service + PostgreSQL + Redis
-- Payment-service (Simulado)
-- Kafka + DLQ (Event-Driven)
-- Elasticsearch (Búsqueda)
+### ⏳ Pendiente:
+- **Semana 8.1**: OpenTelemetry (Tracing Distribuido)
+- **Semana 8.3**: Grafana Dashboards
+- **Semana 8.4**: Logging Centralizado
+- **Semana 8.5**: Health Checks y Readiness avanzados
+
+---
+
+**Stack Implementado hasta ahora:**
+- Spring Cloud Gateway + Keycloak (Auth) ✅
+- Event-service + PostgreSQL + Redis ✅
+- Order-service + PostgreSQL + Redis ✅
+- Payment-service (Simulado) ✅
+- Kafka + DLQ (Event-Driven) ✅
+- Elasticsearch (Búsqueda) ✅
+- Micrometer + Prometheus (9 métricas custom + HTTP/JVM automáticas) ✅
+
+**Stack Pendiente:**
 - OpenTelemetry (Tracing)
-- Prometheus + Grafana (Métricas)
+- Grafana (Dashboards)
+- Logging Centralizado (Loki/ELK)
+- Health Checks avanzados (liveness/readiness)

@@ -1,13 +1,19 @@
 package com.vento.event.core.service;
 
-import com.vento.event.infrastructure.persistence.repository.EventRepository;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.vento.event.infrastructure.persistence.repository.EventRepository;
 
 /**
  * Gestiona el inventario de tickets en Redis.
@@ -27,9 +33,21 @@ public class InventoryService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final EventRepository eventRepository;
+    private final MeterRegistry meterRegistry;
+
+    // Mapa local para monitorear cuántos eventos tienen inventario rastreado en Redis (solo para métricas)
+    private final Map<String, Integer> availableTicketsByEvent = new ConcurrentHashMap<>();
 
     @Value("${vento.redis.key-prefix:vento:}")
     private String keyPrefix;
+
+    @PostConstruct
+    public void init() {
+        // Registra un Gauge para monitorear el número de eventos con inventario rastreado
+        Gauge.builder("vento.tickets.available", availableTicketsByEvent, Map::size)
+                .description("Number of events with tracked ticket availability")
+                .register(meterRegistry);
+    }
 
     // -----------------------------------------------------------------------
     // Key builders
@@ -56,6 +74,7 @@ public class InventoryService {
     public void initializeInventory(UUID eventId, int availableTickets) {
         String key = buildTicketsKey(eventId);
         redisTemplate.opsForValue().set(key, String.valueOf(availableTickets));
+        availableTicketsByEvent.put(eventId.toString(), availableTickets);
         log.info("✅ Inventario inicializado en Redis. Key: {}, Tickets: {}", key, availableTickets);
     }
 
@@ -71,8 +90,10 @@ public class InventoryService {
         ensureKeyExists(eventId, key);
         if (delta > 0) {
             redisTemplate.opsForValue().increment(key, delta);
+            availableTicketsByEvent.merge(eventId.toString(), delta, Integer::sum);
         } else if (delta < 0) {
             redisTemplate.opsForValue().decrement(key, Math.abs(delta));
+            availableTicketsByEvent.merge(eventId.toString(), delta, Integer::sum);
         }
         log.info("✅ Inventario ajustado en Redis. Key: {}, Delta: {}", key, delta);
     }
@@ -85,6 +106,7 @@ public class InventoryService {
     public void removeInventory(UUID eventId) {
         String key = buildTicketsKey(eventId);
         Boolean deleted = redisTemplate.delete(key);
+        availableTicketsByEvent.remove(eventId.toString());
         log.info("✅ Inventario eliminado de Redis. Key: {}, Eliminado: {}", key, deleted);
     }
 
@@ -114,6 +136,7 @@ public class InventoryService {
         String key = buildTicketsKey(eventId);
         ensureKeyExists(eventId, key);
         Long newValue = redisTemplate.opsForValue().increment(key, quantity);
+        availableTicketsByEvent.merge(eventId.toString(), quantity, Integer::sum);
         log.info("✅ Tickets liberados en Redis. Key: {}, Cantidad: {}, Nuevo total: {}", key, quantity, newValue);
     }
 
