@@ -90,7 +90,7 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] `vento.events.created` - Eventos creados
   - [x] `vento.reservations.active` - Reservas activas (creadas - eliminadas)
   - [x] `vento.reservations.removed` - Reservas eliminadas (confirm/cancel/expire)
-  - [x] `vento.tickets.available` - Gauge de eventos con tracking de tickets
+  - [x] `vento.tickets.available` - Gauge de tickets disponibles en total (todos los eventos)
 - [x] **Prometheus Endpoint**:
   - [x] Exponer `/actuator/prometheus` en cada servicio
   - [ ] Proteger endpoint en producción (pendiente)
