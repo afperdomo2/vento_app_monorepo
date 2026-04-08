@@ -56,9 +56,9 @@ export class EventService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(catchError(this.handleError));
   }
 
-  getFeaturedEvents(limit: number = 6): Observable<Event[]> {
-    // Ensure limit is between 6 and 20
-    const safeLimit = Math.max(6, Math.min(20, limit));
+  getFeaturedEvents(limit: number = 3): Observable<Event[]> {
+    // Ensure limit is between 3 and 20
+    const safeLimit = Math.max(3, Math.min(20, limit));
 
     return this.http
       .get<ApiResponse<BackendEvent[]>>(`${this.apiUrl}/featured?limit=${safeLimit}`)

@@ -114,7 +114,7 @@ public class EventController {
             summary = "Obtener eventos destacados",
             description = "Retorna una lista de eventos destacados: eventos futuros con tickets disponibles, " +
                     "ordenados por fecha (más próximos primero). " +
-                    "El límite por defecto es 6 eventos, mínimo 6 y máximo 20."
+                    "El límite por defecto es 6 eventos, mínimo 3 y máximo 20."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -125,7 +125,7 @@ public class EventController {
     })
     @GetMapping("/featured")
     public ResponseEntity<ApiResponse<List<EventDto>>> getFeaturedEvents(
-            @Parameter(description = "Cantidad máxima de eventos a retornar (mínimo 6, máximo 20, por defecto 6)")
+            @Parameter(description = "Cantidad máxima de eventos a retornar (mínimo 3, máximo 20, por defecto 6)")
             @RequestParam(required = false, defaultValue = "6") int limit) {
 
         List<EventDto> events = eventService.getFeaturedEvents(limit);

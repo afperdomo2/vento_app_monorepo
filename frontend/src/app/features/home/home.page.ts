@@ -1,11 +1,12 @@
-import { Component, inject, signal, OnInit, effect } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
-import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
-import { EventCard } from '../../shared/components/event-card/event-card';
+import { formatCurrency } from '../../core/format/format';
+import { Event } from '../../core/models/event.models';
 import { EventService } from '../../core/services/event.service';
 import { GeolocationService, GeoPosition } from '../../core/services/geolocation.service';
-import { Event } from '../../core/models/event.models';
+import { EventCard } from '../../shared/components/event-card/event-card';
+import { BottomNavBar } from '../../shared/ui/bottom-nav-bar/bottom-nav-bar';
+import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
 
 interface NearbySectionState {
   position: GeoPosition | null;
@@ -35,26 +36,35 @@ const initialNearbyState: NearbySectionState = {
     <main class="pt-20 pb-24 md:pb-12">
       <!-- Hero Section -->
       <section class="px-6 py-12 max-w-7xl mx-auto">
-        <div class="relative rounded-xl overflow-hidden min-h-[500px] flex items-center p-8 md:p-16">
+        <div
+          class="relative rounded-xl overflow-hidden min-h-[500px] flex items-center p-8 md:p-16"
+        >
           <div class="absolute inset-0 z-0">
             <img
               src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=900&fit=crop"
               alt="Hero Background"
               class="w-full h-full object-cover"
             />
-            <div class="absolute inset-0 bg-gradient-to-r from-inverse-surface/90 via-inverse-surface/40 to-transparent"></div>
+            <div
+              class="absolute inset-0 bg-gradient-to-r from-inverse-surface/90 via-inverse-surface/40 to-transparent"
+            ></div>
           </div>
 
           <div class="relative z-10 max-w-2xl">
-            <span class="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary-fixed font-label text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
+            <span
+              class="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary-fixed font-label text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md"
+            >
               Featured This Month
             </span>
-            <h1 class="text-5xl md:text-7xl font-headline font-extrabold text-surface tracking-tighter leading-tight mb-6">
-              Experiencias que <br/>
+            <h1
+              class="text-5xl md:text-7xl font-headline font-extrabold text-surface tracking-tighter leading-tight mb-6"
+            >
+              Experiencias que <br />
               <span class="text-primary-container">definen tu ritmo.</span>
             </h1>
             <p class="text-lg text-surface-variant font-body mb-8 max-w-lg leading-relaxed">
-              Descubre los eventos más exclusivos de tu ciudad. Desde tecnología de vanguardia hasta el alma de la música en vivo.
+              Descubre los eventos más exclusivos de tu ciudad. Desde tecnología de vanguardia hasta
+              el alma de la música en vivo.
             </p>
             <div class="flex flex-wrap gap-4">
               <a
@@ -64,7 +74,9 @@ const initialNearbyState: NearbySectionState = {
                 Explorar Eventos
                 <span class="material-symbols-outlined">arrow_forward</span>
               </a>
-              <button class="bg-surface/10 backdrop-blur-md text-surface border border-surface/20 px-8 py-4 rounded-full font-bold hover:bg-surface/20 transition-all">
+              <button
+                class="bg-surface/10 backdrop-blur-md text-surface border border-surface/20 px-8 py-4 rounded-full font-bold hover:bg-surface/20 transition-all"
+              >
                 Ver Calendario
               </button>
             </div>
@@ -77,9 +89,14 @@ const initialNearbyState: NearbySectionState = {
         <div class="flex justify-between items-end mb-10">
           <div>
             <h2 class="text-4xl font-headline font-extrabold tracking-tight">Eventos destacados</h2>
-            <p class="text-on-surface-variant mt-2">Selección editorial de las mejores experiencias.</p>
+            <p class="text-on-surface-variant mt-2">
+              Selección editorial de las mejores experiencias.
+            </p>
           </div>
-          <a routerLink="/events" class="text-primary font-bold flex items-center gap-2 hover:underline">
+          <a
+            routerLink="/events"
+            class="text-primary font-bold flex items-center gap-2 hover:underline"
+          >
             Ver todos <span class="material-symbols-outlined text-sm">arrow_outward</span>
           </a>
         </div>
@@ -107,7 +124,9 @@ const initialNearbyState: NearbySectionState = {
 
         <!-- Error State -->
         @if (error(); as errorMessage) {
-          <div class="bg-error-container border border-error border-opacity-20 rounded-xl p-8 text-center">
+          <div
+            class="bg-error-container border border-error border-opacity-20 rounded-xl p-8 text-center"
+          >
             <span class="material-symbols-outlined text-error text-4xl mb-4">error</span>
             <h3 class="text-xl font-bold text-on-surface mb-2">Error al cargar eventos</h3>
             <p class="text-on-surface-variant mb-4">{{ errorMessage }}</p>
@@ -138,11 +157,16 @@ const initialNearbyState: NearbySectionState = {
 
       <!-- Dynamic Map/Location Section -->
       <section class="px-6 py-12 max-w-7xl mx-auto">
-        <div class="bg-surface-container rounded-xl p-8 flex flex-col lg:flex-row gap-12 items-center">
+        <div
+          class="bg-surface-container rounded-xl p-8 flex flex-col lg:flex-row gap-12 items-center"
+        >
           <div class="lg:w-1/2">
-            <h2 class="text-3xl font-headline font-extrabold mb-6">Encuentra eventos cerca de ti</h2>
+            <h2 class="text-3xl font-headline font-extrabold mb-6">
+              Encuentra eventos cerca de ti
+            </h2>
             <p class="text-on-surface-variant mb-8 leading-relaxed">
-              Utilizamos tu ubicación para mostrarte los happenings más relevantes en tu zona. Nunca te pierdas lo que está ocurriendo a la vuelta de la esquina.
+              Utilizamos tu ubicación para mostrarte los happenings más relevantes en tu zona. Nunca
+              te pierdas lo que está ocurriendo a la vuelta de la esquina.
             </p>
 
             <!-- State: Not Initialized -->
@@ -158,8 +182,12 @@ const initialNearbyState: NearbySectionState = {
 
             <!-- State: Loading -->
             @if (nearbyState().loading) {
-              <div class="flex items-center gap-3 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10">
-                <span class="material-symbols-outlined text-primary animate-spin">progress_activity</span>
+              <div
+                class="flex items-center gap-3 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10"
+              >
+                <span class="material-symbols-outlined text-primary animate-spin"
+                  >progress_activity</span
+                >
                 <div>
                   <p class="font-bold text-on-surface">
                     @if (nearbyState().permissionDenied) {
@@ -195,14 +223,19 @@ const initialNearbyState: NearbySectionState = {
             <!-- State: With Position and Events -->
             @if (nearbyState().position && !nearbyState().loading) {
               <div class="space-y-4">
-                <div class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10">
-                  <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <div
+                  class="flex items-start gap-4 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10"
+                >
+                  <span
+                    class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary"
+                  >
                     <span class="material-symbols-outlined">location_on</span>
                   </span>
                   <div class="flex-1">
                     <h4 class="font-bold">Ubicación activa</h4>
                     <p class="text-sm text-on-surface-variant">
-                      {{ nearbyState().position!.lat.toFixed(4) }}, {{ nearbyState().position!.lon.toFixed(4) }}
+                      {{ nearbyState().position!.lat.toFixed(4) }},
+                      {{ nearbyState().position!.lon.toFixed(4) }}
                     </p>
                   </div>
                 </div>
@@ -227,7 +260,9 @@ const initialNearbyState: NearbySectionState = {
                             <p class="font-bold text-sm truncate">{{ event.title }}</p>
                             <p class="text-xs text-on-surface-variant">{{ event.location }}</p>
                           </div>
-                          <span class="text-primary font-bold text-sm">{{ formatPrice(event.price) }}</span>
+                          <span class="text-primary font-bold text-sm">
+                            {{ formatCurrency(event.price) }}
+                           </span>
                         </div>
                       }
                     </div>
@@ -276,9 +311,13 @@ const initialNearbyState: NearbySectionState = {
             <div class="absolute inset-0 flex items-center justify-center">
               <div class="relative">
                 @if (nearbyState().position) {
-                  <div class="absolute -inset-4 bg-primary rounded-full opacity-20 animate-ping"></div>
+                  <div
+                    class="absolute -inset-4 bg-primary rounded-full opacity-20 animate-ping"
+                  ></div>
                 }
-                <div class="relative w-8 h-8 bg-primary rounded-full border-4 border-surface flex items-center justify-center shadow-lg">
+                <div
+                  class="relative w-8 h-8 bg-primary rounded-full border-4 border-surface flex items-center justify-center shadow-lg"
+                >
                   <div class="w-2 h-2 bg-white rounded-full"></div>
                 </div>
               </div>
@@ -290,9 +329,12 @@ const initialNearbyState: NearbySectionState = {
       <!-- Newsletter / Footer CTA -->
       <section class="px-6 py-20 max-w-7xl mx-auto text-center">
         <div class="max-w-2xl mx-auto">
-          <h2 class="text-4xl font-headline font-extrabold mb-6 tracking-tighter">No te pierdas de nada.</h2>
+          <h2 class="text-4xl font-headline font-extrabold mb-6 tracking-tighter">
+            No te pierdas de nada.
+          </h2>
           <p class="text-on-surface-variant mb-10 text-lg">
-            Suscríbete para recibir recomendaciones personalizadas y acceso anticipado a tickets exclusivos.
+            Suscríbete para recibir recomendaciones personalizadas y acceso anticipado a tickets
+            exclusivos.
           </p>
           <div class="flex flex-col sm:flex-row gap-4">
             <input
@@ -300,7 +342,9 @@ const initialNearbyState: NearbySectionState = {
               placeholder="Tu correo electrónico"
               class="flex-grow bg-surface-container border-none rounded-full px-8 py-4 focus:ring-2 ring-primary"
             />
-            <button class="kinetic-gradient text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+            <button
+              class="kinetic-gradient text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+            >
               Unirse ahora
             </button>
           </div>
@@ -313,11 +357,13 @@ const initialNearbyState: NearbySectionState = {
 
     <app-bottom-nav-bar />
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class HomePage implements OnInit {
   private eventService = inject(EventService);
@@ -337,6 +383,9 @@ export class HomePage implements OnInit {
     });
   }
 
+  // Expose format function to template
+  readonly formatCurrency = formatCurrency;
+
   ngOnInit(): void {
     this.loadEvents();
     this.tryLoadNearbyPreview();
@@ -346,7 +395,7 @@ export class HomePage implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.eventService.getFeaturedEvents(6).subscribe({
+    this.eventService.getFeaturedEvents(3).subscribe({
       next: (events) => {
         this.events.set(events);
         this.isLoading.set(false);

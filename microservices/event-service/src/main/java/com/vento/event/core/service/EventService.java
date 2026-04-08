@@ -96,13 +96,13 @@ public class EventService {
      * Obtiene eventos destacados: eventos futuros con tickets disponibles,
      * ordenados por fecha (más próximos primero).
      *
-     * @param limit cantidad máxima de eventos a retornar (mínimo 6, máximo 20)
+     * @param limit cantidad máxima de eventos a retornar (mínimo 3, máximo 20)
      * @return lista de eventos destacados
      */
     @Transactional(readOnly = true)
     public List<EventDto> getFeaturedEvents(int limit) {
-        // Validar límites: mínimo 6, máximo 20
-        int effectiveLimit = Math.max(6, Math.min(20, limit));
+        // Validar límites: mínimo 3, máximo 20
+        int effectiveLimit = Math.max(3, Math.min(20, limit));
         log.info("✅ Obteniendo eventos destacados - Límite: {}", effectiveLimit);
 
         LocalDateTime now = LocalDateTime.now();

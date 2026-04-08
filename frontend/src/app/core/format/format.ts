@@ -11,7 +11,7 @@ export function formatCurrency(amount: number, freeLabel: string = 'Gratis'): st
   if (amount === 0) {
     return freeLabel;
   }
-  return `$${amount.toFixed(2)}`;
+  return `$ ${amount.toFixed(2)}`;
 }
 
 /**
