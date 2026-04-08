@@ -63,12 +63,8 @@ export interface CreateEventRequest {
 }
 
 export interface UpdateEventRequest {
-  name?: string;
   description?: string;
   eventDate?: string; // ISO LocalDateTime string
   venue?: string;
-  totalCapacity?: number;
   price?: number;
-  latitude?: number;
-  longitude?: number;
 }

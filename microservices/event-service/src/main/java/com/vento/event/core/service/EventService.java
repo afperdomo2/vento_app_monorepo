@@ -126,12 +126,6 @@ public class EventService {
                     if (request.getVenue() != null) {
                         event.setVenue(request.getVenue());
                     }
-                    if (request.getTotalCapacity() != null) {
-                        int diferencia = request.getTotalCapacity() - event.getTotalCapacity();
-                        event.setTotalCapacity(request.getTotalCapacity());
-                        event.setAvailableTickets(event.getAvailableTickets() + diferencia);
-                        inventoryService.adjustInventory(event.getId(), diferencia);
-                    }
                     if (request.getPrice() != null) {
                         event.setPrice(request.getPrice());
                     }

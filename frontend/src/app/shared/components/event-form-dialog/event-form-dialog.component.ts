@@ -60,12 +60,15 @@ export interface EventFormData {
                 id="name"
                 type="text"
                 formControlName="name"
-                placeholder="Ej: Concierto de Rock 2026"
+                [readonly]="isEdit()"
+                [placeholder]="isEdit() ? 'No editable' : 'Ej: Concierto de Rock 2026'"
                 class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
                        placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
-                       focus:border-transparent transition-all text-sm"
+                       focus:border-transparent transition-all text-sm
+                       disabled:opacity-60 disabled:cursor-not-allowed"
+                [class.bg-surface-container-high]="isEdit()"
               />
-              @if (form.get('name')?.touched && form.get('name')?.invalid) {
+              @if (!isEdit() && form.get('name')?.touched && form.get('name')?.invalid) {
                 <p class="text-error text-xs mt-1.5">{{ getErrorMessage('name') }}</p>
               }
             </div>
@@ -138,12 +141,15 @@ export interface EventFormData {
                   formControlName="totalCapacity"
                   min="1"
                   max="500000"
-                  placeholder="5000"
+                  [readonly]="isEdit()"
+                  [placeholder]="isEdit() ? 'No editable' : '5000'"
                   class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface text-on-surface
                          placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary
-                         focus:border-transparent transition-all text-sm"
+                         focus:border-transparent transition-all text-sm
+                         disabled:opacity-60 disabled:cursor-not-allowed"
+                  [class.bg-surface-container-high]="isEdit()"
                 />
-                @if (form.get('totalCapacity')?.touched && form.get('totalCapacity')?.invalid) {
+                @if (!isEdit() && form.get('totalCapacity')?.touched && form.get('totalCapacity')?.invalid) {
                   <p class="text-error text-xs mt-1.5">{{ getErrorMessage('totalCapacity') }}</p>
                 }
               </div>
@@ -173,14 +179,30 @@ export interface EventFormData {
           <!-- Right: Map -->
           <div class="p-6 pt-0 lg:p-6 lg:border-l border-outline-variant/10 min-h-[350px] lg:min-h-[450px]">
             <div class="sticky top-0 lg:pt-6">
-              <label class="block text-sm font-bold text-on-surface mb-1.5 lg:hidden">
-                Ubicación en el mapa <span class="text-error">*</span>
-              </label>
-              <app-location-picker
-                [initialLat]="form.get('latitude')?.value || 0"
-                [initialLng]="form.get('longitude')?.value || 0"
-                (locationChange)="onLocationChange($event)"
-              ></app-location-picker>
+              @if (isEdit()) {
+                <div class="relative">
+                  <app-location-picker
+                    [initialLat]="form.get('latitude')?.value || 0"
+                    [initialLng]="form.get('longitude')?.value || 0"
+                    (locationChange)="onLocationChange($event)"
+                    class="opacity-50 pointer-events-none"
+                  ></app-location-picker>
+                  <div class="absolute inset-0 flex items-center justify-center z-10">
+                    <span class="text-sm font-bold text-on-surface-variant bg-surface px-3 py-1 rounded-lg shadow">
+                      Ubicación no editable
+                    </span>
+                  </div>
+                </div>
+              } @else {
+                <label class="block text-sm font-bold text-on-surface mb-1.5 lg:hidden">
+                  Ubicación en el mapa <span class="text-error">*</span>
+                </label>
+                <app-location-picker
+                  [initialLat]="form.get('latitude')?.value || 0"
+                  [initialLng]="form.get('longitude')?.value || 0"
+                  (locationChange)="onLocationChange($event)"
+                ></app-location-picker>
+              }
             </div>
           </div>
         </form>
@@ -284,14 +306,10 @@ export class EventFormDialog implements OnInit {
     if (this.isEdit()) {
       const evt = this.event()!;
       const request: UpdateEventRequest = {
-        name: formValue.name || undefined,
         description: formValue.description || undefined,
         eventDate: formValue.eventDate || undefined,
         venue: formValue.venue || undefined,
-        totalCapacity: formValue.totalCapacity || undefined,
         price: formValue.price || undefined,
-        latitude: formValue.latitude || undefined,
-        longitude: formValue.longitude || undefined,
       };
 
       this.eventService.updateEvent(evt.id, request).subscribe({
