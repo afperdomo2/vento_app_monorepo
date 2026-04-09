@@ -879,6 +879,23 @@
       "item": [
         {
           "name": "API Gateway Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ API Gateway status:', response.status);",
+                  "    pm.test('Status is UP', () => pm.expect(response.status).to.equal('UP'));",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -898,12 +915,35 @@
                 "health"
               ]
             },
-            "description": "Verifica el estado de salud del API Gateway.\n\nNo requiere autenticación."
+            "description": "Verifica el estado de salud del API Gateway.\n\nComponentes verificados:\n- ping: Verifica que el servicio está respondiendo\n- diskSpace: Verifica espacio en disco disponible\n\nNo verifica DB/Redis/Kafka porque el Gateway solo hace routing.\n\nRespuesta esperada: { \"status\": \"UP\" }\n\nNo requiere autenticación."
           },
           "response": []
         },
         {
           "name": "Event Service Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Event Service status:', response.status);",
+                  "    if (response.components) {",
+                  "        console.log('  - db:', response.components.db?.status);",
+                  "        console.log('  - redis:', response.components.redis?.status);",
+                  "        console.log('  - kafka:', response.components.kafka?.status);",
+                  "        console.log('  - elasticsearch:', response.components.elasticsearch?.status);",
+                  "    }",
+                  "    pm.test('Status is UP', () => pm.expect(response.status).to.equal('UP'));",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -923,12 +963,34 @@
                 "health"
               ]
             },
-            "description": "Verifica el estado de salud del Event Service.\n\nNo requiere autenticación (acceso directo al servicio)."
+            "description": "Verifica el estado de salud del Event Service.\n\nComponentes verificados:\n- db: PostgreSQL (events_db) - Conexión y query de prueba\n- redis: Redis - Conexión y comando PING\n- kafka: Kafka broker - Conexión al broker\n- elasticsearch: Elasticsearch - Estado del cluster\n- diskSpace: Espacio en disco disponible\n- ping: Servicio respondiendo\n\nRespuesta esperada: { \"status\": \"UP\", \"components\": { ... } }\n\nNo requiere autenticación (acceso directo al servicio)."
           },
           "response": []
         },
         {
           "name": "Order Service Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Order Service status:', response.status);",
+                  "    if (response.components) {",
+                  "        console.log('  - db:', response.components.db?.status);",
+                  "        console.log('  - redis:', response.components.redis?.status);",
+                  "        console.log('  - kafka:', response.components.kafka?.status);",
+                  "    }",
+                  "    pm.test('Status is UP', () => pm.expect(response.status).to.equal('UP'));",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -948,12 +1010,33 @@
                 "health"
               ]
             },
-            "description": "Verifica el estado de salud del Order Service.\n\nNo requiere autenticación (acceso directo al servicio)."
+            "description": "Verifica el estado de salud del Order Service.\n\nComponentes verificados:\n- db: PostgreSQL (orders_db) - Conexión y query de prueba\n- redis: Redis - Conexión y comando PING (usado para reservas temporales con TTL)\n- kafka: Kafka broker - Conexión al broker\n- diskSpace: Espacio en disco disponible\n- ping: Servicio respondiendo\n\nRespuesta esperada: { \"status\": \"UP\", \"components\": { ... } }\n\nNo requiere autenticación (acceso directo al servicio)."
           },
           "response": []
         },
         {
           "name": "Payment Service Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Payment Service status:', response.status);",
+                  "    if (response.components) {",
+                  "        console.log('  - db:', response.components.db?.status);",
+                  "        console.log('  - kafka:', response.components.kafka?.status);",
+                  "    }",
+                  "    pm.test('Status is UP', () => pm.expect(response.status).to.equal('UP'));",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -973,12 +1056,27 @@
                 "health"
               ]
             },
-            "description": "Verifica el estado de salud del Payment Service.\n\nNo requiere autenticación (acceso directo al servicio)."
+            "description": "Verifica el estado de salud del Payment Service.\n\nComponentes verificados:\n- db: PostgreSQL (payments_db) - Conexión y query de prueba\n- kafka: Kafka broker - Conexión al broker\n- diskSpace: Espacio en disco disponible\n- ping: Servicio respondiendo\n\nNOTA: Payment Service NO usa Redis.\n\nRespuesta esperada: { \"status\": \"UP\", \"components\": { ... } }\n\nNo requiere autenticación (acceso directo al servicio)."
           },
           "response": []
         },
         {
           "name": "Keycloak Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Keycloak está listo para autenticación');",
+                  "} else {",
+                  "    console.error('❌ Keycloak no está listo:', pm.response.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -998,12 +1096,12 @@
                 "ready"
               ]
             },
-            "description": "Verifica el estado de salud de Keycloak.\n\nNo requiere autenticación."
+            "description": "Verifica el estado de salud de Keycloak (readiness probe).\n\nEste endpoint verifica que Keycloak está listo para procesar autenticación.\n\nRespuesta esperada: 200 OK con {} o detalles del estado\n\nNo requiere autenticación."
           },
           "response": []
         }
       ],
-      "description": "Endpoints de health check para monitoreo"
+      "description": "Endpoints de health check para monitoreo de todos los servicios y sus dependencias (PostgreSQL, Redis, Kafka, Elasticsearch)"
     },
     {
       "name": "📊 Metrics",

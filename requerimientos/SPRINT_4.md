@@ -102,20 +102,32 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [ ] Agregar Prometheus en docker-compose.prod.yml (pendiente)
 
 ### 8.3 - Grafana Dashboards
-- [ ] **Dashboard Principal - Ventas**:
-  - Tickets vendidos por minuto
-  - Órdenes creadas vs confirmadas vs canceladas
-  - Tiempo promedio de reserva a confirmación
-  - Tasa de éxito de pagos (80%)
-- [ ] **Dashboard - Performance**:
-  - Latencia de APIs (p50, p95, p99)
-  - Throughput por servicio
-  - Errores por endpoint
-- [ ] **Dashboard - Infraestructura**:
-  - Uso de memoria y CPU
-  - Conexiones Redis/Kafka/PostgreSQL
-  - Health checks
-- [ ] **Alertas**:
+- [x] **Dashboard Principal - Ventas**:
+  - [x] Tickets vendidos por minuto
+  - [x] Órdenes creadas vs confirmadas vs canceladas
+  - [x] Reservas activas (TTL 5 min)
+  - [x] Tasa de éxito de pagos
+  - [x] Tickets disponibles (todos los eventos)
+  - [x] Eventos creados
+- [x] **Dashboard - Performance**:
+  - [x] Latencia de APIs (p50, p95, p99)
+  - [x] Throughput por servicio
+  - [x] Errores por endpoint (4xx, 5xx)
+  - [x] Uso de memoria JVM (heap/non-heap)
+  - [x] Tiempo promedio de respuesta por servicio (p95)
+- [x] **Infraestructura de Aprovisionamiento**:
+  - [x] Grafana en docker-compose.local.yml (puerto 3000)
+  - [x] Prometheus configurado como datasource
+  - [x] Dashboards auto-provisionados vía provisioning/
+  - [x] Volúmenes Docker persistentes para datos
+- [x] **Dashboard - Infraestructura**:
+  - [x] Service Health Status (UP/DOWN por servicio)
+  - [x] JVM Garbage Collection Activity (GC/sec)
+  - [x] Database Connection Pool (HikariCP - active, idle, pending)
+  - [x] JVM Thread Pool Usage (live threads, daemon threads)
+  - [x] Kafka Consumer Lag (messages behind por topic)
+  - [x] Service Uptime (tiempo de actividad)
+- [ ] **Alertas** (pendiente):
   - DLQ growing
   - High error rate
   - Low available tickets
@@ -132,15 +144,21 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - Facilitar búsqueda por traceId
 
 ### 8.5 - Health Checks y Readiness
-- [ ] **Spring Actuator**:
-  - `/actuator/health` - Health check aggregate
-  - `/actuator/health/db` - PostgreSQL
-  - `/actuator/health/redis` - Redis
-  - `/actuator/health/kafka` - Kafka (custom)
-- [ ] **Liveness vs Readiness**:
-  - Liveness: ¿El servicio está vivo?
-  - Readiness: ¿Puede recibir tráfico?
-  - Kubernetes probes
+- [x] **Documentación de Health Endpoints**:
+  - [x] Health checks documentados en Postman Collection
+  - [x] Descripciones detalladas de componentes por servicio
+  - [x] Scripts de validación automática en Postman tests
+  - [x] POSTMAN_ENDPOINTS.md actualizado con ejemplos de respuesta
+  - [x] Tabla de troubleshooting de health checks
+- [x] **Componentes Verificados**:
+  - [x] PostgreSQL (events_db, orders_db, payments_db)
+  - [x] Redis (event-service, order-service)
+  - [x] Kafka (event-service, order-service, payment-service)
+  - [x] Elasticsearch (event-service)
+  - [x] DiskSpace y Ping (todos los servicios)
+- [ ] **Liveness vs Readiness** (no aplica para Docker Compose):
+  - Docker Compose usa health checks genéricos, no separa liveness/readiness
+  - Configuración disponible si se migra a Kubernetes en el futuro
 
 ---
 
@@ -170,7 +188,9 @@ Semana 8 ───────────────────────�
 - [x] Búsqueda por geolocalización retorna eventos cercanos
 - [ ] TraceId visible en Jaeger/Grafana desde Gateway hasta Payment
 - [x] Métricas visibles en Prometheus endpoint
-- [ ] Dashboard de ventas en Grafana muestra tickets/segundo
+- [x] Dashboard de ventas en Grafana muestra tickets/segundo
+- [x] Health checks documentados en Postman con detalles de componentes
+- [x] Dashboard de infraestructura en Grafana (health, GC, DB pool, threads, Kafka lag)
 - [ ] Alertas configuradas para DLQ y error rate
 - [ ] Logs incluyen traceId para correlación
 - [ ] Health checks funcionan para todos los componentes
@@ -259,12 +279,20 @@ PUT /events
   - ✅ 9 métricas custom implementadas
   - ✅ Prometheus corriendo en entorno local
   - ⏳ Pendiente: protección de endpoints en producción
+- **Semana 8.3**: Grafana Dashboards (100%)
+  - ✅ Dashboard de Ventas (6 paneles funcionales)
+  - ✅ Dashboard de Performance (5 paneles funcionales)
+  - ✅ Dashboard de Infraestructura (7 paneles funcionales)
+  - ✅ Aprovisionamiento automático configurado
+- **Semana 8.5**: Health Checks y Readiness (90%)
+  - ✅ Health endpoints documentados en Postman Collection
+  - ✅ POSTMAN_ENDPOINTS.md actualizado con ejemplos y troubleshooting
+  - ✅ Componentes verificados: PostgreSQL, Redis, Kafka, Elasticsearch
+  - ⏳ Liveness/Readiness (no aplica para Docker Compose, disponible para K8s futuro)
 
 ### ⏳ Pendiente:
 - **Semana 8.1**: OpenTelemetry (Tracing Distribuido)
-- **Semana 8.3**: Grafana Dashboards
-- **Semana 8.4**: Logging Centralizado
-- **Semana 8.5**: Health Checks y Readiness avanzados
+- **Semana 8.4**: Logging Centralizado (Loki/ELK)
 
 ---
 
@@ -276,9 +304,10 @@ PUT /events
 - Kafka + DLQ (Event-Driven) ✅
 - Elasticsearch (Búsqueda) ✅
 - Micrometer + Prometheus (9 métricas custom + HTTP/JVM automáticas) ✅
+- Grafana (Dashboards de Ventas + Performance + Infraestructura) ✅
+- Health Checks documentados en Postman ✅
 
 **Stack Pendiente:**
 - OpenTelemetry (Tracing)
-- Grafana (Dashboards)
 - Logging Centralizado (Loki/ELK)
-- Health Checks avanzados (liveness/readiness)
+- Alertas configuradas (Grafana)

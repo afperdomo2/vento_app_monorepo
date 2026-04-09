@@ -656,6 +656,23 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 
 ### 🏥 Health Checks
 
+> **Nota:** Todos los health checks usan `show-details: always`, lo que significa que la respuesta incluye el estado de **cada componente individual** (DB, Redis, Kafka, etc.).
+
+#### Componentes Verificados por Servicio
+
+| Servicio | PostgreSQL | Redis | Kafka | Elasticsearch |
+|----------|------------|-------|-------|---------------|
+| **api-gateway** | ❌ | ❌ | ❌ | ❌ |
+| **event-service** | ✅ (events_db) | ✅ | ✅ | ✅ |
+| **order-service** | ✅ (orders_db) | ✅ | ✅ | ❌ |
+| **payment-service** | ✅ (payments_db) | ❌ | ✅ | ❌ |
+
+**Componentes adicionales en todos los servicios:**
+- `ping`: Verifica que el servicio está respondiendo
+- `diskSpace`: Verifica espacio en disco disponible
+
+---
+
 #### API Gateway Health
 
 - **Método:** `GET`
@@ -663,7 +680,20 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 - **Respuesta exitosa:** `200 OK`
   ```json
   {
-    "status": "UP"
+    "status": "UP",
+    "components": {
+      "diskSpace": {
+        "status": "UP",
+        "details": {
+          "total": 500000000000,
+          "free": 350000000000,
+          "threshold": 10485760
+        }
+      },
+      "ping": {
+        "status": "UP"
+      }
+    }
   }
   ```
 
@@ -674,6 +704,42 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 - **Método:** `GET`
 - **URL:** `http://localhost:8082/actuator/health`
 - **Respuesta exitosa:** `200 OK`
+  ```json
+  {
+    "status": "UP",
+    "components": {
+      "db": {
+        "status": "UP",
+        "details": {
+          "database": "PostgreSQL",
+          "validationQuery": "SELECT 1"
+        }
+      },
+      "redis": {
+        "status": "UP",
+        "details": {
+          "version": "7.0.0"
+        }
+      },
+      "kafka": {
+        "status": "UP",
+        "details": {
+          "clusterId": "abc123",
+          "brokerCount": 1
+        }
+      },
+      "elasticsearch": {
+        "status": "UP",
+        "details": {
+          "clusterName": "docker-cluster",
+          "status": "green"
+        }
+      },
+      "diskSpace": { "status": "UP" },
+      "ping": { "status": "UP" }
+    }
+  }
+  ```
 
 ---
 
@@ -682,6 +748,35 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 - **Método:** `GET`
 - **URL:** `http://localhost:8083/actuator/health`
 - **Respuesta exitosa:** `200 OK`
+  ```json
+  {
+    "status": "UP",
+    "components": {
+      "db": {
+        "status": "UP",
+        "details": {
+          "database": "PostgreSQL",
+          "validationQuery": "SELECT 1"
+        }
+      },
+      "redis": {
+        "status": "UP",
+        "details": {
+          "version": "7.0.0"
+        }
+      },
+      "kafka": {
+        "status": "UP",
+        "details": {
+          "clusterId": "abc123",
+          "brokerCount": 1
+        }
+      },
+      "diskSpace": { "status": "UP" },
+      "ping": { "status": "UP" }
+    }
+  }
+  ```
 
 ---
 
@@ -690,6 +785,29 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 - **Método:** `GET`
 - **URL:** `http://localhost:8084/actuator/health`
 - **Respuesta exitosa:** `200 OK`
+  ```json
+  {
+    "status": "UP",
+    "components": {
+      "db": {
+        "status": "UP",
+        "details": {
+          "database": "PostgreSQL",
+          "validationQuery": "SELECT 1"
+        }
+      },
+      "kafka": {
+        "status": "UP",
+        "details": {
+          "clusterId": "abc123",
+          "brokerCount": 1
+        }
+      },
+      "diskSpace": { "status": "UP" },
+      "ping": { "status": "UP" }
+    }
+  }
+  ```
 
 ---
 
@@ -698,6 +816,18 @@ Procesa un pago simulado. Tiene 80% de probabilidad de éxito y 20% de fallo, co
 - **Método:** `GET`
 - **URL:** `{{keycloak_url}}/health/ready`
 - **Respuesta exitosa:** `200 OK`
+
+---
+
+#### Troubleshooting de Health Checks
+
+| Síntoma | Causa Probable | Solución |
+|---------|---------------|----------|
+| `db.status: DOWN` | PostgreSQL no está corriendo | `docker compose ps postgres-events` |
+| `redis.status: DOWN` | Redis no está corriendo | `docker compose ps redis` |
+| `kafka.status: DOWN` | Kafka no está corriendo | `docker compose ps kafka` |
+| `elasticsearch.status: DOWN` | ES no está corriendo | `docker compose ps elasticsearch` |
+| `diskSpace.status: DOWN` | Espacio en disco insuficiente | Liberar espacio o aumentar `threshold` |
 
 ---
 

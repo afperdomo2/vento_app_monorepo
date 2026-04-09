@@ -317,5 +317,5 @@ Este sistema de observabilidad corresponde al **Sprint 4, Semana 8** del roadmap
 - [Prometheus Docs](https://prometheus.io/docs/)
 - [Grafana Docs](https://grafana.com/docs/grafana/latest/)
 - [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/index.html)
-- [SPRINT_4.md](./SPRINT_4.md) — Plan completo del sprint
-- [REQUERIMIENTOS.md](./REQUERIMIENTOS.md) — Roadmap del proyecto
+- [SPRINT_4.md](requerimientos/SPRINT_4.md) — Plan completo del sprint
+- [REQUERIMIENTOS.md](requerimientos/REQUERIMIENTOS.md) — Roadmap del proyecto
