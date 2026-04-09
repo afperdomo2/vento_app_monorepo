@@ -380,11 +380,11 @@ export class CheckoutPage implements OnInit, OnDestroy {
   paymentErrorReason = signal('');
   redirectCountdown = signal(5);
 
-  // Payment form fields
-  cardNumber = signal('');
-  cardExpiry = signal('');
-  cardCvc = signal('');
-  cardName = signal('');
+  // Payment form fields - Pre-filled with fake data for development/testing
+  cardNumber = signal('4111 1111 1111 1111'); // Standard Visa test card
+  cardExpiry = signal('12/28'); // Valid future expiry
+  cardCvc = signal('123'); // Standard test CVC
+  cardName = signal('JUAN PEREZ'); // Test cardholder name
   formValid = computed(() => {
     return (
       this.cardNumber().length >= 13 &&
