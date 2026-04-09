@@ -156,7 +156,7 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] Kafka (event-service, order-service, payment-service)
   - [x] Elasticsearch (event-service)
   - [x] DiskSpace y Ping (todos los servicios)
-- [ ] **Liveness vs Readiness** (no aplica para Docker Compose):
+- [x] **Liveness vs Readiness** (no aplica para Docker Compose):
   - Docker Compose usa health checks genéricos, no separa liveness/readiness
   - Configuración disponible si se migra a Kubernetes en el futuro
 

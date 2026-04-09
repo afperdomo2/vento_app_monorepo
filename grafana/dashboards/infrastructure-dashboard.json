@@ -427,7 +427,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "hikaricp_connections_active{pool=~\"*\"}",
+          "expr": "hikaricp_connections_active{pool=~\".*\"}",
           "legendFormat": "{{job}} - Active",
           "refId": "A"
         },
@@ -436,7 +436,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "hikaricp_connections_idle{pool=~\"*\"}",
+          "expr": "hikaricp_connections_idle{pool=~\".*\"}",
           "hide": false,
           "legendFormat": "{{job}} - Idle",
           "refId": "B"
@@ -446,7 +446,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "hikaricp_connections_pending{pool=~\"*\"}",
+          "expr": "hikaricp_connections_pending{pool=~\".*\"}",
           "hide": false,
           "legendFormat": "{{job}} - Pending",
           "refId": "C"
@@ -554,66 +554,6 @@
       ],
       "title": "JVM Thread Pool Usage",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 26
-      },
-      "id": 7,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "expr": "kafka_consumer_records_lag_max{job=~\"event-service|order-service|payment-service\"}",
-          "legendFormat": "{{job}} - {{topic}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Kafka Consumer Lag (Max Messages Behind)",
-      "type": "stat"
     }
   ],
   "refresh": "30s",
