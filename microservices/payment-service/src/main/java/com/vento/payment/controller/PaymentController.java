@@ -12,6 +12,8 @@ import com.vento.payment.service.PaymentIdempotencyService;
 import com.vento.payment.service.SimulatedPaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ public class PaymentController {
     private final SimulatedPaymentService paymentService;
     private final PaymentIdempotencyService idempotencyService;
     private final KafkaTemplate<String, Object> paymentKafkaTemplate;
+    private final Tracer tracer;
 
     @PostMapping("/process")
     @ResponseStatus(HttpStatus.OK)
@@ -45,6 +48,12 @@ public class PaymentController {
     )
     public ApiResponse<PaymentDto> processPayment(@Valid @RequestBody PaymentRequest request) {
         log.info("📥 Recibida solicitud de pago para orden: {}", request.getOrderId());
+
+        Span span = tracer.nextSpan().name("payment.process").start();
+        span.tag("payment.orderId", request.getOrderId().toString());
+        span.tag("payment.amount", request.getAmount().toString());
+
+        try (Tracer.SpanInScope ws = tracer.withSpan(span)) {
 
         // Extraer userId del contexto de usuario (propagado por API Gateway via header X-User-Id)
         UUID userId = UUID.fromString(UserContext.getUserId());
@@ -87,6 +96,12 @@ public class PaymentController {
 
             log.warn("❌ Pago fallido para orden: {}, razón: {}", request.getOrderId(), e.getMessage());
             throw e;
+        }
+        } catch (Exception e) {
+            span.error(e);
+            throw e;
+        } finally {
+            span.end();
         }
     }
 }

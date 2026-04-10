@@ -14,6 +14,8 @@ import com.vento.order.infrastructure.client.EventClient;
 import com.vento.order.core.model.Order;
 import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,8 +37,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +62,12 @@ class OrderServiceTest {
     @Mock
     private ReservationService reservationService;
 
+    @Mock
+    private Tracer tracer;
+
+    @Mock
+    private Span span;
+
     private SimpleMeterRegistry meterRegistry;
 
     private OrderService orderService;
@@ -71,7 +82,16 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        orderService = new OrderService(orderRepository, eventClient, ticketInventoryService, reservationService, meterRegistry);
+
+        // Configure tracer mock to return span for custom spans in OrderService
+        lenient().when(span.start()).thenReturn(span);
+        lenient().when(span.name(anyString())).thenReturn(span);
+        lenient().when(span.tag(anyString(), anyString())).thenReturn(span);
+        lenient().when(tracer.nextSpan()).thenReturn(span);
+        var spanInScope = mock(Tracer.SpanInScope.class);
+        lenient().when(tracer.withSpan(any(Span.class))).thenReturn(spanInScope);
+
+        orderService = new OrderService(orderRepository, eventClient, ticketInventoryService, reservationService, meterRegistry, tracer);
         orderService.init(); // Call @PostConstruct manually
         
         orderId = UUID.randomUUID();

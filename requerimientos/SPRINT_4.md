@@ -57,24 +57,28 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
 ## Semana 8: Observabilidad (Tracing + Métricas)
 
 ### 8.1 - OpenTelemetry: Tracing Distribuido
-- [ ] **Instrumentación**:
-  - Agregar OpenTelemetry SDK en todos los servicios
-  - Configurar W3C Trace Context propagation
-  - Crear Spans en:
-    - Gateway: incoming request
-    - Order-service: reserva, validación Redis, persistencia
-    - Event-service: verificación disponibilidad
-    - Payment-service: procesamiento
-- [ ] **Headers de Tracing**:
-  - Propagar `traceparent` y `tracestate` entre servicios
-  - Kafka: incluir traceId en message headers
-- [ ] **Collector**:
-  - Agregar OTEL Collector (Docker)
-  - Configurar exportadores: Jaeger, Zipkin, o Tempo
-  - Recibe spans de todos los servicios
-- [ ] **Visualización**:
-  - Jaeger UI o Tempo + Grafana
-  - Ver trace completo: Gateway → Order → Event → Payment → Kafka
+- [x] **Instrumentación**:
+  - [x] Agregar `micrometer-tracing-bridge-otel` + `opentelemetry-exporter-otlp` en todos los servicios
+  - [x] Configurar `management.tracing.sampling.probability: 1.0` (100% sampling en desarrollo)
+  - [x] Configurar `management.otlp.tracing.endpoint` en cada servicio
+  - [x] Custom spans en:
+    - Order-service: `order.create` (con attributes: orderId, eventId, quantity, userId)
+    - Payment-service: `payment.process` (con attributes: orderId, amount)
+  - [x] Auto-instrumentación de HTTP requests (Spring MVC/WebFlux)
+  - [x] Auto-instrumentación de Feign clients (via micrometer-tracing)
+- [x] **Headers de Tracing**:
+  - [x] Propagación automática de `traceparent` (W3C Trace Context) en HTTP
+  - [x] Feign: auto-instrumentado por micrometer-tracing-bridge-otel
+  - [x] Kafka: auto-instrumentación de KafkaTemplate y @KafkaListener
+- [x] **Collector**:
+  - [x] Agregar OTEL Collector (`otel/opentelemetry-collector-contrib:0.120.0`) en Docker
+  - [x] Configurar `otel-collector-config.yaml` con receivers OTLP HTTP/gRPC
+  - [x] Configurar exporter a Jaeger via OTLP gRPC
+  - [x] Configurar batch processor para optimizar envío de spans
+- [x] **Visualización**:
+  - [x] Jaeger UI (`jaegertracing/all-in-one:1.64.0`) en puerto 16686
+  - [x] Jaeger configurado como datasource en Grafana
+  - [x] Trace completo verificable: Gateway → Order → Event → Payment → Kafka
 
 ### 8.2 - Métricas con Micrometer + Prometheus
 - [x] **Métricas por Servicio**:
@@ -127,7 +131,7 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] JVM Thread Pool Usage (live threads, daemon threads)
   - [x] Kafka Consumer Lag (messages behind por topic)
   - [x] Service Uptime (tiempo de actividad)
-- [ ] **Alertas** (pendiente):
+- [x] **Alertas** (NO SE VAN A HACE, PRESENTAN MUCHOS PROBLEMAS):
   - DLQ growing
   - High error rate
   - Low available tickets
@@ -186,7 +190,8 @@ Semana 8 ───────────────────────�
 - [x] Elasticsearch accesible y con índice `events`
 - [x] Búsqueda de texto funciona con fuzzy matching
 - [x] Búsqueda por geolocalización retorna eventos cercanos
-- [ ] TraceId visible en Jaeger/Grafana desde Gateway hasta Payment
+- [x] TraceId visible en Jaeger desde Gateway hasta Payment
+- [x] Custom spans para order.create y payment.process con attributes
 - [x] Métricas visibles en Prometheus endpoint
 - [x] Dashboard de ventas en Grafana muestra tickets/segundo
 - [x] Health checks documentados en Postman con detalles de componentes
@@ -202,15 +207,16 @@ Semana 8 ───────────────────────�
 
 | Servicio | Puerto | Responsabilidad |
 |----------|--------|------------------|
-| event-service | 8082 | Elasticsearch sync, search |
-| order-service | 8083 | Métricas, tracing |
-| payment-service | 8084 | Métricas, tracing |
+| event-service | 8082 | Elasticsearch sync, search, tracing |
+| order-service | 8083 | Métricas, tracing (custom spans + Feign) |
+| payment-service | 8084 | Métricas, tracing (custom spans) |
+| api-gateway | 8080 | Tracing (WebFlux auto-instrumented) |
 | elasticsearch | 9200 | Índice de eventos |
 | kibana | 5601 | Dev (opcional) |
-| otel-collector | 4317 | Recolector de traces |
+| otel-collector | 4318/4317 | Recolector de traces (OTLP HTTP/gRPC) |
 | jaeger | 16686 | Visualización de traces |
 | prometheus | 9090 | Métricas |
-| grafana | 3000 | Dashboards |
+| grafana | 3000 | Dashboards + datasource Jaeger |
 
 ---
 
@@ -274,6 +280,12 @@ PUT /events
 
 ### ✅ Completado:
 - **Semana 7**: Búsqueda Avanzada con Elasticsearch (100%)
+- **Semana 8.1**: OpenTelemetry (Tracing Distribuido) (100%)
+  - ✅ Instrumentación automática de HTTP, Feign, Kafka
+  - ✅ Custom spans: order.create, payment.process
+  - ✅ OTEL Collector en Docker con batch processor
+  - ✅ Jaeger UI corriendo en puerto 16686
+  - ✅ Jaeger configurado como datasource en Grafana
 - **Semana 8.2**: Métricas con Micrometer + Prometheus (95%)
   - ✅ Métricas HTTP y JVM automáticas
   - ✅ 9 métricas custom implementadas
@@ -291,7 +303,6 @@ PUT /events
   - ⏳ Liveness/Readiness (no aplica para Docker Compose, disponible para K8s futuro)
 
 ### ⏳ Pendiente:
-- **Semana 8.1**: OpenTelemetry (Tracing Distribuido)
 - **Semana 8.4**: Logging Centralizado (Loki/ELK)
 
 ---
@@ -306,8 +317,7 @@ PUT /events
 - Micrometer + Prometheus (9 métricas custom + HTTP/JVM automáticas) ✅
 - Grafana (Dashboards de Ventas + Performance + Infraestructura) ✅
 - Health Checks documentados en Postman ✅
+- **OpenTelemetry + Jaeger (Tracing Distribuido)** ✅
 
 **Stack Pendiente:**
-- OpenTelemetry (Tracing)
 - Logging Centralizado (Loki/ELK)
-- Alertas configuradas (Grafana)

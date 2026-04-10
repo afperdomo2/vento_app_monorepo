@@ -15,6 +15,9 @@ import com.vento.order.infrastructure.persistence.repository.OrderRepository;
 import feign.FeignException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +43,7 @@ public class OrderService {
     private final TicketInventoryService ticketInventoryService;
     private final ReservationService reservationService;
     private final MeterRegistry meterRegistry;
+    private final Tracer tracer;
 
     private Counter ordersCreatedCounter;
     private Counter ordersConfirmedCounter;
@@ -81,6 +85,13 @@ public class OrderService {
     public OrderDto createOrder(CreateOrderRequest request, UUID userId) {
         log.info("✅ Creando nuevo pedido para el usuario: {}, evento: {}, cantidad: {}",
                 userId, request.getEventId(), request.getQuantity());
+
+        Span span = tracer.nextSpan().name("order.create").start();
+        span.tag("order.eventId", request.getEventId().toString());
+        span.tag("order.quantity", String.valueOf(request.getQuantity()));
+        span.tag("order.userId", userId.toString());
+
+        try (Tracer.SpanInScope ws = tracer.withSpan(span)) {
 
         // 1. Obtener precio del evento (y verificar que existe)
         EventAvailabilityDto availability;
@@ -132,6 +143,12 @@ public class OrderService {
         }
 
         return mapToDto(savedOrder);
+        } catch (Exception e) {
+            span.error(e);
+            throw e;
+        } finally {
+            span.end();
+        }
     }
 
     @Transactional(readOnly = true)

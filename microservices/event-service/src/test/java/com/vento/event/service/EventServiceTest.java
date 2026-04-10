@@ -89,8 +89,10 @@ class EventServiceTest {
                 -74.0817
         );
 
-        updateRequest = new UpdateEventRequest();
-        updateRequest.setName("Concierto de Rock Actualizado");
+        updateRequest = UpdateEventRequest.builder()
+                .description("Concierto de Rock Actualizado")
+                .venue("Nuevo Venue")
+                .build();
     }
 
     @Test

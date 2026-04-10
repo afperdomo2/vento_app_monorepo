@@ -8,6 +8,7 @@ import com.vento.order.core.model.Order;
 import com.vento.order.core.service.ReservationService;
 import com.vento.order.core.service.TicketInventoryService;
 import com.vento.order.infrastructure.persistence.repository.OrderRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,8 @@ class PaymentResultListenerIdempotencyTest {
     @Mock
     private org.springframework.kafka.core.KafkaTemplate<String, Object> orderKafkaTemplate;
 
+    private SimpleMeterRegistry meterRegistry;
+
     @InjectMocks
     private PaymentResultListener listener;
 
@@ -51,6 +54,10 @@ class PaymentResultListenerIdempotencyTest {
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        listener = new PaymentResultListener(orderRepository, reservationService, ticketInventoryService, orderKafkaTemplate, meterRegistry);
+        listener.init();
+
         orderId = UUID.randomUUID();
         eventId = UUID.randomUUID();
         userId = UUID.randomUUID();
