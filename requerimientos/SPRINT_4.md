@@ -77,7 +77,6 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - [x] Configurar batch processor para optimizar envío de spans
 - [x] **Visualización**:
   - [x] Jaeger UI (`jaegertracing/all-in-one:1.64.0`) en puerto 16686
-  - [x] Jaeger configurado como datasource en Grafana
   - [x] Trace completo verificable: Gateway → Order → Event → Payment → Kafka
 
 ### 8.2 - Métricas con Micrometer + Prometheus
@@ -216,7 +215,7 @@ Semana 8 ───────────────────────�
 | otel-collector | 4318/4317 | Recolector de traces (OTLP HTTP/gRPC) |
 | jaeger | 16686 | Visualización de traces |
 | prometheus | 9090 | Métricas |
-| grafana | 3000 | Dashboards + datasource Jaeger |
+| grafana | 3000 | Dashboards de métricas |
 
 ---
 
@@ -285,7 +284,6 @@ PUT /events
   - ✅ Custom spans: order.create, payment.process
   - ✅ OTEL Collector en Docker con batch processor
   - ✅ Jaeger UI corriendo en puerto 16686
-  - ✅ Jaeger configurado como datasource en Grafana
 - **Semana 8.2**: Métricas con Micrometer + Prometheus (95%)
   - ✅ Métricas HTTP y JVM automáticas
   - ✅ 9 métricas custom implementadas

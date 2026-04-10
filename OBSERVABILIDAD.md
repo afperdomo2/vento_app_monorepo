@@ -7,33 +7,20 @@ El sistema de observabilidad de Vento App está compuesto por **Prometheus** par
 ### Arquitectura
 
 ```
-┌─────────────────┐     scrape      ┌──────────────┐
-│  Microservicios │ ──────────────> │  Prometheus  │
-│  (4 servicios)  │  /actuator/     │  (puerto     │
-│                 │   prometheus    │    9090)      │
-└────────┬────────┘                 └──────┬───────┘
-         │                                │
-    scrape│                          scrape│
-         ▼                                ▼
-   ┌───────────┐                    ┌──────────────┐
-   │  Grafana  │<───────────────────│  Prometheus  │
-   │ (métricas)│  datasource        │  (puerto     │
-   │ 3000      │                    │    9090)      │
-   └───────────┘                    └──────────────┘
+┌─────────────────┐     scrape      ┌──────────────┐     scrape     ┌──────────────┐
+│  Microservicios │ ──────────────> │  Prometheus  │ ────────────> │   Grafana    │
+│  (4 servicios)  │  /actuator/     │  (puerto     │               │  (puerto     │
+│                 │   prometheus    │    9090)      │               │    3000)     │
+└─────────────────┘                 └──────────────┘               └──────────────┘
 
 ┌─────────────────┐    OTLP/HTTP    ┌──────────────┐   OTLP/gRPC   ┌──────────────┐
 │  Microservicios │ ──────────────> │ OTEL         │ ────────────> │   Jaeger     │
-│  (4 servicios)  │   :4318         │ Collector    │   :4317       │   (puerto    │
-│                 │                 │ :4318/:4317  │               │    16686)    │
-└─────────────────┘                 └──────────────┘               └──────┬───────┘
-                                                                          │
-                                                                    datasource│
-                                                                          ▼
-                                                                    ┌──────────────┐
-                                                                    │   Grafana    │
-                                                                    │  (traces)    │
-                                                                    └──────────────┘
+│  (4 servicios)  │   :4318         │ Collector    │   :4317       │  (puerto     │
+│                 │                 │ :4318/:4317  │               │   16686)     │
+└─────────────────┘                 └──────────────┘               └──────────────┘
 ```
+
+> **Nota:** Los traces se visualizan directamente en Jaeger UI (`http://localhost:16686`), no en Grafana. Las métricas se visualizan en Grafana (`http://localhost:3000`).
 
 ### Stack Tecnológico
 
@@ -41,9 +28,9 @@ El sistema de observabilidad de Vento App está compuesto por **Prometheus** par
 |------------|------------|--------|-----------|
 | **Micrometer** | Librería Java | — | Exponer métricas y traces en cada servicio |
 | **Prometheus** | prom/prometheus:v2.51.0 | 9090 | Recolectar y almacenar métricas |
-| **Grafana** | grafana/grafana-oss | 3000 | Visualizar dashboards + datasource Jaeger |
+| **Grafana** | grafana/grafana-oss | 3000 | Visualizar dashboards de métricas |
 | **OTEL Collector** | otel/opentelemetry-collector-contrib:0.120.0 | 4318/4317 | Recibir traces OTLP y exportar a Jaeger |
-| **Jaeger** | jaegertracing/all-in-one:1.64.0 | 16686 | Visualización de traces distribuidos |
+| **Jaeger** | jaegertracing/all-in-one:1.64.0 | 16686 | Visualización de traces distribuidos (UI propia) |
 
 ---
 
@@ -436,9 +423,9 @@ Este sistema de observabilidad corresponde al **Sprint 4, Semana 8** del roadmap
 | payment-service | 8084 | Métricas de pagos + tracing (custom spans) |
 | api-gateway | 8080 | Métricas de gateway + tracing (WebFlux auto-instrumented) |
 | prometheus | 9090 | Recolección de métricas |
-| grafana | 3000 | Visualización de dashboards + datasource Jaeger |
+| grafana | 3000 | Visualización de dashboards de métricas |
 | otel-collector | 4318/4317 | Recolector de traces (OTLP HTTP/gRPC) |
-| jaeger | 16686 | Visualización de traces distribuidos |
+| jaeger | 16686 | Visualización de traces (UI propia) |
 
 ---
 
