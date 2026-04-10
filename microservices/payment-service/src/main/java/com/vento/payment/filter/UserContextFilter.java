@@ -5,7 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,7 +22,6 @@ import java.io.IOException;
  * esté disponible globalmente durante el procesamiento de la solicitud.
  */
 @Component
-@Slf4j
 public class UserContextFilter extends OncePerRequestFilter {
 
     public static final String X_USER_ID_HEADER = "X-User-Id";
@@ -35,8 +33,6 @@ public class UserContextFilter extends OncePerRequestFilter {
         try {
             String userId = request.getHeader(X_USER_ID_HEADER);
             String roles = request.getHeader(X_USER_ROLES_HEADER);
-
-            log.debug("🐞 Headers recibidos - X-User-Id: {}, X-User-Roles: {}", userId, roles);
 
             if (userId != null && !userId.isEmpty()) {
                 UserContext.setUserId(userId);
