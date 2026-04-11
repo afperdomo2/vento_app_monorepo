@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="event-service"/>
+
+    <!-- ============================================ -->
+    <!-- LOCAL profile: human-readable with traceId   -->
+    <!-- ============================================ -->
+    <springProfile name="local">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%cyan(%X{traceId:-}),%magenta(%X{spanId:-})] %green(${appName}) %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ============================================ -->
+    <!-- DEV profile: JSON structured logging         -->
+    <!-- ============================================ -->
+    <springProfile name="dev">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service_name":"${appName}"}</customFields>
+                <includeContext>true</includeContext>
+                <includeMdc>true</includeMdc>
+                <mdcKeyNames>
+                    <traceId>trace.id</traceId>
+                    <spanId>span.id</spanId>
+                </mdcKeyNames>
+                <fieldNames>
+                    <timestamp>@timestamp</timestamp>
+                    <level>level</level>
+                    <logger>logger</logger>
+                    <message>message</message>
+                    <thread>thread</thread>
+                </fieldNames>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ============================================ -->
+    <!-- PROD profile: JSON structured logging        -->
+    <!-- ============================================ -->
+    <springProfile name="prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service_name":"${appName}"}</customFields>
+                <includeContext>true</includeContext>
+                <includeMdc>true</includeMdc>
+                <mdcKeyNames>
+                    <traceId>trace.id</traceId>
+                    <spanId>span.id</spanId>
+                </mdcKeyNames>
+                <fieldNames>
+                    <timestamp>@timestamp</timestamp>
+                    <level>level</level>
+                    <logger>logger</logger>
+                    <message>message</message>
+                    <thread>thread</thread>
+                </fieldNames>
+            </encoder>
+        </appender>
+
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ============================================ -->
+    <!-- Fallback (no profile matched): readable      -->
+    <!-- ============================================ -->
+    <springProfile name="!local &amp; !dev &amp; !prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId:-},%X{spanId:-}] ${appName} %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+</configuration>

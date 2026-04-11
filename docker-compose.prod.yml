@@ -119,6 +119,40 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  # Loki para agregación de logs
+  loki:
+    image: grafana/loki:3.3.0
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data-prod:/loki
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  # Promtail para recolección y envío de logs a Loki
+  promtail:
+    image: grafana/promtail:3.2.1
+    volumes:
+      - ./scripts/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - vento-network
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Kafka para event-driven architecture
   kafka:
     image: apache/kafka:4.1.1
@@ -319,4 +353,6 @@ volumes:
   kafka-data-prod:
     driver: local
   elasticsearch-data-prod:
+    driver: local
+  loki-data-prod:
     driver: local

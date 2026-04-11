@@ -1,0 +1,29 @@
+# Payment Service - Configuración de Desarrollo (Dev)
+# PostgreSQL con variables de entorno
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5434}/${DATABASE_NAME:payments_db}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.postgresql.Driver
+        format_sql: true
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    com.vento.payment: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

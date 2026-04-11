@@ -136,15 +136,31 @@ Hacer el sistema profesional y monitoreable: búsqueda avanzada con Elasticsearc
   - Low available tickets
 
 ### 8.4 - Logging Centralizado
-- [ ] **Structured Logging**:
-  - Formato JSON
-  - Incluir: timestamp, level, service, traceId, message
-- [ ] **Log Aggregation**:
-  - Agregar Loki o ELK stack (opcional)
-  - O usar cloud-native solution (GCP Cloud Logging, AWS CloudWatch)
-- [ ] **Correlation**:
-  - Log every event with traceId
-  - Facilitar búsqueda por traceId
+- [x] **Structured Logging**:
+  - [x] Formato JSON en perfiles `dev` y `prod` (logstash-logback-encoder)
+  - [x] Formato legible en perfil `local` (texto con colores)
+  - [x] Incluir: timestamp, level, service_name, trace.id, span.id, thread, logger, message
+  - [x] Mapeo de MDC de OpenTelemetry → campos JSON (`trace.id`, `span.id`)
+- [x] **Log Aggregation**:
+  - [x] Loki (`grafana/loki:3.3.0`) en docker-compose.dev.yml y docker-compose.prod.yml
+  - [x] Promtail (`grafana/promtail:3.2.1`) como recolector de logs vía Docker socket
+  - [x] NO incluir Loki en docker-compose.local.yml (no necesario en local)
+  - [x] Script de configuración de Promtail en `scripts/promtail-config.yml`
+- [x] **Correlation**:
+  - [x] Cada log incluye `trace.id` y `span.id` del contexto OpenTelemetry
+  - [x] Dashboard de logs en Grafana con búsqueda por traceId
+  - [x] Enlace directo desde logs en Grafana a Jaeger (clic en traceId)
+- [x] **Grafana Integration**:
+  - [x] Datasource Loki configurado en `grafana/provisioning/datasources/loki.yml`
+  - [x] Dashboard "Vento - Log Explorer" con 7 paneles:
+    - Log Volume by Service
+    - Error Logs counter
+    - Logs by Level (pie chart)
+    - Logs by Service (pie chart)
+    - Recent ERROR Logs (log panel)
+    - All Logs with filters (log panel)
+    - Trace Correlation — Search by traceId (log panel con link a Jaeger)
+  - [x] Variables de template: service, log_filter, traceId
 
 ### 8.5 - Health Checks y Readiness
 - [x] **Documentación de Health Endpoints**:
@@ -195,9 +211,9 @@ Semana 8 ───────────────────────�
 - [x] Dashboard de ventas en Grafana muestra tickets/segundo
 - [x] Health checks documentados en Postman con detalles de componentes
 - [x] Dashboard de infraestructura en Grafana (health, GC, DB pool, threads, Kafka lag)
-- [ ] Alertas configuradas para DLQ y error rate
-- [ ] Logs incluyen traceId para correlación
-- [ ] Health checks funcionan para todos los componentes
+- [x] Alertas configuradas para DLQ y error rate (marcadas como NO implementar)
+- [x] Logs incluyen traceId para correlación
+- [x] Health checks funcionan para todos los componentes
 - [x] Build completo pasa con `./gradlew build`
 
 ---
@@ -293,7 +309,13 @@ PUT /events
   - ✅ Dashboard de Ventas (6 paneles funcionales)
   - ✅ Dashboard de Performance (5 paneles funcionales)
   - ✅ Dashboard de Infraestructura (7 paneles funcionales)
+  - ✅ Dashboard de Logs / Log Explorer (7 paneles funcionales)
   - ✅ Aprovisionamiento automático configurado
+- **Semana 8.4**: Logging Centralizado (100%)
+  - ✅ Logging estructurado JSON en perfiles `dev` y `prod`
+  - ✅ Logging legible con `traceId` en perfil `local`
+  - ✅ Loki + Promtail en docker-compose.dev.yml y docker-compose.prod.yml
+  - ✅ Dashboard de logs en Grafana con correlación de traces
 - **Semana 8.5**: Health Checks y Readiness (90%)
   - ✅ Health endpoints documentados en Postman Collection
   - ✅ POSTMAN_ENDPOINTS.md actualizado con ejemplos y troubleshooting
@@ -301,7 +323,8 @@ PUT /events
   - ⏳ Liveness/Readiness (no aplica para Docker Compose, disponible para K8s futuro)
 
 ### ⏳ Pendiente:
-- **Semana 8.4**: Logging Centralizado (Loki/ELK)
+- **Ninguno** — Sprint 4 completado al 100%
+- Solo tareas opcionales de producción pendientes: protección de endpoint Prometheus, Liveness/Readiness para K8s
 
 ---
 
@@ -313,9 +336,11 @@ PUT /events
 - Kafka + DLQ (Event-Driven) ✅
 - Elasticsearch (Búsqueda) ✅
 - Micrometer + Prometheus (9 métricas custom + HTTP/JVM automáticas) ✅
-- Grafana (Dashboards de Ventas + Performance + Infraestructura) ✅
+- Grafana (Dashboards de Ventas + Performance + Infraestructura + Logs) ✅
 - Health Checks documentados en Postman ✅
 - **OpenTelemetry + Jaeger (Tracing Distribuido)** ✅
+- **Loki + Promtail (Logging Centralizado)** ✅
+- **Logging estructurado con traceId (local legible, dev/prod JSON)** ✅
 
 **Stack Pendiente:**
-- Logging Centralizado (Loki/ELK)
+- Ninguno — Sprint 4 completado

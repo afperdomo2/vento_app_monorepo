@@ -1,0 +1,28 @@
+# Payment Service - Configuración de Producción (Prod)
+# PostgreSQL con validación de schema
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5434}/${DATABASE_NAME:payments_db}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.postgresql.Driver
+        format_sql: false
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    com.vento.payment: WARN
+    org.hibernate.SQL: WARN
