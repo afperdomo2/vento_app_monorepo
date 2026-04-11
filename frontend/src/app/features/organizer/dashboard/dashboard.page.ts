@@ -116,12 +116,10 @@ type ChartRange = '7d' | '30d' | 'all';
       @if (salesChart().length > 0) {
         <div class="h-64 flex items-end justify-between space-x-2">
           @for (point of salesChart(); track point.date) {
-            <div class="flex flex-col items-center flex-1 group" [style.height.%]="100">
-              <div class="w-full rounded-t-lg transition-all group-hover:opacity-80 cursor-pointer relative"
+            <div class="flex flex-col items-center justify-end flex-1 group" [style.height.%]="100">
+              <div class="w-full rounded-t-lg bg-primary transition-all group-hover:opacity-80 cursor-pointer relative"
                    [style.height.%]="barHeight(point.quantity)"
-                   [class.bg-primary]="isMaxBar(point.quantity)"
-                   [class.shadow-[0_-4px_15px_rgba(74,64,224,0.3)]]="isMaxBar(point.quantity)"
-                   [class.bg-primary-container/20]="!isMaxBar(point.quantity)">
+                   [class.shadow-[0_-4px_15px_rgba(74,64,224,0.3)]]="barHeight(point.quantity) >= 80">
                 <!-- Tooltip -->
                 <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface-container-lowest text-on-surface text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg pointer-events-none z-10">
                   {{ point.quantity }} tix — {{ point.revenue | currency:'USD':'symbol':'1.0-0' }}
@@ -131,9 +129,8 @@ type ChartRange = '7d' | '30d' | 'all';
           }
         </div>
         <div class="flex justify-between mt-4 px-2">
-          @for (point of salesChart(); track point.date; let i = $index; let last = $last) {
-            <span class="text-[10px] font-bold text-slate-400 uppercase truncate flex-1 text-center"
-                  [class.text-primary]="last">
+          @for (point of salesChart(); track point.date; let i = $index) {
+            <span class="text-[10px] font-bold text-slate-400 uppercase truncate flex-1 text-center">
               {{ formatChartDate(point.date) }}
             </span>
           }
@@ -152,7 +149,7 @@ type ChartRange = '7d' | '30d' | 'all';
     <!-- Events List -->
     <div>
       <div class="flex justify-between items-center mb-6">
-        <h3 class="font-headline text-xl font-bold">Eventos en la Plataforma</h3>
+        <h3 class="font-headline text-xl font-bold">Últimos Eventos</h3>
       </div>
 
       @if (isLoading()) {
@@ -236,11 +233,6 @@ export class DashboardPage implements OnInit {
   barHeight(quantity: number): number {
     const max = Math.max(...this.salesChart().map((p) => p.quantity), 1);
     return Math.max((quantity / max) * 95, 5);
-  }
-
-  isMaxBar(quantity: number): boolean {
-    const max = Math.max(...this.salesChart().map((p) => p.quantity), 0);
-    return quantity === max && max > 0;
   }
 
   formatChartDate(dateStr: string): string {

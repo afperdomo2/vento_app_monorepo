@@ -144,7 +144,7 @@ export class OrganizerService {
     try {
       const [summaryRes, eventsRes] = await Promise.all([
         firstValueFrom(this.http.get<OrderSummaryResponse>(`${API_URL}/api/orders/analytics/summary`)),
-        firstValueFrom(this.http.get<EventsResponse>(`${API_URL}/api/events?size=100&sortBy=eventDate&sortDir=ASC`)),
+        firstValueFrom(this.http.get<EventsResponse>(`${API_URL}/api/events?size=6&sortBy=createdAt&sortDir=DESC`)),
       ]);
 
       const summary = summaryRes.data;
