@@ -25,3 +25,15 @@ spring:
 logging:
   level:
     org.hibernate.SQL: WARN
+
+# Production: restrict actuator endpoints to health+info only
+# Prometheus metrics are collected internally via Docker network, not exposed publicly
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized

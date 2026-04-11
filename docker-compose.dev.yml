@@ -232,6 +232,91 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Prometheus para métricas de los microservicios
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data-dev:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # OpenTelemetry Collector - recibe traces de todos los servicios
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    ports:
+      - "4318:4318"  # HTTP receiver
+      - "4317:4317"  # gRPC receiver
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    networks:
+      - vento-network
+    depends_on:
+      jaeger:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:13133/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Jaeger - visualización de traces distribuidos
+  jaeger:
+    image: jaegertracing/all-in-one:1.64.0
+    ports:
+      - "16686:16686"  # UI web
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - vento-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:14269/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Grafana para dashboards de métricas y logs
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana-data-dev:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning-dev/datasources:/etc/grafana/provisioning/datasources/extra
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - vento-network
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   # Event Service
   event-service:
     build:
@@ -381,4 +466,8 @@ volumes:
   elasticsearch-data-dev:
     driver: local
   loki-data-dev:
+    driver: local
+  prometheus-data-dev:
+    driver: local
+  grafana-data-dev:
     driver: local

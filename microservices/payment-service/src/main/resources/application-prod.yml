@@ -26,3 +26,14 @@ logging:
   level:
     com.vento.payment: WARN
     org.hibernate.SQL: WARN
+
+# Production: restrict actuator endpoints to health+info only
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
