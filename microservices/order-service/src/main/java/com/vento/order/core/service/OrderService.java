@@ -4,6 +4,8 @@ import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.order.CreateOrderRequest;
 import com.vento.common.dto.order.OrderDto;
+import com.vento.common.dto.order.OrderSummaryDto;
+import com.vento.common.dto.order.SalesChartPointDto;
 import com.vento.common.enums.OrderStatus;
 import com.vento.common.exception.BusinessException;
 import com.vento.common.exception.ConflictResolutionService;
@@ -29,9 +31,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -289,6 +296,92 @@ public class OrderService {
             log.error("❌ Error al liberar tickets en event-service al expirar orden {}: {}",
                     freshOrder.getId(), e.getMessage());
         }
+    }
+
+    /**
+     * Resumen analítico de todas las órdenes CONFIRMED.
+     * Retorna totales de revenue, órdenes, tickets y eventos únicos.
+     */
+    @Transactional(readOnly = true)
+    public OrderSummaryDto getOrderSummary() {
+        log.info("✅ Calculando resumen analítico de órdenes confirmadas");
+
+        List<Order> confirmedOrders = orderRepository.findAllConfirmed();
+
+        BigDecimal totalRevenue = confirmedOrders.stream()
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long totalOrders = confirmedOrders.size();
+        long totalTickets = confirmedOrders.stream()
+                .mapToLong(Order::getQuantity)
+                .sum();
+
+        long totalEvents = confirmedOrders.stream()
+                .map(Order::getEventId)
+                .distinct()
+                .count();
+
+        return OrderSummaryDto.builder()
+                .totalRevenue(totalRevenue)
+                .totalOrders(totalOrders)
+                .totalTickets(totalTickets)
+                .totalEvents(totalEvents)
+                .build();
+    }
+
+    /**
+     * Serie temporal de ventas por día para gráfica de dashboard.
+     *
+     * @param range "7d", "30d", o "all"
+     * @return lista de puntos con fecha, cantidad y revenue
+     */
+    @Transactional(readOnly = true)
+    public List<SalesChartPointDto> getSalesChart(String range) {
+        log.info("✅ Calculando serie temporal de ventas para rango: {}", range);
+
+        LocalDateTime since;
+        LocalDateTime now = LocalDateTime.now();
+
+        switch (range) {
+            case "7d" -> since = now.minusDays(7);
+            case "30d" -> since = now.minusDays(30);
+            default -> { return buildSalesChartAllTime(orderRepository.findAllConfirmed()); }
+        }
+
+        List<Order> orders = orderRepository.findConfirmedSince(since);
+        return buildSalesChart(orders);
+    }
+
+    private List<SalesChartPointDto> buildSalesChartAllTime(List<Order> orders) {
+        return buildSalesChart(orders);
+    }
+
+    private List<SalesChartPointDto> buildSalesChart(List<Order> orders) {
+        // Agrupar por fecha (LocalDate) y sumar quantity + revenue
+        Map<LocalDate, long[]> grouped = orders.stream()
+                .collect(Collectors.groupingBy(
+                        o -> o.getCreatedAt().toLocalDate(),
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> new long[]{
+                                        list.stream().mapToLong(Order::getQuantity).sum(),
+                                        list.stream()
+                                                .map(Order::getTotalAmount)
+                                                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                                                .longValue()
+                                }
+                        )
+                ));
+
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> SalesChartPointDto.builder()
+                        .date(entry.getKey())
+                        .quantity(entry.getValue()[0])
+                        .revenue(BigDecimal.valueOf(entry.getValue()[1]))
+                        .build())
+                .toList();
     }
 
     private OrderDto mapToDto(Order order) {

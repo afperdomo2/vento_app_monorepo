@@ -1,7 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { getEnvValue } from '../../../../environments/env.config';
+
+const API_URL = getEnvValue('API_URL');
 
 /**
- * Event data for organizer dashboard
+ * Event data for organizer dashboard (enriched from EventDto)
  */
 interface OrganizerEvent {
   id: string;
@@ -16,18 +21,7 @@ interface OrganizerEvent {
 }
 
 /**
- * Notification for organizer dashboard
- */
-interface OrganizerNotification {
-  id: string;
-  type: 'alert' | 'sale' | 'registration';
-  title: string;
-  message: string;
-  time: string;
-}
-
-/**
- * KPI data for dashboard
+ * KPI data for dashboard (from backend analytics)
  */
 interface OrganizerKPIs {
   totalSales: number;
@@ -39,19 +33,74 @@ interface OrganizerKPIs {
 }
 
 /**
+ * Sales chart point (from backend)
+ */
+interface SalesChartPoint {
+  date: string;
+  quantity: number;
+  revenue: number;
+}
+
+/**
+ * Backend OrderSummaryDto response
+ */
+interface OrderSummaryResponse {
+  data: {
+    totalRevenue: number;
+    totalOrders: number;
+    totalTickets: number;
+    totalEvents: number;
+  };
+}
+
+/**
+ * Backend EventDto response (paginated)
+ */
+interface EventsResponse {
+  data: {
+    content: Array<{
+      id: string;
+      name: string;
+      description: string;
+      eventDate: string;
+      venue: string;
+      totalCapacity: number;
+      availableTickets: number;
+      price: number;
+      latitude: number | null;
+      longitude: number | null;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+    totalPages: number;
+    totalElements: number;
+  };
+}
+
+/**
+ * Backend SalesChart response
+ */
+interface SalesChartResponse {
+  data: Array<{
+    date: string;
+    quantity: number;
+    revenue: number;
+  }>;
+}
+
+/**
  * Organizer dashboard state
  */
 interface OrganizerState {
   events: OrganizerEvent[];
-  notifications: OrganizerNotification[];
   kpis: OrganizerKPIs;
+  salesChart: SalesChartPoint[];
   isLoading: boolean;
   error: string | null;
 }
 
 const initialState: OrganizerState = {
   events: [],
-  notifications: [],
   kpis: {
     totalSales: 0,
     salesGrowth: 0,
@@ -60,6 +109,7 @@ const initialState: OrganizerState = {
     totalCapacity: 0,
     monthlyGoal: 50000,
   },
+  salesChart: [],
   isLoading: false,
   error: null,
 };
@@ -68,100 +118,93 @@ const initialState: OrganizerState = {
  * Organizer Service
  *
  * Manages state for the organizer dashboard feature.
- * Currently uses mock data - will be connected to backend APIs when available.
- *
- * TODO: Connect to backend endpoints:
- * - GET /api/organizer/events - List organizer's events
- * - GET /api/organizer/kpis - Dashboard KPIs
- * - GET /api/organizer/notifications - Real-time notifications
+ * Connects to real backend APIs for KPIs, events, and sales chart data.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class OrganizerService {
+  private http = inject(HttpClient);
+
   private state = signal<OrganizerState>(initialState);
 
   // Public signals for components
   readonly events = computed(() => this.state().events);
-  readonly notifications = computed(() => this.state().notifications);
   readonly kpis = computed(() => this.state().kpis);
+  readonly salesChart = computed(() => this.state().salesChart);
   readonly isLoading = computed(() => this.state().isLoading);
   readonly error = computed(() => this.state().error);
 
   /**
-   * Load organizer dashboard data
-   * TODO: Replace with actual API calls
+   * Load organizer dashboard data from backend
    */
-  loadDashboardData(): void {
+  async loadDashboardData(): Promise<void> {
     this.state.update((s) => ({ ...s, isLoading: true, error: null }));
 
-    // Mock data - replace with HTTP calls
-    setTimeout(() => {
+    try {
+      const [summaryRes, eventsRes] = await Promise.all([
+        firstValueFrom(this.http.get<OrderSummaryResponse>(`${API_URL}/api/orders/analytics/summary`)),
+        firstValueFrom(this.http.get<EventsResponse>(`${API_URL}/api/events?size=100&sortBy=eventDate&sortDir=ASC`)),
+      ]);
+
+      const summary = summaryRes.data;
+      const rawEvents = eventsRes.data.content;
+
+      const kpis: OrganizerKPIs = {
+        totalSales: summary.totalRevenue,
+        salesGrowth: 0, // Requires historical comparison — set to 0 for now
+        totalAttendees: summary.totalTickets,
+        currentCapacity: summary.totalTickets,
+        totalCapacity: rawEvents.reduce((sum, e) => sum + e.totalCapacity, 0),
+        monthlyGoal: 50000,
+      };
+
+      const events: OrganizerEvent[] = rawEvents
+        .filter((e) => e.totalCapacity > 0)
+        .map((e) => {
+          const sold = e.totalCapacity - e.availableTickets;
+          const pct = e.totalCapacity > 0 ? Math.round((sold / e.totalCapacity) * 100) : 0;
+          return {
+            id: e.id,
+            title: e.name,
+            date: this.formatDate(e.eventDate),
+            location: e.venue,
+            imageUrl: this.getEventImage(e.name),
+            status: pct === 100 ? 'sold-out' : 'selling',
+            percentageSold: pct,
+            totalTickets: e.totalCapacity,
+            soldTickets: sold,
+          };
+        });
+
       this.state.update((s) => ({
         ...s,
         isLoading: false,
-        events: [
-          {
-            id: '1',
-            title: 'Summer Jazz Night',
-            date: '24 June, 2024',
-            location: 'Marina Bay',
-            imageUrl:
-              'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=200&h=200&fit=crop',
-            status: 'sold-out',
-            percentageSold: 100,
-            totalTickets: 500,
-            soldTickets: 500,
-          },
-          {
-            id: '2',
-            title: 'Tech Summit 2024',
-            date: '12 July, 2024',
-            location: 'Convention Hall',
-            imageUrl:
-              'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=200&h=200&fit=crop',
-            status: 'selling',
-            percentageSold: 85,
-            totalTickets: 1000,
-            soldTickets: 850,
-          },
-        ],
-        notifications: [
-          {
-            id: '1',
-            type: 'alert',
-            title: 'Cambio de Horario',
-            message:
-              'El evento "Jazz Night" ha sido retrasado 30 minutos por condiciones climáticas.',
-            time: 'Hace 5 min',
-          },
-          {
-            id: '2',
-            type: 'sale',
-            title: 'Nueva Venta',
-            message:
-              'Se han vendido 5 entradas VIP para "Tech Summit 2024".',
-            time: 'Hace 12 min',
-          },
-          {
-            id: '3',
-            type: 'registration',
-            title: 'Registro de Expositor',
-            message:
-              'Marina Soler ha completado su registro para el área de prensa.',
-            time: 'Hace 1 hora',
-          },
-        ],
-        kpis: {
-          totalSales: 42850,
-          salesGrowth: 12.5,
-          totalAttendees: 1284,
-          currentCapacity: 452,
-          totalCapacity: 500,
-          monthlyGoal: 50000,
-        },
+        events,
+        kpis,
       }));
-    }, 500);
+    } catch (err) {
+      this.state.update((s) => ({
+        ...s,
+        isLoading: false,
+        error: err instanceof Error ? err.message : 'Error loading dashboard data',
+      }));
+    }
+  }
+
+  /**
+   * Load sales chart data for a given time range
+   */
+  async loadSalesChart(range: '7d' | '30d' | 'all' = '7d'): Promise<void> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<SalesChartResponse>(`${API_URL}/api/orders/analytics/sales-chart?range=${range}`),
+      );
+      this.state.update((s) => ({ ...s, salesChart: res.data }));
+    } catch (_err) {
+      // If no data, keep empty chart
+      this.state.update((s) => ({ ...s, salesChart: [] }));
+    }
   }
 
   /**
@@ -169,5 +212,26 @@ export class OrganizerService {
    */
   clearError(): void {
     this.state.update((s) => ({ ...s, error: null }));
+  }
+
+  private formatDate(isoDate: string): string {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  private getEventImage(eventName: string): string {
+    // Use a deterministic placeholder based on event name
+    const images = [
+      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=200&h=200&fit=crop',
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=200&h=200&fit=crop',
+      'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=200&h=200&fit=crop',
+      'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200&h=200&fit=crop',
+    ];
+    const index = eventName.length % images.length;
+    return images[index];
   }
 }

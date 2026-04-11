@@ -31,4 +31,17 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("status") OrderStatus status,
             @Param("createdBefore") LocalDateTime createdBefore
     );
+
+    /**
+     * Retorna todas las órdenes CONFIRMED ordenadas por fecha de creación.
+     * Usado para agregación analítica del dashboard.
+     */
+    @Query("SELECT o FROM Order o WHERE o.status = 'CONFIRMED' ORDER BY o.createdAt")
+    List<Order> findAllConfirmed();
+
+    /**
+     * Retorna órdenes CONFIRMED creadas desde una fecha dada.
+     */
+    @Query("SELECT o FROM Order o WHERE o.status = 'CONFIRMED' AND o.createdAt >= :since ORDER BY o.createdAt")
+    List<Order> findConfirmedSince(@Param("since") LocalDateTime since);
 }
