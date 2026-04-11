@@ -1,6 +1,7 @@
 package com.vento.order.api.controller;
 
 import com.vento.common.dto.ApiResponse;
+import com.vento.common.dto.order.EventAnalyticsDto;
 import com.vento.common.dto.order.OrderSummaryDto;
 import com.vento.common.dto.order.SalesChartPointDto;
 import com.vento.order.core.service.OrderService;
@@ -63,5 +64,24 @@ public class OrderAnalyticsController {
             @RequestParam(defaultValue = "7d") String range) {
         List<SalesChartPointDto> chart = orderService.getSalesChart(range);
         return ResponseEntity.ok(ApiResponse.success(chart));
+    }
+
+    @Operation(
+            summary = "Métricas por evento",
+            description = "Retorna métricas analíticas agrupadas por evento: " +
+                    "órdenes confirmadas, tickets vendidos y revenue total por evento. " +
+                    "Ordenado por revenue descendente."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Métricas por evento calculadas exitosamente",
+                    content = @Content(schema = @Schema(implementation = EventAnalyticsDto.class))
+            )
+    })
+    @GetMapping("/by-event")
+    public ResponseEntity<ApiResponse<List<EventAnalyticsDto>>> getEventsAnalytics() {
+        List<EventAnalyticsDto> analytics = orderService.getEventsAnalytics();
+        return ResponseEntity.ok(ApiResponse.success(analytics));
     }
 }

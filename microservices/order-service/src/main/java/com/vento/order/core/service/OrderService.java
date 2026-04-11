@@ -3,6 +3,7 @@ package com.vento.order.core.service;
 import com.vento.common.dto.ApiResponse;
 import com.vento.common.dto.event.EventAvailabilityDto;
 import com.vento.common.dto.order.CreateOrderRequest;
+import com.vento.common.dto.order.EventAnalyticsDto;
 import com.vento.common.dto.order.OrderDto;
 import com.vento.common.dto.order.OrderSummaryDto;
 import com.vento.common.dto.order.SalesChartPointDto;
@@ -296,6 +297,41 @@ public class OrderService {
             log.error("❌ Error al liberar tickets en event-service al expirar orden {}: {}",
                     freshOrder.getId(), e.getMessage());
         }
+    }
+
+    /**
+     * Métricas analíticas agrupadas por evento.
+     * Retorna métricas de todas las órdenes CONFIRMED agrupadas por eventId.
+     */
+    @Transactional(readOnly = true)
+    public List<EventAnalyticsDto> getEventsAnalytics() {
+        log.info("✅ Calculando métricas analíticas por evento");
+
+        List<Order> confirmedOrders = orderRepository.findAllConfirmed();
+
+        Map<UUID, List<Order>> groupedByEvent = confirmedOrders.stream()
+                .collect(Collectors.groupingBy(Order::getEventId));
+
+        return groupedByEvent.entrySet().stream()
+                .map(entry -> {
+                    UUID eventId = entry.getKey();
+                    List<Order> orders = entry.getValue();
+
+                    long totalOrders = orders.size();
+                    long totalTickets = orders.stream().mapToLong(Order::getQuantity).sum();
+                    BigDecimal totalRevenue = orders.stream()
+                            .map(Order::getTotalAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    return EventAnalyticsDto.builder()
+                            .eventId(eventId)
+                            .totalOrders(totalOrders)
+                            .totalTickets(totalTickets)
+                            .totalRevenue(totalRevenue)
+                            .build();
+                })
+                .sorted((a, b) -> b.getTotalRevenue().compareTo(a.getTotalRevenue()))
+                .toList();
     }
 
     /**

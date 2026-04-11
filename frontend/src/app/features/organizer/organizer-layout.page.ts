@@ -50,18 +50,6 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
             >
             <span>Eventos</span>
           </a>
-
-          <a
-            routerLink="/organizer/ticketing"
-            routerLinkActive="active-nav"
-            class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
-            [class.active-nav]="isActive('/ticketing')"
-          >
-            <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')"
-              >confirmation_number</span
-            >
-            <span>Tickets</span>
-          </a>
         </nav>
 
         <div class="mt-auto space-y-1 pt-4 border-t border-slate-200/50">
@@ -137,19 +125,6 @@ import { TopNavBar } from '../../shared/ui/top-nav-bar/top-nav-bar';
                 >event</span
               >
               <span>Eventos</span>
-            </a>
-
-            <a
-              routerLink="/organizer/ticketing"
-              routerLinkActive="active-nav"
-              class="rounded-xl px-4 py-3 flex items-center space-x-3 transition-all duration-300 ease-in-out"
-              [class.active-nav]="isActive('/ticketing')"
-              (click)="toggleMobileSidebar()"
-            >
-              <span class="material-symbols-outlined" [class.fill-icon]="isActive('/ticketing')"
-                >confirmation_number</span
-              >
-              <span>Tickets</span>
             </a>
           </nav>
 

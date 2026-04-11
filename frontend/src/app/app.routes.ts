@@ -7,8 +7,6 @@ import { OrganizerLayoutPage } from './features/organizer/organizer-layout.page'
 import { DashboardPage } from './features/organizer/dashboard/dashboard.page';
 import { AnalyticsPage } from './features/organizer/analytics/analytics.page';
 import { EventsPage } from './features/organizer/events/events.page';
-import { TicketingPage } from './features/organizer/ticketing/ticketing.page';
-import { SettingsPage } from './features/organizer/settings/settings.page';
 import { EventsListPage } from './features/events-list/events-list.page';
 import { NearbyEventsPage } from './features/nearby/nearby.page';
 import { ProfilePage } from './features/profile/profile.page';
@@ -44,8 +42,6 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardPage },
       { path: 'analytics', component: AnalyticsPage },
       { path: 'events', component: EventsPage },
-      { path: 'ticketing', component: TicketingPage },
-      { path: 'settings', component: SettingsPage },
     ]
   },
   {

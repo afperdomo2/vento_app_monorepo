@@ -47,12 +47,6 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
             </a>
           }
 
-          <!-- Notifications -->
-          <button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full relative">
-            <span class="material-symbols-outlined">notifications</span>
-            <span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-surface"></span>
-          </button>
-
           <!-- Auth State: Not Logged In -->
           @if (!authState.isLoggedIn()) {
             <a
