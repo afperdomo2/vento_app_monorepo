@@ -97,16 +97,35 @@ services:
         limits:
           memory: 2g
 
+  # Kibana para visualización de datos de Elasticsearch
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - vento-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
   # Keycloak para autenticación y gestión de usuarios
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Keycloak admin password required}
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres-events:5432/${POSTGRES_EVENTS_DB:-events_db}
-      KC_DB_USERNAME: ${POSTGRES_EVENTS_USER:-postgres}
-      KC_DB_PASSWORD: ${POSTGRES_EVENTS_PASSWORD:?Database password required}
+    ports:
+      - "8180:8080"
+    command: start-dev
     volumes:
       - keycloak-data-prod:/opt/keycloak/data
     networks:
@@ -128,7 +147,7 @@ services:
     networks:
       - vento-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3100/ready || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3100/ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -212,18 +231,20 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Grafana para dashboards (sin puerto expuesto — acceder vía reverse proxy)
+  # Grafana para dashboards
   grafana:
     image: grafana/grafana-oss:latest
+    ports:
+      - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Grafana admin password required}
       GF_AUTH_ANONYMOUS_ENABLED: "false"
-      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3000}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
     volumes:
       - grafana-data-prod:/var/lib/grafana
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning-dev/datasources:/etc/grafana/provisioning/datasources/extra
+      - ./grafana/provisioning-prod/datasources:/etc/grafana/provisioning/datasources/extra
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     networks:
@@ -302,10 +323,15 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     depends_on:
       postgres-events:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - vento-network
@@ -334,12 +360,16 @@ services:
       EVENT_SERVICE_URL: http://event-service:8082
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     depends_on:
       postgres-orders:
         condition: service_healthy
       event-service:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - vento-network
@@ -366,8 +396,11 @@ services:
       DATABASE_USERNAME: ${POSTGRES_PAYMENTS_USER:-postgres}
       DATABASE_PASSWORD: ${POSTGRES_PAYMENTS_PASSWORD:?Database password required}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     depends_on:
       postgres-payments:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - vento-network
@@ -389,6 +422,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/vento-realm
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     depends_on:
       event-service:
         condition: service_healthy
@@ -408,18 +442,33 @@ services:
       retries: 3
       start_period: 60s
 
-  # Frontend (placeholder)
+  # Frontend — Angular SPA served by Nginx
   frontend:
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.prod
+      args:
+        API_URL: ${API_URL:-http://localhost:8080}
+        KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8180}
+        KEYCLOAK_REALM: ${KEYCLOAK_REALM:-vento-realm}
+        KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-vento-frontend}
     ports:
       - "3000:3000"
+    environment:
+      API_URL: ${API_URL:-http://localhost:8080}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8180}
+    depends_on:
+      api-gateway:
+        condition: service_healthy
     networks:
       - vento-network
-    command: sh -c "echo 'Coloca tu frontend en la carpeta ./frontend' && tail -f /dev/null"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
 networks:
   vento-network:

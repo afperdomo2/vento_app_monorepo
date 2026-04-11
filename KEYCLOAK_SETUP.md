@@ -579,6 +579,6 @@ Además:
 
 ---
 
-**Última actualización:** Marzo 2026  
-**Versión de Keycloak:** 24.0  
-**Versión del documento:** 2.0
+**Última actualización:** Abril 2026
+**Versión de Keycloak:** 26.0
+**Versión del documento:** 2.1

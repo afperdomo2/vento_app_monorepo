@@ -163,13 +163,19 @@ docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
 Todos los servicios corren en contenedores Docker con configuración optimizada para producción.
 
 ```bash
+# Configurar variables de entorno (una sola vez)
+cp .env.example .env
+# Editar .env con valores seguros
+
 # Ejecutar en producción
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# Requiere variables de entorno para secretos
+# O usar export para secretos
 export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
 export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
+export POSTGRES_PAYMENTS_PASSWORD=tu_password_seguro
 export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
+export GRAFANA_ADMIN_PASSWORD=tu_password_seguro
 ```
 
 **Características:**
@@ -179,6 +185,9 @@ export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
 - ✅ Health checks configurados
 - ✅ Políticas de restart automático
 - ✅ Usuario no-root por seguridad
+- ✅ Frontend Angular servido por Nginx
+- ✅ Kibana para visualización de Elasticsearch
+- ✅ Grafana + Prometheus + Loki para observabilidad
 
 ## 🐳 Docker
 
@@ -610,9 +619,37 @@ POSTGRES_ORDERS_DB=orders_db          # Nombre de la base de datos
 POSTGRES_ORDERS_USER=postgres         # Usuario de la base de datos
 POSTGRES_ORDERS_PASSWORD=postgres     # Contraseña (CAMBIAR EN PROD)
 
+# PostgreSQL Payment Service
+POSTGRES_PAYMENTS_DB=payments_db      # Nombre de la base de datos
+POSTGRES_PAYMENTS_USER=postgres       # Usuario de la base de datos
+POSTGRES_PAYMENTS_PASSWORD=postgres   # Contraseña (CAMBIAR EN PROD)
+
 # Keycloak
 KEYCLOAK_ADMIN=admin                  # Usuario admin de Keycloak
 KEYCLOAK_ADMIN_PASSWORD=admin         # Contraseña admin (CAMBIAR EN PROD)
+
+# Frontend (Dockerfile.prod build args)
+API_URL=http://localhost:8080         # API Gateway URL para el frontend
+KEYCLOAK_URL=http://localhost:8180    # Keycloak URL para el frontend
+KEYCLOAK_REALM=vento-realm            # Nombre del realm
+KEYCLOAK_CLIENT_ID=vento-frontend     # Client ID para el frontend
+
+# Grafana
+GRAFANA_ADMIN_USER=admin              # Usuario admin de Grafana
+GRAFANA_ADMIN_PASSWORD=admin          # Contraseña admin (CAMBIAR EN PROD)
+GRAFANA_ROOT_URL=http://localhost:3001 # URL base de Grafana
+
+# CORS (opcional — tienen defaults)
+CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3000
+CORS_ALLOWED_METHODS=GET,POST,PUT,PATCH,DELETE,OPTIONS
+CORS_ALLOWED_HEADERS=Authorization,Content-Type,Accept
+CORS_EXPOSED_HEADERS=X-User-Id,X-User-Roles
+CORS_ALLOW_CREDENTIALS=true
+CORS_MAX_AGE=3600
+
+# Avanzadas (opcional — tienen defaults)
+ELASTICSEARCH_URIS=http://localhost:9200
+KEYCLOAK_JWK_SET_URI=http://localhost:8180/realms/vento-realm/protocol/openid-connect/certs
 ```
 
 ## 🐛 Troubleshooting

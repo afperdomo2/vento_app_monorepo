@@ -571,6 +571,63 @@
             "description": "Elimina un evento por su ID.\n\nRequiere: Token JWT válido con rol ADMIN."
           },
           "response": []
+        },
+        {
+          "name": "Release Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Tickets liberados correctamente');",
+                  "} else {",
+                  "    console.error('❌ Error:', pm.response.code, pm.response.json());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/events/{{event_id}}/tickets/release",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}",
+                "tickets",
+                "release"
+              ]
+            },
+            "description": "Libera manualmente tickets en Redis para un evento (por ejemplo, tras una cancelación masiva).\n\nEjecuta INCRBY en Redis para incrementar el contador de tickets disponibles.\n\nCampos requeridos:\n- quantity: Cantidad de tickets a liberar\n\nRequiere: Token JWT válido con rol ADMIN."
+          },
+          "response": []
         }
       ],
       "description": "Endpoints para la gestión de eventos (CRUD)"
