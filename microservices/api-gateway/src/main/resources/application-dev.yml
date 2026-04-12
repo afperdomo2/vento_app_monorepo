@@ -7,28 +7,30 @@ spring:
       on-profile: dev
   cloud:
     gateway:
-      routes:
-        - id: event-service
-          uri: http://event-service:8082
-          predicates:
-            - Path=/api/events/**
+      server:
+        webflux:
+          routes:
+            - id: event-service
+              uri: http://event-service:8082
+              predicates:
+                - Path=/api/events/**
 
-        - id: order-service
-          uri: http://order-service:8083
-          predicates:
-            - Path=/api/orders/**
+            - id: order-service
+              uri: http://order-service:8083
+              predicates:
+                - Path=/api/orders/**
 
-        - id: payment-service
-          uri: http://payment-service:8084
-          predicates:
-            - Path=/api/payments/**
+            - id: payment-service
+              uri: http://payment-service:8084
+              predicates:
+                - Path=/api/payments/**
 
-        - id: frontend
-          uri: http://frontend:3000
-          predicates:
-            - Path=/ui/**
-          filters:
-            - StripPrefix=1
+            - id: frontend
+              uri: http://frontend:3000
+              predicates:
+                - Path=/ui/**
+              filters:
+                - StripPrefix=1
 
 logging:
   level:
