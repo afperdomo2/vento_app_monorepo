@@ -147,6 +147,7 @@ Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `
 - **Microservicios** confían en esos headers directamente — **no validan JWT**. Una llamada directa que bypasee el gateway es efectivamente no autenticada.
 - **Frontend** usa Keycloak **Direct Access Grant** (Resource Owner Password Credentials), no Authorization Code Flow. El cliente `vento-frontend` en Keycloak debe tener "Direct Access Grants Enabled". Tokens en `localStorage`.
 - Token se considera expirado 1 minuto antes del `exp` real (buffer de 60s).
+- **Refresh token**: al recibir 401 del gateway, el interceptor llama a `refreshSession()` (grant_type=refresh_token) y reintenta la petición original. Si el refresh falla, logout + redirect a `/login`. Requests concurrentes comparten el mismo refresh in-flight.
 
 ## Frontend — quirks importantes
 
@@ -155,7 +156,7 @@ Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `
 - **Config de entorno runtime**: se inyecta via `window.__env` en `index.html`, no via `environments/*.ts`. Los helpers están en `src/environments/env.config.ts`. Ejecutar `pnpm run setup:env` para crear `.env` desde `.env.example`.
 - **Tailwind v4**: configuración CSS-first, entry point `src/tailwind.css`. No existe `tailwind.config.js`.
 - **Rutas NO son lazy-loaded** a pesar de lo que sugiere la estructura — todos los componentes están importados estáticamente en `app.routes.ts`.
-- **`auth.service.ts` usa `BehaviorSubject`** para `authChanged$` — excepción a la regla de Signals (código legacy, no cambiar a signals sin refactor completo).
+- **`auth.service.ts` usa `BehaviorSubject`** para `authChanged$` + refresh token automático al recibir 401 (código legacy, no cambiar a signals sin refactor completo).
 - **ESLint prohíbe `any`** (`no-explicit-any: error`) — no usar `any` en TypeScript.
 - **Librerías UI de terceros**: `@bluehalo/ngx-leaflet` + `leaflet` + `leaflet-control-geocoder` (mapas), `qrcode` (tickets).
 - Estilos en `angular.json` en orden: `src/tailwind.css` → `src/styles.scss` → `leaflet.css`. El orden importa.

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators';
+import { catchError, tap, map, switchMap, shareReplay } from 'rxjs/operators';
 
 import { getEnvValue } from '../../../environments/env.config';
 
@@ -41,6 +41,9 @@ export class AuthService {
    */
   authChanged = this.authChanged$.asObservable();
 
+  // Refresh token in-flight tracking (prevents concurrent refresh requests)
+  private refreshInProgress$: Observable<User> | null = null;
+
   /**
    * Login with email/username and password
    * Uses Keycloak Direct Access Grant (Resource Owner Password Credentials)
@@ -74,6 +77,59 @@ export class AuthService {
   logout(): void {
     this.clearTokens();
     this.authChanged$.next(false);
+    this.refreshInProgress$ = null;
+  }
+
+  /**
+   * Refresh access token using the stored refresh token.
+   *
+   * Public entry point that deduplicates concurrent refresh attempts —
+   * multiple callers (interceptor, guards, etc.) will share the same
+   * in-flight HTTP request.
+   */
+  refreshSession(): Observable<User> {
+    // If a refresh is already in progress, return that observable instead
+    // of creating a new request.
+    if (this.refreshInProgress$) {
+      return this.refreshInProgress$;
+    }
+
+    const refreshToken = localStorage.getItem(this.refreshTokenKey);
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    const body = new URLSearchParams();
+    body.set('grant_type', 'refresh_token');
+    body.set('client_id', KEYCLOAK_CLIENT_ID);
+    body.set('refresh_token', refreshToken);
+
+    this.refreshInProgress$ = this.http
+      .post<AuthResponse>(this.keycloakTokenUrl, body.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      })
+      .pipe(
+        tap((response) => {
+          this.storeTokens(response);
+        }),
+        map(() => this.extractUserFromToken()),
+        tap(() => {
+          this.authChanged$.next(true);
+        }),
+        shareReplay(1),
+        catchError((error) => {
+          // Refresh failed — clear all tokens and force re-login
+          this.logout();
+          return throwError(() => error);
+        }),
+        tap({
+          finalize: () => {
+            this.refreshInProgress$ = null;
+          },
+        })
+      );
+
+    return this.refreshInProgress$;
   }
 
   /**

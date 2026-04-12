@@ -347,7 +347,9 @@ PENDING → CONFIRMED (pago exitoso)
 **Frontend — Token expiration:**
 - Los tokens de Keycloak tienen una duración de 5 minutos (`expires_in: 300`)
 - El frontend considera el token expirado 1 minuto antes del `exp` real (buffer de 60s)
-- Los refresh tokens se almacenan pero actualmente no se usan (no hay implementación de refresh automático)
+- **Refresh automático**: al recibir 401 del gateway, el interceptor llama a `refreshSession()` (`grant_type=refresh_token`) y reintenta la petición original con el nuevo access token
+- Si el refresh token también expiró o es inválido, se ejecuta logout y redirect a `/login`
+- Requests concurrentes que reciben 401 comparten el mismo refresh in-flight (no se lanzan múltiples requests de refresh)
 
 **Headers propagados a microservicios:**
 - `X-User-Id`: ID del usuario desde claim `sub` del JWT

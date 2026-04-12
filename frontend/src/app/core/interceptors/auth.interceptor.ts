@@ -1,7 +1,8 @@
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../auth/auth.service';
 
@@ -63,15 +64,33 @@ export const authInterceptor: HttpInterceptorFn = (
   // Send cloned request with authorization header
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Handle 401 Unauthorized errors
+      // Handle 401 Unauthorized errors — try to refresh the token
       if (error.status === 401) {
-        // Token might be expired, clear auth state
-        authService.logout();
-        
-        // Optionally redirect to login page
-        // This is handled by the components/guards
+        const router = inject(Router);
+
+        return authService.refreshSession().pipe(
+          switchMap(() => {
+            // Token refreshed successfully — retry the original request
+            const newToken = authService.getToken();
+            if (!newToken) {
+              return throwError(() => error);
+            }
+            const retryReq = req.clone({
+              setHeaders: {
+                Authorization: `Bearer ${newToken}`,
+              },
+            });
+            return next(retryReq);
+          }),
+          catchError((refreshError) => {
+            // Refresh failed — logout and redirect to login
+            authService.logout();
+            router.navigate(['/login']);
+            return throwError(() => error);
+          })
+        );
       }
-      
+
       return throwError(() => error);
     })
   );
