@@ -138,44 +138,10 @@
         "enableLogDetails": true,
         "sortOrder": "Descending"
       }
-    },
-    {
-      "id": 7,
-      "title": "Trace Correlation — Search by traceId",
-      "type": "logs",
-      "datasource": "Loki",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 38 },
-      "description": "Enter a traceId to view all correlated logs across services. Links to Jaeger for full trace visualization.",
-      "targets": [
-        {
-          "expr": "{service=~\".+\"} |~ \"$traceId\"",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showTime": true,
-        "showLabels": true,
-        "showCommonLabels": true,
-        "wrapLogMessage": true,
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "sortOrder": "Descending"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "links": [
-            {
-              "title": "View in Jaeger",
-              "url": "http://localhost:16686/trace/${__value.raw}",
-              "targetBlank": true
-            }
-          ]
-        }
-      }
     }
   ],
   "schemaVersion": 39,
-  "tags": ["logs", "loki", "tracing"],
+  "tags": ["logs", "loki", "observability"],
   "templating": {
     "list": [
       {
@@ -193,13 +159,6 @@
         "type": "textbox",
         "label": "Log Filter (regex)",
         "description": "Filter logs by keyword (regex supported)",
-        "current": { "text": "", "value": "" }
-      },
-      {
-        "name": "traceId",
-        "type": "textbox",
-        "label": "Trace ID",
-        "description": "Enter a traceId to filter logs by distributed trace",
         "current": { "text": "", "value": "" }
       }
     ]

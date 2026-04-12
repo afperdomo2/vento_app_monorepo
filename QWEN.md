@@ -363,10 +363,11 @@ PENDING → CONFIRMED (pago exitoso)
 Microservicios → OTel Collector → Jaeger (traces)
               ↘ Prometheus (métricas) ← scrapea /actuator/prometheus
               ↘ Loki (logs) ← recibe via Promtail
-              
+
 Grafana ← datasource: Prometheus (métricas)
-        ← datasource: Jaeger (traces)
         ← datasource: Loki (logs)
+
+Jaeger UI (http://localhost:16686) ← traces distribuidos
 ```
 
 ### Herramientas
@@ -374,18 +375,31 @@ Grafana ← datasource: Prometheus (métricas)
 | Herramienta | Propósito | Acceso |
 |---|---|---|
 | **OTel Collector** | Recibe traces OTLP de todos los servicios, los envía a Jaeger | Interno solo |
-| **Jaeger** | Almacena y visualiza traces distribuidos | Puerto 16686 (UI directa) + Grafana datasource |
+| **Jaeger** | Almacena y visualiza traces distribuidos | Puerto 16686 (UI directa) |
 | **Prometheus** | Scrapea métricas de Spring Boot Actuator (`/actuator/prometheus`) | Interno solo (vía Grafana) |
 | **Loki** | Agrega logs de todos los contenedores via Promtail | Interno solo (vía Grafana) |
-| **Grafana** | Dashboards unificados para métricas, logs y traces | Puerto 3000 (dev) / 3001 (prod) |
+| **Grafana** | Dashboards unificados para métricas y logs | Puerto 3000 (dev) / 3001 (prod) |
 
 ### Grafana — Datasources provisionados
 
 - **Prometheus** (`grafana/provisioning/datasources/prometheus.yml`) → datasource default
 - **Loki** (`grafana/provisioning-{dev,prod}/datasources/loki.yml`) → logs
-- **Jaeger** (`grafana/provisioning-prod/datasources/jaeger.yml`) → traces
-  - Integrado con Loki: click en span → ve logs relacionados
-  - Integrado con Prometheus: click en span → ve métricas del servicio
+
+### Grafana — Dashboards disponibles
+
+| Dashboard | Archivo | Propósito |
+|---|---|---|
+| **Vento — Log Explorer** | `logs-dashboard.json` | Volumen de logs, errores, logs por servicio/nivel |
+| **Infrastructure** | `infrastructure-dashboard.json` | Health de servicios, CPU, memoria, uptime |
+| **Performance** | `performance-dashboard.json` | Latencia de requests, throughput, percentiles |
+| **Sales** | `sales-dashboard.json` | Métricas de negocio: órdenes, pagos, revenue |
+
+### Jaeger UI
+
+Acceso directo en `http://localhost:16686` para:
+- Búsqueda de traces por servicio, operación, tags, duración
+- Timeline visual completo con spans y critical path
+- Grafo de dependencias entre servicios
 
 ### Métricas expuestas
 
