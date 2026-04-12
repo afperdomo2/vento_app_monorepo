@@ -142,7 +142,7 @@ Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `
 - **api-gateway** valida JWT (OAuth2 resource server vs Keycloak). Extrae `sub` → `X-User-Id` y `realm_access.roles` → `X-User-Roles` y los propaga como headers.
 - **Microservicios** confían en esos headers directamente — **no validan JWT**. Una llamada directa que bypasee el gateway es efectivamente no autenticada.
 - **Frontend** usa Keycloak **Direct Access Grant** (Resource Owner Password Credentials), no Authorization Code Flow. El cliente `vento-frontend` en Keycloak debe tener "Direct Access Grants Enabled". Tokens en `localStorage`.
-- Token se considera expirado 5 minutos antes del `exp` real (buffer de 300s).
+- Token se considera expirado 1 minuto antes del `exp` real (buffer de 60s).
 
 ## Frontend — quirks importantes
 

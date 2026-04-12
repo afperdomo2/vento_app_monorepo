@@ -338,6 +338,11 @@ PENDING → CONFIRMED (pago exitoso)
 | Token válido, sin rol | `403 Forbidden` |
 | Token válido, con rol | `200 OK` |
 
+**Frontend — Token expiration:**
+- Los tokens de Keycloak tienen una duración de 5 minutos (`expires_in: 300`)
+- El frontend considera el token expirado 1 minuto antes del `exp` real (buffer de 60s)
+- Los refresh tokens se almacenan pero actualmente no se usan (no hay implementación de refresh automático)
+
 **Headers propagados a microservicios:**
 - `X-User-Id`: ID del usuario desde claim `sub` del JWT
 - `X-User-Roles`: Roles separados por coma desde `realm_access.roles`

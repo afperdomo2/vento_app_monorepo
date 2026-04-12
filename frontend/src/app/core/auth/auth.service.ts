@@ -89,8 +89,8 @@ export class AuthService {
     try {
       const tokenInfo = this.decodeToken(token);
       const now = Date.now() / 1000;
-      // Consider token expired 5 minutes before actual expiration
-      return tokenInfo.exp > now + 300;
+      // Consider token expired 1 minute before actual expiration
+      return tokenInfo.exp > now + 60;
     } catch {
       return false;
     }
