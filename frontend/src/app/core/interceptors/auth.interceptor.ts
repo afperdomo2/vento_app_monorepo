@@ -1,4 +1,10 @@
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpInterceptorFn,
+  HttpRequest,
+  HttpHandlerFn,
+  HttpEvent,
+  HttpErrorResponse,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, throwError } from 'rxjs';
@@ -7,91 +13,97 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 
 /**
- * Paths that should not be prefixed with API_URL
+ * Paths that should not receive a Bearer token (static assets, public API routes).
  */
-const PUBLIC_PATHS = [
-  '/assets/',
-  '/public/',
-];
+const PUBLIC_PATHS = ['/assets/', '/public/'];
 
 /**
- * Paths that should be excluded from token attachment
- * (e.g., Keycloak endpoints)
+ * Paths that belong to Keycloak itself and must never carry a Bearer token
+ * (avoids circular calls during refresh).
  */
-const EXCLUDED_PATHS = [
-  '/realms/',
-  '/protocol/openid-connect/',
-];
+const EXCLUDED_PATHS = ['/realms/', '/protocol/openid-connect/'];
 
 /**
- * Authentication Interceptor
- * 
- * - Attaches JWT token to outgoing HTTP requests
- * - Handles 401 errors by clearing auth state
- * - Skips authentication for public endpoints
+ * Attach a Bearer token to every outgoing request, refreshing proactively when
+ * the stored access token is expired before the request is even sent.
+ *
+ * Flow:
+ *  1. Skip excluded / public paths.
+ *  2. If the token is expired (or missing) but a refresh token exists →
+ *     refresh first, then send the request with the new token (proactive).
+ *  3. If the token is still valid → send immediately with the current token.
+ *  4. On a 401 response → attempt a reactive refresh and retry once.
+ *  5. If any refresh fails → logout + redirect to /login.
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
 
-  // Check if request should be excluded from token attachment
-  const isExcluded = EXCLUDED_PATHS.some(path => req.url.includes(path));
-  
-  // Check if request is for a public path
-  const isPublic = PUBLIC_PATHS.some(path => req.url.startsWith(path));
+  const isExcluded = EXCLUDED_PATHS.some((path) => req.url.includes(path));
+  const isPublic = PUBLIC_PATHS.some((path) => req.url.startsWith(path));
 
   if (isExcluded || isPublic) {
     return next(req);
   }
 
-  // Get token from service
-  const token = authService.getToken();
+  // --- Proactive refresh ---
+  // If the access token is already expired (within the 60 s buffer) but we
+  // still have a refresh token, refresh before sending the request. This
+  // prevents the unnecessary 401 round trip.
+  const hasRefreshToken = !!localStorage.getItem('refresh_token');
+  if (authService.isTokenExpired() && hasRefreshToken) {
+    return authService.refreshSession().pipe(
+      switchMap(() => next(addBearer(req, authService.getToken()))),
+      catchError((refreshError) => {
+        handleRefreshFailure(authService, inject(Router));
+        return throwError(() => refreshError);
+      }),
+    );
+  }
 
-  // If no token, proceed with original request
+  // --- Happy path ---
+  const token = authService.getToken();
   if (!token) {
     return next(req);
   }
 
-  // Clone request and add authorization header
-  const authReq = req.clone({
-    setHeaders: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  // Send cloned request with authorization header
-  return next(authReq).pipe(
+  return next(addBearer(req, token)).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Handle 401 Unauthorized errors — try to refresh the token
+      // --- Reactive refresh on 401 ---
+      // Handles the edge case where the token expired in-flight (clock skew,
+      // server-side revocation, etc.) after the proactive check passed.
       if (error.status === 401) {
-        const router = inject(Router);
-
         return authService.refreshSession().pipe(
-          switchMap(() => {
-            // Token refreshed successfully — retry the original request
-            const newToken = authService.getToken();
-            if (!newToken) {
-              return throwError(() => error);
-            }
-            const retryReq = req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${newToken}`,
-              },
-            });
-            return next(retryReq);
-          }),
+          switchMap(() => next(addBearer(req, authService.getToken()))),
           catchError((refreshError) => {
-            // Refresh failed — logout and redirect to login
-            authService.logout();
-            router.navigate(['/login']);
+            handleRefreshFailure(authService, inject(Router));
             return throwError(() => error);
-          })
+          }),
         );
       }
 
       return throwError(() => error);
-    })
+    }),
   );
 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function addBearer(
+  req: HttpRequest<unknown>,
+  token: string | null,
+): HttpRequest<unknown> {
+  if (!token) {
+    return req;
+  }
+  return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+}
+
+function handleRefreshFailure(authService: AuthService, router: Router): void {
+  authService.logout();
+  router.navigate(['/login']);
+}

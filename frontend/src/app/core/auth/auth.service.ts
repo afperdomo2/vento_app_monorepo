@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap, map, switchMap, shareReplay } from 'rxjs/operators';
+import { catchError, tap, map, finalize, shareReplay } from 'rxjs/operators';
 
 import { getEnvValue } from '../../../environments/env.config';
 
@@ -116,39 +116,80 @@ export class AuthService {
         tap(() => {
           this.authChanged$.next(true);
         }),
-        shareReplay(1),
         catchError((error) => {
-          // Refresh failed — clear all tokens and force re-login
+          // Refresh failed — clear all tokens and force re-login.
+          // Must be BEFORE shareReplay so the error is handled before the
+          // observable is multicasted to all subscribers.
           this.logout();
           return throwError(() => error);
         }),
-        tap({
-          finalize: () => {
-            this.refreshInProgress$ = null;
-          },
-        })
+        finalize(() => {
+          // finalize BEFORE shareReplay ensures the in-flight tracker is
+          // cleared on every terminal event (complete, error, unsubscribe),
+          // even when multiple subscribers share the same observable.
+          this.refreshInProgress$ = null;
+        }),
+        shareReplay(1),
       );
 
     return this.refreshInProgress$;
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated.
+   *
+   * Returns true if the access token is still valid (> 60s buffer),
+   * OR if a refresh token exists (the interceptor will refresh it).
+   *
+   * This prevents the auth guard from redirecting to /login when the
+   * access token expired but the user can still be silently re-authenticated.
    */
   isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) {
-      return false;
+      // No token at all — but check if we have a refresh token
+      const hasRefreshToken = !!localStorage.getItem(this.refreshTokenKey);
+      return hasRefreshToken;
     }
 
-    // Check if token is expired
     try {
       const tokenInfo = this.decodeToken(token);
       const now = Date.now() / 1000;
-      // Consider token expired 1 minute before actual expiration
-      return tokenInfo.exp > now + 60;
+      const isValid = tokenInfo.exp > now + 60;
+
+      if (!isValid) {
+        // Token is expired — but if refresh token exists, user can be
+        // silently re-authenticated. Let the guard proceed; the interceptor
+        // will handle the actual refresh on 401.
+        const hasRefreshToken = !!localStorage.getItem(this.refreshTokenKey);
+        return hasRefreshToken;
+      }
+
+      return true;
     } catch {
-      return false;
+      // Malformed token — fall back to refresh token check
+      const hasRefreshToken = !!localStorage.getItem(this.refreshTokenKey);
+      return hasRefreshToken;
+    }
+  }
+
+  /**
+   * Check if the stored access token is expired (or missing).
+   * Uses the same 60-second buffer as isAuthenticated().
+   * Used by the interceptor to decide whether to proactively refresh
+   * before sending a request.
+   */
+  isTokenExpired(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return true;
+    }
+    try {
+      const tokenInfo = this.decodeToken(token);
+      const now = Date.now() / 1000;
+      return tokenInfo.exp <= now + 60;
+    } catch {
+      return true;
     }
   }
 
