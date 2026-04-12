@@ -298,21 +298,27 @@ microservices/<servicio>/src/main/java/com/vento/<modulo>/
 
 ### Puertos
 
-| Servicio | Puerto | Propósito |
-|----------|--------|-----------|
-| API Gateway | 8080 | Enrutamiento de peticiones |
-| Event Service | 8082 | Gestión de eventos |
-| Order Service | 8083 | Gestión de pedidos/reservas |
-| Payment Service | 8084 | Procesamiento de pagos |
-| Frontend | 4200 | SPA Angular |
-| PostgreSQL Events | 5432 | DB de event-service |
-| PostgreSQL Orders | 5433 | DB de order-service |
-| PostgreSQL Payments | 5434 | DB de payment-service |
-| Redis | 6379 | Caché + reservas temporales |
-| Keycloak | 8180 | Proveedor OAuth2/OIDC |
-| Kafka | 9092/9093 | Message broker |
-| Elasticsearch | 9200 | Búsqueda full-text |
-| Kibana | 5601 | UI de Elasticsearch |
+| Servicio | Puerto (dev) | Puerto (prod) | Propósito |
+|----------|-------------|---------------|-----------|
+| API Gateway | 8080 | 8080 | Enrutamiento de peticiones (única entrada al backend) |
+| Event Service | 8082 | — | Gestión de eventos (solo vía API Gateway en prod) |
+| Order Service | 8083 | — | Gestión de pedidos/reservas (solo vía API Gateway en prod) |
+| Payment Service | 8084 | — | Procesamiento de pagos (solo vía API Gateway en prod) |
+| Frontend | 4200 | 3000 | SPA Angular |
+| PostgreSQL Events | 5432 | — | DB de event-service |
+| PostgreSQL Orders | 5433 | — | DB de order-service |
+| PostgreSQL Payments | 5434 | — | DB de payment-service |
+| Redis | 6379 | — | Caché + reservas temporales |
+| Keycloak | 8180 | 8180 | Proveedor OAuth2/OIDC |
+| Kafka | 9092/9093 | — | Message broker (solo dev) |
+| Kafka UI | 8089 | — | Debug de Kafka (solo dev) |
+| Elasticsearch | 9200 | — | Búsqueda full-text |
+| Kibana | 5601 | 5601 | UI de Elasticsearch |
+| Prometheus | 9090 | — | Métricas (acceso interno solo, vía Grafana) |
+| Jaeger | 16686 | 16686 | UI de traces distribuidos |
+| OTel Collector | 4317, 4318 | — | Recepción de traces (acceso interno) |
+| Loki | 3100 | — | Agregación de logs (acceso interno, vía Grafana) |
+| Grafana | 3000 | 3001 | Dashboards de observabilidad (métricas, logs, traces) |
 
 ### Claves de Redis
 
@@ -346,6 +352,54 @@ PENDING → CONFIRMED (pago exitoso)
 **Headers propagados a microservicios:**
 - `X-User-Id`: ID del usuario desde claim `sub` del JWT
 - `X-User-Roles`: Roles separados por coma desde `realm_access.roles`
+
+---
+
+## Observabilidad
+
+### Pipeline completo
+
+```
+Microservicios → OTel Collector → Jaeger (traces)
+              ↘ Prometheus (métricas) ← scrapea /actuator/prometheus
+              ↘ Loki (logs) ← recibe via Promtail
+              
+Grafana ← datasource: Prometheus (métricas)
+        ← datasource: Jaeger (traces)
+        ← datasource: Loki (logs)
+```
+
+### Herramientas
+
+| Herramienta | Propósito | Acceso |
+|---|---|---|
+| **OTel Collector** | Recibe traces OTLP de todos los servicios, los envía a Jaeger | Interno solo |
+| **Jaeger** | Almacena y visualiza traces distribuidos | Puerto 16686 (UI directa) + Grafana datasource |
+| **Prometheus** | Scrapea métricas de Spring Boot Actuator (`/actuator/prometheus`) | Interno solo (vía Grafana) |
+| **Loki** | Agrega logs de todos los contenedores via Promtail | Interno solo (vía Grafana) |
+| **Grafana** | Dashboards unificados para métricas, logs y traces | Puerto 3000 (dev) / 3001 (prod) |
+
+### Grafana — Datasources provisionados
+
+- **Prometheus** (`grafana/provisioning/datasources/prometheus.yml`) → datasource default
+- **Loki** (`grafana/provisioning-{dev,prod}/datasources/loki.yml`) → logs
+- **Jaeger** (`grafana/provisioning-prod/datasources/jaeger.yml`) → traces
+  - Integrado con Loki: click en span → ve logs relacionados
+  - Integrado con Prometheus: click en span → ve métricas del servicio
+
+### Métricas expuestas
+
+Cada microservicio expone en `/actuator/prometheus`:
+- `http_server_requests_seconds` — latencia de requests (histograma)
+- `jvm_memory_used_bytes` — uso de memoria JVM
+- `process_cpu_usage` — consumo de CPU
+- `spring_data_repository_invocations_seconds` — rendimiento de repositorios
+
+### Logs
+
+- Promtail lee logs de Docker via `/var/run/docker.sock`
+- Config en `scripts/promtail-config.yml`
+- Enviados a Loki en `http://loki:3100`
 
 ---
 

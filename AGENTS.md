@@ -74,28 +74,32 @@ docker compose down
 
 ## Infraestructura — puertos completos
 
-| Servicio | Puerto externo | Notas |
-|---|---|---|
-| api-gateway | 8080 | — |
-| event-service | 8082 | Swagger: `/swagger-ui.html` |
-| order-service | 8083 | Swagger: `/swagger-ui.html` |
-| payment-service | 8084 | Swagger: `/swagger-ui.html` |
-| frontend | 4200 | — |
-| postgres-events | 5432 | — |
-| postgres-orders | 5433 | → interno 5432 |
-| postgres-payments | 5434 | → interno 5432 |
-| redis | 6379 | — |
-| keycloak | 8180 | → interno 8080 |
-| kafka (containers) | 9092 | `INTERNAL://kafka:9092` |
-| kafka (host) | **9093** | `EXTERNAL://localhost:9093` — usar este desde Gradle local |
-| kafka-ui (Provectus) | 8089 | — |
-| elasticsearch | 9200 | xpack.security deshabilitado |
-| kibana | 5601 | — |
-| prometheus | 9090 | — |
-| debug JVM (event) | 5005 | JDWP, solo Docker dev |
-| debug JVM (gateway) | 5007 | JDWP, solo Docker dev |
-| debug JVM (order) | 5006 | JDWP, solo Docker dev |
-| debug JVM (payment) | 5009 | JDWP, solo Docker dev |
+| Servicio | Puerto externo (dev) | Puerto externo (prod) | Notas |
+|---|---|---|---|
+| api-gateway | 8080 | 8080 | Única entrada al backend |
+| event-service | 8082 | — | Acceso solo vía API Gateway |
+| order-service | 8083 | — | Acceso solo vía API Gateway |
+| payment-service | 8084 | — | Acceso solo vía API Gateway |
+| frontend | 4200 | 3000 | Angular/Nginx |
+| postgres-events | 5432 | — | — |
+| postgres-orders | 5433 | — | → interno 5432 |
+| postgres-payments | 5434 | — | → interno 5432 |
+| redis | 6379 | — | — |
+| keycloak | 8180 | 8180 | → interno 8080 |
+| kafka (containers) | 9092 | — | `INTERNAL://kafka:9092` |
+| kafka (host) | **9093** | — | `EXTERNAL://localhost:9093` — solo dev |
+| kafka-ui (Provectus) | 8089 | — | Solo dev |
+| elasticsearch | 9200 | — | xpack.security deshabilitado |
+| kibana | 5601 | 5601 | — |
+| prometheus | 9090 | — | Acceso interno solo (Grafana) |
+| jaeger | 16686 | 16686 | UI de traces (remover en prod si solo Grafana) |
+| otel-collector | 4317, 4318 | — | Acceso interno solo |
+| loki | 3100 | — | Acceso interno solo (Grafana) |
+| grafana | 3000 | 3001 | Dashboards de observabilidad |
+| debug JVM (event) | 5005 | — | JDWP, solo Docker dev |
+| debug JVM (gateway) | 5007 | — | JDWP, solo Docker dev |
+| debug JVM (order) | 5006 | — | JDWP, solo Docker dev |
+| debug JVM (payment) | 5009 | — | JDWP, solo Docker dev |
 
 ## Kafka — gotchas críticos
 

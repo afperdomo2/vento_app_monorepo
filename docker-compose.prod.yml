@@ -216,9 +216,11 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Jaeger — visualización de traces distribuidos (sin puertos expuestos)
+  # Jaeger — visualización de traces distribuidos
   jaeger:
     image: jaegertracing/all-in-one:1.64.0
+    ports:
+      - "16686:16686"  # UI web (remover en producción si solo se usa Grafana)
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     networks:
@@ -263,8 +265,6 @@ services:
   # Kafka para event-driven architecture
   kafka:
     image: apache/kafka:4.1.1
-    ports:
-      - "9092:9092"     # Internal listener (container-to-container only)
     environment:
       - KAFKA_PROCESS_ROLES=broker,controller
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
@@ -311,8 +311,6 @@ services:
     build:
       context: .
       dockerfile: microservices/event-service/Dockerfile.prod
-    ports:
-      - "8082:8082"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_HOST: postgres-events
@@ -353,8 +351,6 @@ services:
     build:
       context: .
       dockerfile: microservices/order-service/Dockerfile.prod
-    ports:
-      - "8083:8083"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_HOST: postgres-orders
@@ -395,8 +391,6 @@ services:
     build:
       context: .
       dockerfile: microservices/payment-service/Dockerfile.prod
-    ports:
-      - "8084:8084"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_HOST: postgres-payments

@@ -25,12 +25,12 @@ logging:
   level:
     org.hibernate.SQL: WARN
 
-# Production: restrict actuator endpoints to health+info only
+# Production: restrict actuator endpoints — prometheus is needed for metrics scraping
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
       base-path: /actuator
   endpoint:
     health:
