@@ -26,10 +26,6 @@
                 <customFields>{"service_name":"${appName}"}</customFields>
                 <includeContext>true</includeContext>
                 <includeMdc>true</includeMdc>
-                <mdcKeyNames>
-                    <traceId>trace.id</traceId>
-                    <spanId>span.id</spanId>
-                </mdcKeyNames>
                 <fieldNames>
                     <timestamp>@timestamp</timestamp>
                     <level>level</level>
@@ -54,10 +50,6 @@
                 <customFields>{"service_name":"${appName}"}</customFields>
                 <includeContext>true</includeContext>
                 <includeMdc>true</includeMdc>
-                <mdcKeyNames>
-                    <traceId>trace.id</traceId>
-                    <spanId>span.id</spanId>
-                </mdcKeyNames>
                 <fieldNames>
                     <timestamp>@timestamp</timestamp>
                     <level>level</level>

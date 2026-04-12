@@ -5,6 +5,8 @@ spring:
     import: optional:file:./config/order-service.yml
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa:
+    open-in-view: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}
