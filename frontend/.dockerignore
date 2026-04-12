@@ -1,0 +1,27 @@
+# =============================================================================
+# .dockerignore — frontend/
+# Aplica cuando el build context es ./frontend
+# =============================================================================
+
+# --- Dependencias instaladas (pnpm install las regenera) ---
+node_modules/
+
+# --- Outputs de build anteriores ---
+dist/
+.angular/
+
+# --- Archivos de entorno ---
+.env
+.env.*
+!.env.example
+
+# --- Tests y cobertura ---
+coverage/
+
+# --- IDEs y editores ---
+.idea/
+.vscode/
+*.DS_Store
+
+# --- Archivos no necesarios para el build ---
+*.md

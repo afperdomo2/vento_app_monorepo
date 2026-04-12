@@ -1,0 +1,47 @@
+# =============================================================================
+# .dockerignore — Monorepo raíz
+# Aplica a todos los microservicios Java (context: .)
+# NO excluir: common/, gradlew, gradle/, build.gradle, settings.gradle,
+#             gradle.properties — necesarios para el build de Gradle
+# =============================================================================
+
+# --- Control de versiones ---
+.git
+.gitignore
+.gitattributes
+
+# --- Frontend — innecesario para builds Java ---
+frontend/
+
+# --- Documentación y archivos de proyecto ---
+*.md
+requerimientos/
+backups/
+KEYCLOAK_SETUP.md
+OBSERVABILIDAD.md
+
+# --- Archivos Docker (no necesarios dentro de la imagen) ---
+docker-compose*.yml
+**/Dockerfile*
+
+# --- Outputs de Gradle (se regeneran en el build) ---
+**/build/
+**/.gradle/
+
+# --- Configuración de observabilidad / infra ---
+grafana/
+prometheus.yml
+otel-collector-config.yaml
+scripts/
+
+# --- IDEs y editores ---
+.idea/
+*.iml
+.vscode/
+*.DS_Store
+**/.DS_Store
+
+# --- Archivos de entorno (no deben ir en la imagen) ---
+.env
+.env.*
+!.env.example

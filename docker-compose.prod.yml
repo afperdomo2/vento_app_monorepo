@@ -80,22 +80,22 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.security.enrollment.enabled=false
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - elasticsearch-data-prod:/usr/share/elasticsearch/data
     networks:
       - vento-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 1g
 
   # Kibana para visualización de datos de Elasticsearch
   kibana:
@@ -153,10 +153,10 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 512m
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512m
 
   # Promtail para recolección y envío de logs a Loki
   promtail:
@@ -193,10 +193,10 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 1g
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 1g
 
   # OpenTelemetry Collector — recibe traces de todos los servicios
   otel-collector:
@@ -324,6 +324,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     depends_on:
       postgres-events:
         condition: service_healthy
@@ -333,6 +334,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - vento-network
     restart: unless-stopped
@@ -371,6 +374,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - vento-network
     restart: unless-stopped
@@ -402,6 +407,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - vento-network
     restart: unless-stopped
@@ -432,6 +439,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - vento-network
     restart: unless-stopped
@@ -445,8 +454,8 @@ services:
   # Frontend — Angular SPA served by Nginx
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile.prod
+      context: ./frontend
+      dockerfile: Dockerfile.prod
       args:
         API_URL: ${API_URL:-http://localhost:8080}
         KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8180}

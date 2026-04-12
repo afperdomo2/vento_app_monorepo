@@ -29,8 +29,9 @@ spring:
           max-idle: 8
           min-idle: 0
           max-wait: -1ms
-    elasticsearch:
-      uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
 
 server:
   port: ${SERVER_PORT:8082}
