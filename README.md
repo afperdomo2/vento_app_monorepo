@@ -1,104 +1,141 @@
-# Vento App - Monorepo Microservicios
+# 🎟️ Vento App — Monorepo de Microservicios
+
+Plataforma de venta de tickets para eventos construida con arquitectura de microservicios. El backend usa Java 25 + Spring Boot 3.5, el frontend Angular 21, y toda la infraestructura está contenedorizada con Docker Compose.
+
+> **Documentación adicional:**
+> - [ARCHITECTURE.md](./ARCHITECTURE.md) — Arquitectura detallada del sistema
+> - [KEYCLOAK_SETUP.md](./KEYCLOAK_SETUP.md) — Configuración de autenticación
+> - [OBSERVABILIDAD.md](./OBSERVABILIDAD.md) — Stack de observabilidad
+> - [POSTMAN_ENDPOINTS.md](./POSTMAN_ENDPOINTS.md) — Catálogo de endpoints para pruebas
+
+---
 
 ## 📁 Estructura del Proyecto
 
 ```
 vento_app_monorepo/
-├── common/                      # Módulo compartido (DTOs, excepciones, utilerías)
+├── common/                          # Módulo compartido (DTOs, excepciones, utilerías)
 │   └── src/main/java/com/vento/common/
-│       ├── dto/                 # DTOs compartidos
+│       ├── dto/                     # DTOs compartidos y eventos Kafka
 │       │   ├── ApiResponse.java
-│       │   ├── event/           # DTOs de eventos
-│       │   ├── order/           # DTOs de pedidos
-│       │   └── payment/         # DTOs de pagos
-│       └── exception/           # Excepciones globales
+│       │   ├── event/               # DTOs de eventos
+│       │   ├── kafka/               # Eventos Kafka (OrderConfirmedEvent, etc.)
+│       │   ├── order/               # DTOs de pedidos
+│       │   └── payment/             # DTOs de pagos
+│       ├── entity/                  # AuditableEntity (base JPA)
+│       ├── exception/               # Excepciones de dominio y GlobalExceptionHandler
+│       └── util/                    # KafkaTopics, UserContext
 ├── microservices/
-│   ├── api-gateway/             # Spring Cloud Gateway (:8080)
-│   ├── event-service/           # Microservicio de eventos (:8082)
-│   ├── order-service/           # Microservicio de pedidos (:8083)
-│   └── payment-service/         # Microservicio de pagos (:8084)
-└── frontend/                    # Aplicación Angular 21 (:4200)
+│   ├── api-gateway/                 # Spring Cloud Gateway — puerto 8080
+│   ├── event-service/               # Gestión de eventos — puerto 8082
+│   ├── order-service/               # Gestión de pedidos — puerto 8083
+│   └── payment-service/             # Simulación de pagos — puerto 8084
+├── frontend/                        # Angular 21 SPA — puerto 4200
+├── grafana/                         # Dashboards y datasources de Grafana
+├── scripts/                         # Scripts de inicialización (Kafka, Elasticsearch)
+├── docker-compose.yml               # Servicios base compartidos
+├── docker-compose.local.yml         # Solo infraestructura (microservicios en Gradle)
+├── docker-compose.dev.yml           # Stack completo en Docker con debug
+├── docker-compose.prod.yml          # Stack completo optimizado para producción
+└── prometheus.yml                   # Configuración de scraping de Prometheus
 ```
 
-## ⚙️ Requisitos
+---
+
+## ⚙️ Versiones del Stack
+
+| Componente | Versión |
+|---|---|
+| Java | 25 (`eclipse-temurin:25`) |
+| Gradle | 9.4.0 (full distribution) |
+| Spring Boot | 3.5.0 |
+| Spring Cloud | 2025.0.0 |
+| Angular | ^21.2.0 |
+| TypeScript | ~5.9.2 |
+| Node.js | 22+ |
+| pnpm | 10.30.3 |
+| Tailwind CSS | v4 (`@tailwindcss/postcss`) |
+| Kafka | 4.1.1 |
+| Elasticsearch | 8.18.0 |
+| Keycloak | 26.0 |
+
+---
+
+## ⚡ Requisitos Previos
 
 ### Backend
 
-- **Java 25** (usar SDKMAN para gestionar versiones)
-- **Gradle 9.4** (incluido via wrapper)
-- **Docker & Docker Compose** (para despliegue)
-
-### Frontend
-
-- **Node.js 22+** (recomendado usar nvm o fnm)
-- **pnpm** (gestor de paquetes)
+- **Java 25** (usar [SDKMAN](https://sdkman.io/) para gestionar versiones)
+- **Gradle 9.4** (incluido via wrapper — no necesitas instalarlo)
+- **Docker & Docker Compose** (para infraestructura)
 
 ```bash
-# Instalar pnpm globalmente
-npm install -g pnpm
-```
-
-## 🌍 Entornos
-
-El proyecto soporta tres entornos de ejecución:
-
-| Entorno   | Base de Datos          | Microservicios      | Uso               |
-|-----------|------------------------|---------------------|-------------------|
-| **Local** | PostgreSQL en Docker   | Gradle (hot reload) | Desarrollo diario |
-| **Dev**   | PostgreSQL en Docker   | Docker              | Testing integrado |
-| **Prod**  | PostgreSQL persistente | Docker              | Producción        |
-
-### 🏠 Entorno Local (Desarrollo)
-
-```bash
-# Configurar Java 25
+# Instalar Java 25 con SDKMAN
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install java 25-tem
 sdk use java 25-tem
 ```
 
+### Frontend
+
+- **Node.js 22+** (recomendado [nvm](https://github.com/nvm-sh/nvm) o [fnm](https://github.com/Schniz/fnm))
+- **pnpm 10.30.3** (gestor de paquetes)
+
 ```bash
-# Compilar
-./gradlew build -x test
+# Instalar pnpm
+npm install -g pnpm@10.30.3
 ```
 
-Los microservicios se ejecutan localmente con Gradle para aprovechar el hot reload. Solo la infraestructura (PostgreSQL,
-Redis, Keycloak, Elasticsearch) corre en Docker.
+---
+
+## 🌍 Entornos de Ejecución
+
+El proyecto soporta tres entornos:
+
+| Entorno | Microservicios | Infraestructura | Uso |
+|---|---|---|---|
+| **Local** | Gradle (hot reload) | Docker | Desarrollo diario |
+| **Dev** | Docker (con debug) | Docker | Testing de integración |
+| **Prod** | Docker (optimizado) | Docker | Producción |
+
+---
+
+### 🏠 Entorno Local (Recomendado para desarrollo)
+
+Solo la infraestructura corre en Docker. Los microservicios corren con Gradle para aprovechar hot reload y debugging directo desde el IDE.
 
 ```bash
-# Iniciar solo infraestructura
+# 1. Compilar (primera vez o tras cambios en dependencias)
+./gradlew build -x test
+
+# 2. Levantar infraestructura (PostgreSQL x3, Redis, Kafka, Keycloak, Elasticsearch, etc.)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
-# Ejecutar microservicios en terminales separadas
-./gradlew :microservices:payment-service:bootRun
+# 3. Ejecutar microservicios (en terminales separadas)
 ./gradlew :microservices:event-service:bootRun
 ./gradlew :microservices:order-service:bootRun
+./gradlew :microservices:payment-service:bootRun
 ./gradlew :microservices:api-gateway:bootRun
 
-# Compilar continuamente para hot reload (opcional)
+# 4. (Opcional) Hot reload automático al cambiar código
 ./gradlew classes --continuous
 ```
 
 **Ventajas:**
-
 - ✅ Hot reload automático al cambiar código
 - ✅ Debugging directo desde el IDE
 - ✅ Iteración rápida en desarrollo
 
+---
+
 ### 🎨 Frontend (Angular 21)
-
-El frontend está construido con **Angular 21** usando **pnpm** como gestor de paquetes.
-
-**Requisitos:**
-
-- Node.js 22+
-- pnpm (`npm install -g pnpm`)
-
-**Inicio rápido:**
 
 ```bash
 # Navegar a la carpeta frontend
 cd frontend
+
+# Configurar variables de entorno (solo la primera vez)
+pnpm run setup:env
 
 # Instalar dependencias (primera vez)
 pnpm install
@@ -109,269 +146,250 @@ pnpm start
 
 La aplicación estará disponible en: **http://localhost:4200**
 
-**Ventajas:**
+**Comandos disponibles:**
 
-- ✅ **Signals** incorporados (reactividad moderna sin librerías adicionales)
-- ✅ **Standalone Components** (patrón moderno de Angular)
-- ✅ Hot reload automático
-- ✅ TypeScript para type safety
+| Comando | Descripción |
+|---|---|
+| `pnpm start` | Servidor de desarrollo en localhost:4200 |
+| `pnpm build` | Build de **producción** (por defecto) |
+| `pnpm build -- --configuration development` | Build de desarrollo |
+| `pnpm test` | Ejecutar tests unitarios |
+| `pnpm lint` | Analizar código con ESLint |
+| `pnpm lint:fix` | Corregir errores de lint automáticamente |
+| `pnpm watch` | Build en modo watch (development) |
+
+> ⚠️ `pnpm build` compila en modo **producción** por defecto (`defaultConfiguration: "production"` en `angular.json`).
 
 **Documentación completa:** Ver [frontend/README.md](./frontend/README.md)
 
-### 🔧 Entorno Dev (Testing)
+---
 
-Todos los servicios corren en contenedores Docker con configuración de desarrollo.
+### 🔧 Entorno Dev (Testing de integración)
+
+Todos los servicios, incluidos los microservicios, corren en contenedores Docker. Los puertos JDWP quedan expuestos para debug remoto.
 
 ```bash
-# 1. Opciones de despliegue
-
-# 1.1. Construir y levantar todos los contenedores (usa la última imagen contruida)
+# Levantar todo el stack (usa la última imagen construida)
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-# 1.2. Reconstruir todas las imagenes y deplegar todos los contenedores del proyecto
-docker compose -f docker-compose.yml -f docker-compose.dev.yml --build up -d 
+# Reconstruir todas las imágenes y desplegar
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
-# 1.3. Recontruir una imagen individual (por si tiene cambios en el código) y desplegarla
-docker compose -f docker-compose.yml -f docker-compose.dev.yml --build up -d event-service
+# Reconstruir solo un servicio
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d event-service
 
-# 1.4. Separar el proceso en 2 (menos consumo recursos, más tiempo)
-
-# 1.4.1. Crear la imagen
-docker compose -f docker-compose.yml -f docker-compose.dev.yml build
-
-# 1.4.2. Desplegar su contenedor
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# 2. Apaga y limpia los contenedores creados
+# Apagar y limpiar contenedores
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
-# 3. Ver logs
-docker compose logs -f
+# Ver logs en tiempo real
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
 
-# 4. Crear topics de kafka (solo la primera vez o si se reinicia el contenedor)
+# Si Kafka se reinicia, recrear los topics manualmente
 docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
 ```
 
-**Ventajas:**
+**Puertos de debug remoto (JDWP):**
 
+| Servicio | Puerto debug |
+|---|---|
+| event-service | 5005 |
+| order-service | 5006 |
+| api-gateway | 5007 |
+| payment-service | 5009 |
+
+**Ventajas:**
 - ✅ Entorno consistente y reproducible
 - ✅ Testing de integración real
-- ✅ Debug remoto habilitado (puerto 5005)
+- ✅ Debug remoto habilitado
+
+---
 
 ### 🚀 Entorno Prod (Producción)
-
-Todos los servicios corren en contenedores Docker con configuración optimizada para producción.
 
 ```bash
 # Configurar variables de entorno (una sola vez)
 cp .env.example .env
-# Editar .env con valores seguros
+# Editar .env con contraseñas seguras
 
-# Ejecutar en producción
+# Desplegar en producción
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# O usar export para secretos
-export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
-export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
-export POSTGRES_PAYMENTS_PASSWORD=tu_password_seguro
-export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
-export GRAFANA_ADMIN_PASSWORD=tu_password_seguro
+# O usando variables de entorno exportadas
+export POSTGRES_EVENTS_PASSWORD=password_seguro
+export POSTGRES_ORDERS_PASSWORD=password_seguro
+export POSTGRES_PAYMENTS_PASSWORD=password_seguro
+export KEYCLOAK_ADMIN_PASSWORD=password_seguro
+export GRAFANA_ADMIN_PASSWORD=password_seguro
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-**Características:**
-
-- ✅ Imágenes optimizadas (multi-stage build)
-- ✅ Volúmenes persistentes para datos
-- ✅ Health checks configurados
-- ✅ Políticas de restart automático
-- ✅ Usuario no-root por seguridad
+**Características de producción:**
+- ✅ Imágenes optimizadas (multi-stage build con `eclipse-temurin:25`)
+- ✅ Volúmenes persistentes para todos los datos
+- ✅ Health checks configurados en todos los servicios
+- ✅ Políticas de restart automático (`unless-stopped`)
+- ✅ Usuario no-root por seguridad en contenedores Java
 - ✅ Frontend Angular servido por Nginx
-- ✅ Kibana para visualización de Elasticsearch
-- ✅ Grafana + Prometheus + Loki para observabilidad
+- ✅ Puertos internos no expuestos al host
+- ✅ Retención de 30 días en Prometheus
+- ✅ Grafana + Loki + Jaeger para observabilidad completa
 
-## 🐳 Docker
+---
 
-### Comandos por Entorno
+## 🐳 Docker — Referencia de Comandos
 
-#### LOCAL
+### Por Entorno
 
+#### LOCAL (solo infraestructura)
 ```bash
-# Solo infraestructura (microservicios con Gradle)
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.local.yml down
+docker compose -f docker-compose.yml -f docker-compose.local.yml ps
 ```
 
-#### DEV
-
+#### DEV (stack completo)
 ```bash
-# Todos los servicios en Docker
 docker compose -f docker-compose.yml -f docker-compose.dev.yml build
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
-#### PROD
 
+#### PROD
 ```bash
-# Todos los servicios en Docker (producción)
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 ```
 
-### Servicios Individuales
+### Comandos útiles
 
 ```bash
-# Infraestructura común
-docker compose up -d postgres-events
-docker compose up -d postgres-orders
-docker compose up -d redis
-docker compose up -d keycloak
-
-# Microservicios (solo en dev/prod)
-docker compose up -d event-service
-docker compose up -d order-service
-docker compose up -d api-gateway
-```
-
-### Ver Logs
-
-```bash
-# Todos los logs
+# Ver logs de todos los servicios
 docker compose logs -f
 
-# Logs de un servicio específico
+# Ver logs de un servicio específico
 docker compose logs -f event-service
 docker compose logs -f postgres-events
-```
 
-### Detener Servicios
-
-```bash
-# Detener todo
-docker compose down
-
-# Detener servicios individuales
+# Detener un servicio
 docker compose stop event-service
-docker compose stop order-service
+
+# Reiniciar un servicio
+docker compose restart event-service
+
+# Ver estado de los contenedores
+docker compose ps
 ```
 
-## 🌐 Ruteo del API Gateway
+---
 
-| Endpoint         | Servicio            | Descripción               |
-|------------------|---------------------|---------------------------|
-| `/api/events/**` | event-service:8082  | Gestión de eventos        |
-| `/api/orders/**` | order-service:8083  | Gestión de pedidos        |
-| `/api/payments/**` | payment-service:8084 | Procesamiento de pagos  |
-| `/ui/*`          | frontend:4200       | Frontend de la aplicación |
+## 🗺️ Servicios e Infraestructura
 
-> **Nota:** Durante el desarrollo local, el frontend corre directamente en `http://localhost:4200`. El ruteo `/ui/*` es
-> útil cuando el frontend se sirve a través del API Gateway en producción.
+### Puertos Expuestos (entorno local/dev)
 
-## 🔌 Endpoints
+| Servicio | Puerto | Descripción |
+|---|---|---|
+| **api-gateway** | 8080 | Única entrada al backend |
+| **event-service** | 8082 | Solo acceso directo en desarrollo |
+| **order-service** | 8083 | Solo acceso directo en desarrollo |
+| **payment-service** | 8084 | Solo acceso directo en desarrollo |
+| **frontend** | 4200 | Angular dev server |
+| **keycloak** | 8180 | Dashboard de administración |
+| **postgres-events** | 5432 | Base de datos de eventos |
+| **postgres-orders** | 5433 | Base de datos de pedidos |
+| **postgres-payments** | 5434 | Base de datos de pagos |
+| **redis** | 6379 | Caché e inventario de tickets |
+| **kafka (host)** | 9093 | Solo dev (`EXTERNAL://localhost:9093`) |
+| **kafka-ui** | 8089 | UI de Kafka (Provectus) |
+| **elasticsearch** | 9200 | Motor de búsqueda |
+| **kibana** | 5601 | UI de Elasticsearch |
+| **grafana** | 3000 | Dashboards de observabilidad |
+| **prometheus** | 9090 | Métricas (acceso interno) |
+| **jaeger** | 16686 | UI de trazas distribuidas |
+| **otel-collector** | 4317, 4318 | OpenTelemetry (OTLP gRPC / HTTP) |
 
-### A través del API Gateway (Puerto 8080)
+---
 
-| Método | Endpoint                          | Descripción                         |
-|--------|-----------------------------------|-------------------------------------|
-| POST   | `/api/events`                     | Crear evento                        |
-| GET    | `/api/events/{id}`                | Obtener evento por ID (UUID)        |
-| GET    | `/api/events`                     | Listar eventos (paginación)         |
-| GET    | `/api/events/featured`            | Eventos destacados                  |
-| PUT    | `/api/events/{id}`                | Actualizar evento                   |
-| DELETE | `/api/events/{id}`                | Eliminar evento                     |
-| PUT    | `/api/events/{id}/tickets/release`| Liberar tickets en Redis            |
-| POST   | `/api/orders`                     | Crear reserva (TTL 5 min en Redis)  |
-| GET    | `/api/orders/{id}`                | Obtener pedido por ID               |
-| GET    | `/api/orders/my-orders`           | Pedidos del usuario autenticado     |
-| PUT    | `/api/orders/{id}/cancel`         | Cancelar pedido                     |
-| PUT    | `/api/orders/{id}/confirm`        | Confirmar pedido (simula pago)      |
-| POST   | `/api/payments/process`           | Procesar pago simulado (80% éxito)  |
+## 🌐 API Gateway — Rutas
 
-----
+| Endpoint | Destino | Autenticación |
+|---|---|---|
+| `GET /api/events/**` | event-service:8082 | Pública |
+| `POST/PUT/DELETE /api/events/**` | event-service:8082 | `ROLE_ADMIN` |
+| `/api/orders/**` | order-service:8083 | `ROLE_USER` o `ROLE_ADMIN` |
+| `/api/payments/**` | payment-service:8084 | `ROLE_USER` o `ROLE_ADMIN` |
 
-> ⚠️ **NOTA:** Estas rutas son **solo para desarrollo**. En producción deben estar bloqueadas o no expuestas.
+---
+
+## 🔌 Referencia de Endpoints
 
 ### Event Service (Puerto 8082)
 
 **Swagger UI:** http://localhost:8082/swagger-ui.html
 
-| Método | Endpoint                    | Descripción                  |
-|--------|-----------------------------|------------------------------|
-| POST   | `/api/events`               | Crear evento                 |
-| GET    | `/api/events/{id}`          | Obtener evento por ID (UUID) |
-| GET    | `/api/events`               | Listar eventos (paginación)  |
-| GET    | `/api/events/featured`      | Eventos destacados           |
-| PUT    | `/api/events/{id}`          | Actualizar evento            |
-| DELETE | `/api/events/{id}`          | Eliminar evento              |
-| PUT    | `/api/events/{id}/tickets/release` | Liberar tickets en Redis |
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `POST` | `/api/events` | Crear evento |
+| `GET` | `/api/events/{id}` | Obtener evento por ID (UUID) |
+| `GET` | `/api/events` | Listar eventos (paginación) |
+| `GET` | `/api/events/featured` | Eventos destacados |
+| `PUT` | `/api/events/{id}` | Actualizar evento |
+| `DELETE` | `/api/events/{id}` | Eliminar evento |
+| `PUT` | `/api/events/{id}/tickets/release` | Liberar tickets en Redis |
 
 ### Order Service (Puerto 8083)
 
 **Swagger UI:** http://localhost:8083/swagger-ui.html
 
-| Método | Endpoint                   | Descripción                                        |
-|--------|----------------------------|----------------------------------------------------|
-| POST   | `/api/orders`              | Crear reserva (**reserva temporal de 5 min en Redis**) |
-| GET    | `/api/orders/{id}`         | Obtener pedido por ID                              |
-| GET    | `/api/orders/my-orders`    | Pedidos del usuario autenticado                    |
-| PUT    | `/api/orders/{id}/cancel`  | Cancelar pedido (libera tickets en Redis)          |
-| PUT    | `/api/orders/{id}/confirm` | Confirmar pedido → estado CONFIRMED                |
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `POST` | `/api/orders` | Crear reserva (TTL 5 min en Redis) |
+| `GET` | `/api/orders/{id}` | Obtener pedido por ID |
+| `GET` | `/api/orders/my-orders` | Pedidos del usuario autenticado |
+| `PUT` | `/api/orders/{id}/cancel` | Cancelar pedido (libera tickets) |
+| `PUT` | `/api/orders/{id}/confirm` | Confirmar pedido manualmente |
+| `GET` | `/api/orders/analytics` | Estadísticas de pedidos |
 
-> **Reserva temporal:** Al crear una orden queda en estado `PENDING` con una reserva en Redis que expira a los
-> **5 minutos** (configurable con `vento.reservation.ttl-minutes`). Si no se confirma o cancela antes, la orden
-> pasa automáticamente a `EXPIRED` y los tickets se liberan. Ver Swagger para el flujo completo.
+> **Reserva temporal:** Al crear una orden queda en estado `PENDING` con una reserva en Redis que expira en **5 minutos** (configurable con `vento.reservation.ttl-minutes`). Si no se confirma antes, la orden pasa a `EXPIRED` automáticamente.
 
 ### Payment Service (Puerto 8084)
 
 **Swagger UI:** http://localhost:8084/swagger-ui.html
 
-| Método | Endpoint                   | Descripción                                        |
-|--------|----------------------------|----------------------------------------------------|
-| POST   | `/api/payments/process`    | Procesar pago simulado (80% éxito, 20% fallo, 2s delay) |
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `POST` | `/api/payments/process` | Procesar pago simulado (80% éxito, ~2s delay) |
 
-> **Simulación de pago:** El servicio simula un gateway de pago real con 80% de tasa de éxito y 20% de fallo.
-> Cada request tiene un delay de ~2 segundos. Los fallos devuelven HTTP 402 con formato RFC 9457.
+> **Simulación de pago:** 80% de tasa de éxito, 20% de fallo. Delay artificial de ~2 segundos. Los fallos devuelven HTTP 402 en formato RFC 9457. Incluye deduplicación por `orderId` para idempotencia.
+
+---
 
 ## 🔐 Seguridad (Keycloak)
 
-La autenticación y autorización del sistema está centralizada en el **API Gateway** usando **Keycloak** como proveedor
-de identidad OAuth2/OpenID Connect.
+La autenticación está centralizada en el **API Gateway** usando **Keycloak 26.0** como proveedor OAuth2/OIDC.
 
-### 📋 Credenciales por Defecto (Solo Desarrollo Local)
+### Credenciales por Defecto (Solo Desarrollo Local)
 
-| Servicio               | URL                   | Usuario | Contraseña |
-|------------------------|-----------------------|---------|------------|
-| **Keycloak Dashboard** | http://localhost:8180 | `admin` | `admin`    |
+| Servicio | URL | Usuario | Contraseña |
+|---|---|---|---|
+| Keycloak Dashboard | http://localhost:8180 | `admin` | `admin` |
 
-> ⚠️ **IMPORTANTE:** Estas credenciales son **EXCLUSIVAS para desarrollo local**. En producción, debes cambiar las
-> contraseñas en el archivo `.env.prod` antes de desplegar.
+> ⚠️ **Cambiar estas credenciales en producción** mediante el archivo `.env`.
 
-### 🔑 Configuración Requerida
-
-Antes de usar la API, debes configurar Keycloak con los siguientes elementos:
+### Configuración Requerida en Keycloak
 
 1. **Realm:** `vento-realm`
-2. **Cliente:** `vento-api` (OpenID Connect, confidential)
-3. **Roles:** `USER`, `ADMIN`
-4. **Usuarios:** Crear usuarios y asignar roles
+2. **Cliente backend:** `vento-api` (OpenID Connect, confidential) — para validación de JWT en el Gateway
+3. **Cliente frontend:** `vento-frontend` — con **Direct Access Grants** habilitado
+4. **Roles:** `USER`, `ADMIN`
+5. **Usuarios:** Crear y asignar roles según necesidad
 
-### 📖 Guía Completa de Configuración
+**Guía completa paso a paso:** [KEYCLOAK_SETUP.md](./KEYCLOAK_SETUP.md)
 
-Para instrucciones detalladas paso a paso, consulta: **[KEYCLOAK_SETUP.md](./KEYCLOAK_SETUP.md)**
-
-La guía incluye:
-
-- ✅ Creación de realm, cliente y roles
-- ✅ Creación de usuarios
-- ✅ Cómo obtener tokens JWT
-- ✅ Ejemplos de requests autenticados
-- ✅ Troubleshooting de errores comunes
-
-### 🧪 Ejemplo Rápido de Uso
+### Obtener Token JWT (curl)
 
 ```bash
-# 1. Obtener token JWT
-TOKEN=$(curl -X POST http://localhost:8180/realms/vento-realm/protocol/openid-connect/token \
+TOKEN=$(curl -s -X POST http://localhost:8180/realms/vento-realm/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "client_id=vento-api" \
@@ -379,103 +397,48 @@ TOKEN=$(curl -X POST http://localhost:8180/realms/vento-realm/protocol/openid-co
   -d "username=testuser" \
   -d "password=password123" | jq -r '.access_token')
 
-# 2. Usar token en requests a la API
+# Usar el token
 curl -X GET http://localhost:8080/api/events \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### 🛡️ Comportamiento de Seguridad
+### Headers Propagados a Microservicios
 
-| Escenario                      | Comportamiento                   |
-|--------------------------------|----------------------------------|
-| Request sin token              | `401 Unauthorized`               |
-| Token inválido/expirado        | `401 Unauthorized`               |
-| Token válido sin rol requerido | `403 Forbidden`                  |
-| Token válido con rol correcto  | `200 OK` → pasa al microservicio |
+El API Gateway extrae información del JWT y la reenvía como headers HTTP:
 
-### 📡 Headers Propagados a Microservicios
+| Header | Origen JWT | Descripción |
+|---|---|---|
+| `X-User-Id` | Claim `sub` | ID único del usuario |
+| `X-User-Roles` | Claim `realm_access.roles` | Roles (comma-separated) |
 
-El API Gateway extrae información del JWT y la propaga como headers:
+> Los microservicios **no validan JWT**. Confían directamente en los headers propagados por el Gateway. Una llamada directa que bypasee el Gateway es efectivamente no autenticada.
 
-| Header         | Descripción                         | Origen en JWT              |
-|----------------|-------------------------------------|----------------------------|
-| `X-User-Id`    | ID único del usuario                | Claim `sub`                |
-| `X-User-Roles` | Roles del usuario (comma-separated) | Claim `realm_access.roles` |
+### Comportamiento de Seguridad
 
-> Los microservicios **NO validan JWT**. Confían en los headers propagados por el Gateway.
+| Escenario | Respuesta |
+|---|---|
+| Request sin token | `401 Unauthorized` |
+| Token inválido o expirado | `401 Unauthorized` |
+| Token válido sin rol requerido | `403 Forbidden` |
+| Token válido con rol correcto | Pasa al microservicio |
 
-## 📦 Módulos
+---
 
-### `common/`
+## 📦 Módulo `common/`
 
-Módulo compartido con DTOs, excepciones y utilerías disponibles para todos los microservicios.
+Módulo compartido (`java-library`) disponible para todos los microservicios.
 
-### `microservices/api-gateway/`
+| Componente | Descripción |
+|---|---|
+| `AuditableEntity` | `@MappedSuperclass` con `createdAt`, `updatedAt`, `@Version` (optimistic locking) |
+| `GlobalExceptionHandler` | RFC 9457 Problem Details — auto-registrado via Spring auto-configuration |
+| `KafkaTopics` | Constantes centralizadas de nombres de topics |
+| `UserContext` | Thread-local para el `userId` propagado por el Gateway |
+| `OrderStatus` | Enum: `PENDING`, `CONFIRMED`, `CANCELLED`, `EXPIRED` |
+| `PaymentStatus` | Enum: `SUCCESS`, `FAILED` |
+| `TicketStatus` | Enum de estado de tickets |
 
-Punto de entrada único. Recibe todas las peticiones y las enruta a los microservicios correspondientes.
-
-### `microservices/*-service/`
-
-Cada microservicio es independiente:
-
-- `event-service` - Gestión de eventos
-- `order-service` - Gestión de pedidos
-- `payment-service` - Procesamiento de pagos simulados
-
-## 🛠️ Desarrollo
-
-### Ejecutar Todo el Stack (Recomendado para Desarrollo)
-
-Para desarrollar con frontend y backend simultáneamente:
-
-```bash
-# Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak)
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-
-# Terminal 2: Event Service
-./gradlew :microservices:event-service:bootRun
-
-# Terminal 3: Order Service
-./gradlew :microservices:order-service:bootRun
-
-# Terminal 4: Payment Service
-./gradlew :microservices:payment-service:bootRun
-
-# Terminal 5: API Gateway
-./gradlew :microservices:api-gateway:bootRun
-
-# Terminal 6: Frontend
-cd frontend && pnpm start
-```
-
-**Acceso:**
-
-- 🌐 **Frontend:** http://localhost:4200
-- 🔌 **API Gateway:** http://localhost:8080
-- 📖 **Swagger Event Service:** http://localhost:8082/swagger-ui.html
-- 📖 **Swagger Order Service:** http://localhost:8083/swagger-ui.html
-- 📖 **Swagger Payment Service:** http://localhost:8084/swagger-ui.html
-- 🔐 **Keycloak:** http://localhost:8180
-- 🔍 **Elasticsearch:** http://localhost:9200
-- 📊 **Kibana:** http://localhost:5601
-
-### Compilar un módulo específico
-
-```bash
-./gradlew :microservices:event-service:build
-```
-
-### Limpiar build
-
-```bash
-./gradlew clean
-```
-
-### Ver dependencias de un módulo
-
-```bash
-./gradlew :microservices:event-service:dependencies
-```
+---
 
 ## 🧪 Testing
 
@@ -488,158 +451,166 @@ cd frontend && pnpm start
 # Tests de un módulo específico
 ./gradlew :microservices:event-service:test
 ./gradlew :microservices:order-service:test
+./gradlew :common:test
 
-# Tests con reporte detallado
+# Test específico
+./gradlew :microservices:event-service:test --tests "com.vento.event.service.EventServiceTest"
+./gradlew :microservices:order-service:test --tests "*OrderServiceTest.testCreate*"
+
+# Con output detallado
 ./gradlew test --info
 ```
 
 ### Cobertura Actual
 
-| Servicio                  | Tests | Estado |
-|---------------------------|-------|--------|
-| EventService              | 6     | ✅      |
-| OrderService              | 9     | ✅      |
-| TicketInventoryService    | 3     | ✅      |
-| ConflictResolutionService | 3     | ✅      |
+| Módulo | Suite de Tests | Estado |
+|---|---|---|
+| event-service | `EventServiceTest` | ✅ |
+| order-service | `OrderServiceTest` (CreateOrder, CancelOrder, ConfirmOrder, ConcurrencyTests) | ✅ |
+| order-service | `PaymentSagaIntegrationTest` | ✅ |
+| order-service | `DlqIntegrationTest` | ✅ |
+| order-service | `PaymentResultListenerIdempotencyTest` | ✅ |
+| order-service | `TicketInventoryServiceTest` | ✅ |
+| payment-service | `KafkaEventPublishingTest` | ✅ |
+| payment-service | `PaymentIdempotencyServiceTest` | ✅ |
+| api-gateway | — | ❌ Sin tests |
 
-### Reportes
+> **Nota:** Los tests de integración de Kafka usan `EmbeddedKafka` de `spring-kafka-test`, no Testcontainers.
 
-Los reportes de tests se generan en:
+### Reportes HTML
 
-- **HTML:** `microservices/*/build/reports/tests/test/index.html`
-- **XML:** `microservices/*/build/test-results/test/`
-
-## 📂 Agregar un Nuevo Microservicio
-
-1. Crear carpeta en `microservices/nombre-servicio/`
-2. Crear `build.gradle` basado en los existentes
-3. Crear estructura de paquetes Java
-4. Agregar al `settings.gradle`:
-
-```groovy
-include 'microservices:nombre-servicio'
+```
+microservices/*/build/reports/tests/test/index.html
 ```
 
-5. Agregar ruta en `api-gateway/application.yml`
+---
 
-## 🔧 Configuración por Perfiles
+## 🛠️ Desarrollo
 
-Cada microservicio tiene configuración específica para cada entorno:
+### Arrancar el Stack Completo (Desarrollo Local)
+
+```bash
+# Terminal 1 — Infraestructura
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+# Terminal 2 — Event Service
+./gradlew :microservices:event-service:bootRun
+
+# Terminal 3 — Order Service
+./gradlew :microservices:order-service:bootRun
+
+# Terminal 4 — Payment Service
+./gradlew :microservices:payment-service:bootRun
+
+# Terminal 5 — API Gateway
+./gradlew :microservices:api-gateway:bootRun
+
+# Terminal 6 — Frontend
+cd frontend && pnpm start
+```
+
+### URLs de Acceso
+
+| Servicio | URL |
+|---|---|
+| 🌐 Frontend | http://localhost:4200 |
+| 🔌 API Gateway | http://localhost:8080 |
+| 📖 Swagger — Event Service | http://localhost:8082/swagger-ui.html |
+| 📖 Swagger — Order Service | http://localhost:8083/swagger-ui.html |
+| 📖 Swagger — Payment Service | http://localhost:8084/swagger-ui.html |
+| 🔐 Keycloak | http://localhost:8180 |
+| 🔍 Elasticsearch | http://localhost:9200 |
+| 📊 Kibana | http://localhost:5601 |
+| 📈 Grafana | http://localhost:3000 |
+| 🔎 Jaeger | http://localhost:16686 |
+| 📨 Kafka UI | http://localhost:8089 |
+
+### Comandos de Build
+
+```bash
+# Compilar todo (con tests)
+./gradlew build
+
+# Compilar sin tests
+./gradlew build -x test
+
+# Compilar módulo específico
+./gradlew :microservices:event-service:build
+
+# Limpiar build
+./gradlew clean
+
+# Ver dependencias de un módulo
+./gradlew :microservices:event-service:dependencies
+```
+
+---
+
+## 🔧 Configuración por Perfiles de Spring Boot
+
+Cada microservicio carga su configuración según `SPRING_PROFILES_ACTIVE` (por defecto: `local`).
 
 ```
 microservices/event-service/src/main/resources/
-├── application.yml           # Configuración base (perfil por defecto: local)
-├── application-local.yml     # PostgreSQL localhost para desarrollo rápido
-├── application-dev.yml       # PostgreSQL con variables de entorno
-└── application-prod.yml      # PostgreSQL con validación de schema
+├── application.yml           # Configuración base (activa perfil local por defecto)
+├── application-local.yml     # Credenciales hardcodeadas para localhost
+├── application-dev.yml       # Variables de entorno (Docker dev)
+└── application-prod.yml      # Validación de schema, sin credenciales hardcodeadas
 ```
 
-### Cambiar de Perfil
-
 ```bash
-# Usar perfil específico (local, dev, prod)
+# Cambiar perfil manualmente
 export SPRING_PROFILES_ACTIVE=dev
 ./gradlew :microservices:event-service:bootRun
 
-# O pasar como argumento
+# O como argumento
 ./gradlew :microservices:event-service:bootRun --args='--spring.profiles.active=prod'
 ```
 
-## 🔐 Variables de Entorno (.env)
+---
 
-Para los entornos **Dev** y **Prod** con Docker, el proyecto usa variables de entorno externalizadas.
+## 🔐 Variables de Entorno
 
-### Archivos de Variables
+| Archivo | Propósito | En git |
+|---|---|---|
+| `.env.example` | Plantilla con todas las variables | ✅ Sí |
+| `.env` | Valores para desarrollo local | ❌ No |
+| `.env.prod` | Valores para producción | ❌ No |
 
-| Archivo        | Propósito                                      | Versionado      |
-|----------------|------------------------------------------------|-----------------|
-| `.env.example` | Plantilla con todas las variables              | ✅ Sí (git)      |
-| `.env`         | Valores para desarrollo local                  | ❌ No (ignorado) |
-| `.env.prod`    | Valores específicos para producción (opcional) | ❌ No (ignorado) |
-
-### Configurar para Desarrollo (Dev)
+### Variables Principales
 
 ```bash
-# 1. Copiar plantilla
-cp .env.example .env
+# PostgreSQL — Event Service
+POSTGRES_EVENTS_DB=events_db
+POSTGRES_EVENTS_USER=postgres
+POSTGRES_EVENTS_PASSWORD=postgres          # ⚠️ Cambiar en producción
 
-# 2. (Opcional) Editar valores en .env
-# Las contraseñas por defecto son: postgres
+# PostgreSQL — Order Service
+POSTGRES_ORDERS_DB=orders_db
+POSTGRES_ORDERS_USER=postgres
+POSTGRES_ORDERS_PASSWORD=postgres          # ⚠️ Cambiar en producción
 
-# 3. Levantar entorno dev
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-```
-
-### Configurar para Producción (Prod)
-
-**Opción 1: Usar archivo `.env.prod`**
-
-```bash
-# Crear archivo específico para producción
-cp .env.example .env.prod
-
-# Editar con valores seguros
-# POSTGRES_EVENTS_PASSWORD=tu_password_seguro
-# POSTGRES_ORDERS_PASSWORD=tu_password_seguro
-# KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
-
-# Desplegar
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-**Opción 2: Exportar variables en el shell**
-
-```bash
-export POSTGRES_EVENTS_PASSWORD=tu_password_seguro
-export POSTGRES_ORDERS_PASSWORD=tu_password_seguro
-export KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro
-
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-**Opción 3: Usar Docker Compose directamente**
-
-```bash
-POSTGRES_EVENTS_PASSWORD=tu_password_seguro \
-POSTGRES_ORDERS_PASSWORD=tu_password_seguro \
-KEYCLOAK_ADMIN_PASSWORD=tu_password_seguro \
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-### Variables Disponibles
-
-```bash
-# PostgreSQL Event Service
-POSTGRES_EVENTS_DB=events_db          # Nombre de la base de datos
-POSTGRES_EVENTS_USER=postgres         # Usuario de la base de datos
-POSTGRES_EVENTS_PASSWORD=postgres     # Contraseña (CAMBIAR EN PROD)
-
-# PostgreSQL Order Service
-POSTGRES_ORDERS_DB=orders_db          # Nombre de la base de datos
-POSTGRES_ORDERS_USER=postgres         # Usuario de la base de datos
-POSTGRES_ORDERS_PASSWORD=postgres     # Contraseña (CAMBIAR EN PROD)
-
-# PostgreSQL Payment Service
-POSTGRES_PAYMENTS_DB=payments_db      # Nombre de la base de datos
-POSTGRES_PAYMENTS_USER=postgres       # Usuario de la base de datos
-POSTGRES_PAYMENTS_PASSWORD=postgres   # Contraseña (CAMBIAR EN PROD)
+# PostgreSQL — Payment Service
+POSTGRES_PAYMENTS_DB=payments_db
+POSTGRES_PAYMENTS_USER=postgres
+POSTGRES_PAYMENTS_PASSWORD=postgres        # ⚠️ Cambiar en producción
 
 # Keycloak
-KEYCLOAK_ADMIN=admin                  # Usuario admin de Keycloak
-KEYCLOAK_ADMIN_PASSWORD=admin         # Contraseña admin (CAMBIAR EN PROD)
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=admin              # ⚠️ Cambiar en producción
 
-# Frontend (Dockerfile.prod build args)
-API_URL=http://localhost:8080         # API Gateway URL para el frontend
-KEYCLOAK_URL=http://localhost:8180    # Keycloak URL para el frontend
-KEYCLOAK_REALM=vento-realm            # Nombre del realm
-KEYCLOAK_CLIENT_ID=vento-frontend     # Client ID para el frontend
+# Frontend (build args para Dockerfile.prod)
+API_URL=http://localhost:8080
+KEYCLOAK_URL=http://localhost:8180
+KEYCLOAK_REALM=vento-realm
+KEYCLOAK_CLIENT_ID=vento-frontend
 
 # Grafana
-GRAFANA_ADMIN_USER=admin              # Usuario admin de Grafana
-GRAFANA_ADMIN_PASSWORD=admin          # Contraseña admin (CAMBIAR EN PROD)
-GRAFANA_ROOT_URL=http://localhost:3001 # URL base de Grafana
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=admin               # ⚠️ Cambiar en producción
+GRAFANA_ROOT_URL=http://localhost:3001
 
-# CORS (opcional — tienen defaults)
+# CORS
 CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3000
 CORS_ALLOWED_METHODS=GET,POST,PUT,PATCH,DELETE,OPTIONS
 CORS_ALLOWED_HEADERS=Authorization,Content-Type,Accept
@@ -647,73 +618,16 @@ CORS_EXPOSED_HEADERS=X-User-Id,X-User-Roles
 CORS_ALLOW_CREDENTIALS=true
 CORS_MAX_AGE=3600
 
-# Avanzadas (opcional — tienen defaults)
+# Opcionales (tienen defaults)
 ELASTICSEARCH_URIS=http://localhost:9200
 KEYCLOAK_JWK_SET_URI=http://localhost:8180/realms/vento-realm/protocol/openid-connect/certs
 ```
 
-## 🐛 Troubleshooting
-
-### Los microservicios no se conectan a la base de datos (Local)
-
-1. Verificar que la infraestructura esté corriendo:
-   ```bash
-   docker compose -f docker-compose.yml -f docker-compose.local.yml ps
-   ```
-
-2. Verificar puertos expuestos:
-   ```bash
-   docker compose -f docker-compose.yml -f docker-compose.local.yml ps
-   # PostgreSQL events: 5432
-   # PostgreSQL orders: 5433
-   # Elasticsearch: 9200
-   ```
-
-3. Verificar logs de la base de datos:
-   ```bash
-   docker compose logs postgres-events
-   ```
-
-### Error "Connection refused" en API Gateway
-
-El API Gateway en modo `local` apunta a `localhost:8082` y `localhost:8083`. Asegúrate de que los microservicios estén
-corriendo:
-
-```bash
-# Verificar que los servicios estén activos
-curl http://localhost:8082/actuator/health
-curl http://localhost:8083/actuator/health
-```
-
-### Debug remoto en Docker (Dev)
-
-Los contenedores Dev exponen el puerto 5005 para debug remoto:
-
-1. En tu IDE, crear configuración de "Remote JVM Debug"
-2. Host: `localhost`, Puerto: `5005`
-3. El servicio debe estar corriendo en modo dev:
-   ```bash
-   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d event-service
-   ```
-
-### Resetear bases de datos (Local)
-
-```bash
-# Detener contenedores y eliminar volúmenes
-docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
-
-# Reiniciar
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-```
-
 ---
 
-## 📐 Estándares de la API
+## 📐 Estándar de Errores (RFC 9457)
 
-### Manejo de Errores (RFC 9457)
-
-La API utiliza el estándar **[RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457)** (Problem Details for HTTP APIs)
-para la gestión de errores. Todas las respuestas de error siguen este formato:
+Todas las respuestas de error siguen el estándar **[RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457)** (Problem Details for HTTP APIs):
 
 ```json
 {
@@ -723,37 +637,135 @@ para la gestión de errores. Todas las respuestas de error siguen este formato:
   "detail": "Se encontraron 2 errores de validación en la solicitud",
   "instance": "/api/orders",
   "service": "order-service",
-  "timestamp": "2026-03-28T12:00:00.000"
+  "timestamp": "2026-04-12T12:00:00.000"
 }
 ```
 
-**Campos de la respuesta:**
+| Tipo de error | HTTP | Descripción |
+|---|---|---|
+| `validation-error` | 400 | Datos de entrada inválidos |
+| `unauthorized` | 401 | Error de autenticación |
+| `forbidden` | 403 | Sin permisos suficientes |
+| `not-found` | 404 | Recurso no encontrado |
+| `payment-failed` | 402 | Pago fallido |
+| `conflict` | 409 | Conflicto de negocio (ej. tickets agotados) |
+| `internal-error` | 500 | Error interno del servidor |
+| `bad-gateway` | 502 | Error en servicio externo |
 
-| Campo       | Tipo   | Descripción                                             |
-|-------------|--------|---------------------------------------------------------|
-| `type`      | URI    | Identificador del tipo de error (extensible)            |
-| `title`     | string | Título corto y legible del error                        |
-| `status`    | number | Código HTTP de la respuesta (400, 401, 403, etc.)       |
-| `detail`    | string | Descripción detallada del error                         |
-| `instance`  | string | Path del endpoint que generó el error                   |
-| `service`   | string | Nombre del microservicio que respondió                  |
-| `timestamp` | string | Timestamp en formato ISO 8601 (truncado a milisegundos) |
+---
 
-**Tipos de errores comunes:**
+## 🔄 Scripts de Inicialización
 
-| Tipo                                        | HTTP | Descripción                    |
-|---------------------------------------------|------|--------------------------------|
-| `https://vento.app/errors/validation-error` | 400  | Errores de validación de datos |
-| `https://vento.app/errors/unauthorized`     | 401  | Error de autenticación         |
-| `https://vento.app/errors/forbidden`        | 403  | Error de autorización          |
-| `https://vento.app/errors/not-found`        | 404  | Recurso no encontrado          |
-| `https://vento.app/errors/payment-failed`   | 402  | Pago fallido                   |
-| `https://vento.app/errors/conflict`         | 409  | Conflicto de negocio           |
-| `https://vento.app/errors/internal-error`   | 500  | Error interno del servidor     |
-| `https://vento.app/errors/bad-gateway`      | 502  | Error en servicio externo      |
+### Kafka (automático en Docker)
 
-> **Nota:** Este formato es consistente en todos los microservicios (API Gateway, Event Service, Order Service).
+El contenedor `kafka-init` ejecuta `scripts/init-kafka.sh` automáticamente al primer `up`. Si se recrea el contenedor de Kafka, ejecutar manualmente:
+
+```bash
+docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
+```
+
+Topics creados (3 particiones, excepto DLQs con 1):
+`payment.processed`, `payment.failed`, `order.confirmed`, `order.cancelled`, `event.created`, `event.updated`, `event.deleted`, `payment.processed.DLQ`, `payment.failed.DLQ`
+
+### Elasticsearch (manual requerido)
+
+El índice `events` **no se crea automáticamente**. Ejecutar una sola vez después de que Elasticsearch esté disponible:
+
+```bash
+bash scripts/init-elasticsearch.sh
+```
+
+Crea el índice con analyzer `autocomplete` (edge-ngram, min=2, max=20) y el campo `location` como `geo_point`. Sin esto, las búsquedas de eventos fallarán.
+
+---
+
+## 📂 Agregar un Nuevo Microservicio
+
+1. Crear carpeta `microservices/<nombre-servicio>/` con estructura de paquetes estándar
+2. Copiar `build.gradle` de `event-service` y ajustar dependencias
+3. Registrar en `settings.gradle`:
+   ```groovy
+   include 'microservices:<nombre-servicio>'
+   ```
+4. Configurar ruta en `api-gateway/src/main/resources/application.yml`
+5. Crear `application.yml` con perfiles `local`, `dev` y `prod`
+6. Agregar servicio en `docker-compose.local.yml` si necesita infraestructura propia
+7. Los Dockerfiles usan `context: .` (raíz del repo) — el build copia todo el monorepo
+
+---
+
+## 🐛 Troubleshooting
+
+### Los microservicios no se conectan a la base de datos (Local)
+
+```bash
+# Verificar que la infraestructura esté corriendo
+docker compose -f docker-compose.yml -f docker-compose.local.yml ps
+
+# Verificar logs de PostgreSQL
+docker compose logs postgres-events
+docker compose logs postgres-orders
+
+# Verificar puertos expuestos (5432, 5433, 5434)
+docker compose -f docker-compose.yml -f docker-compose.local.yml ps
+```
+
+### Error "Connection refused" en el API Gateway
+
+El Gateway en perfil `local` apunta a `localhost:808X`. Verificar que los microservicios estén corriendo:
+
+```bash
+curl http://localhost:8082/actuator/health
+curl http://localhost:8083/actuator/health
+curl http://localhost:8084/actuator/health
+```
+
+### Búsquedas de Elasticsearch no funcionan
+
+El índice `events` debe crearse manualmente (no es automático):
+
+```bash
+# Verificar que ES esté healthy
+curl http://localhost:9200/_cluster/health
+
+# Crear el índice
+bash scripts/init-elasticsearch.sh
+
+# Verificar que se creó
+curl http://localhost:9200/events
+```
+
+### Kafka: topics no existen al arrancar
+
+```bash
+# Re-ejecutar el script de inicialización
+docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
+
+# Verificar topics en Kafka UI
+# http://localhost:8089
+```
+
+### Debug remoto en Docker (Dev)
+
+1. En el IDE, crear configuración "Remote JVM Debug"
+2. Host: `localhost`, Puerto según servicio (ver tabla de puertos de debug)
+3. El servicio debe estar corriendo en modo dev:
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d event-service
+   ```
+
+### Resetear bases de datos (Local)
+
+```bash
+# Detener y eliminar volúmenes
+docker compose -f docker-compose.yml -f docker-compose.local.yml down -v
+
+# Reiniciar infraestructura
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+```
+
+---
 
 ## 👤 Autor
 
-Creado para el proyecto Vento App.
+Proyecto **Vento App** — Plataforma de tickets para eventos.

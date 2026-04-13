@@ -14,6 +14,9 @@
 | Node.js | 22+ | docker-compose.dev.yml usa `node:22-alpine` |
 | Tailwind CSS | v4 (`@tailwindcss/postcss`) | `frontend/package.json` (no v3, sin `tailwind.config.js`) |
 
+Versiones de librerías adicionales (en bloque `ext {}` del `build.gradle` raíz):
+`lombok 1.18.38`, `springdoc 2.8.9`, `jackson-annotations 2.17.0`, `jakarta.validation-api 3.0.2`.
+
 ## Módulos Gradle
 
 `settings.gradle` incluye solo:
@@ -53,7 +56,8 @@ pnpm install
 pnpm start           # dev server localhost:4200
 pnpm build           # PRODUCCIÓN por defecto (defaultConfiguration: "production" en angular.json)
 pnpm build -- --configuration development
-pnpm test            # Karma/Jasmine
+pnpm watch           # build en modo watch (development)
+pnpm test            # Angular CLI test runner (no karma.conf.js — configurado en angular.json)
 pnpm ng test -- --include='**/some.spec.ts'
 pnpm run setup:env   # cp .env.example .env  (ejecutar una vez)
 pnpm lint
@@ -65,12 +69,16 @@ pnpm ng generate component features/<feature>/components/<name>
 ### Docker
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d   # Local
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d     # Dev
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d   # Local (infra only, microservicios via Gradle)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d     # Dev (todo en Docker)
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d    # Prod
 docker compose logs -f <servicio>
 docker compose down
 ```
+
+**`docker-compose.local.yml`**: solo infraestructura (postgres, redis, kafka, ES, keycloak, grafana, etc.) — los microservicios corren con `./gradlew bootRun`.
+**`docker-compose.dev.yml`**: incluye microservicios en Docker con puertos JDWP para debug.
+**Frontend en dev Docker**: el servicio `frontend` ejecuta `tail -f /dev/null` — es un placeholder. Correr Angular dev siempre con `pnpm start`.
 
 ## Infraestructura — puertos completos
 
@@ -92,7 +100,7 @@ docker compose down
 | elasticsearch | 9200 | — | xpack.security deshabilitado |
 | kibana | 5601 | 5601 | — |
 | prometheus | 9090 | — | Acceso interno solo (Grafana) |
-| jaeger | 16686 | 16686 | UI de traces (remover en prod si solo Grafana) |
+| jaeger | 16686 | 16686 | UI de traces |
 | otel-collector | 4317, 4318 | — | Acceso interno solo |
 | loki | 3100 | — | Acceso interno solo (Grafana) |
 | grafana | 3000 | 3001 | Dashboards de observabilidad |
@@ -109,6 +117,7 @@ docker compose down
   ```bash
   docker exec vento-app-local-kafka-init-1 sh /init-kafka.sh
   ```
+  (El nombre del contenedor puede variar según el perfil compose; verificar con `docker ps`.)
 - Microservicios corriendo con Gradle (fuera de Docker) deben conectar a `localhost:9093`, no `9092`.
 - Paquetes de confianza para deserialización JSON: `com.vento.common.dto.kafka` — ya configurado en `application.yml` de cada servicio.
 
@@ -132,7 +141,8 @@ Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `
 - Plugin `java-library` (no `java`) — los consumidores acceden via `implementation project(':common')`.
 - Contiene: DTOs compartidos, Enums (`OrderStatus`, `PaymentStatus`, `TicketStatus`), todas las excepciones de dominio, `GlobalExceptionHandler` (RFC 9457 Problem Details), `KafkaTopics` (fuente única de nombres de topics), `UserContext`, `AuditableEntity`.
 - Spring starters declarados `compileOnly` — no se propagan a los runtimes de los servicios.
-- `ExceptionHandlerAutoConfiguration` registra `GlobalExceptionHandler` automáticamente en cada servicio via Spring auto-configuration.
+- `ExceptionHandlerAutoConfiguration` registra `GlobalExceptionHandler` automáticamente en cada servicio via Spring auto-configuration (Spring Boot auto-configuration `META-INF/spring/` entry).
+- `AuditableEntity`: `@MappedSuperclass` con `createdAt`, `updatedAt` y `@Version Long version` (optimistic locking).
 
 ## Perfiles de Spring Boot
 
@@ -141,30 +151,39 @@ Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `
 - `application-dev.yml` usa variables de entorno (necesario para Docker dev).
 - Correr `bootRun` sin definir `SPRING_PROFILES_ACTIVE` usa `local`.
 
+## Dependencias entre microservicios
+
+- **order-service** llama a **event-service** via Feign (`http://localhost:8082` en local) para verificar disponibilidad.
+- **payment-service** no usa Redis ni llama a otros servicios via HTTP; toda comunicación es Kafka.
+- **api-gateway** es WebFlux (Spring Cloud Gateway); los demás servicios son Spring MVC. No compartir `GlobalExceptionHandler` entre ellos.
+
 ## Arquitectura de seguridad
 
 - **api-gateway** valida JWT (OAuth2 resource server vs Keycloak). Extrae `sub` → `X-User-Id` y `realm_access.roles` → `X-User-Roles` y los propaga como headers.
 - **Microservicios** confían en esos headers directamente — **no validan JWT**. Una llamada directa que bypasee el gateway es efectivamente no autenticada.
 - **Frontend** usa Keycloak **Direct Access Grant** (Resource Owner Password Credentials), no Authorization Code Flow. El cliente `vento-frontend` en Keycloak debe tener "Direct Access Grants Enabled". Tokens en `localStorage`.
 - Token se considera expirado 1 minuto antes del `exp` real (buffer de 60s).
-- **Refresh token**: al recibir 401 del gateway, el interceptor llama a `refreshSession()` (grant_type=refresh_token) y reintenta la petición original. Si el refresh falla, logout + redirect a `/login`. Requests concurrentes comparten el mismo refresh in-flight.
+- **Refresh token**: al recibir 401 del gateway, el interceptor llama a `refreshSession()` (grant_type=refresh_token) y reintenta la petición original. Si el refresh falla, logout + redirect a `/login`. Requests concurrentes comparten el mismo refresh in-flight via `shareReplay(1)`.
 
 ## Frontend — quirks importantes
 
 - **`pnpm build` compila en producción** (`defaultConfiguration: "production"` en `angular.json`). Para dev: añadir `-- --configuration development`.
 - **`ng generate` nunca crea `.spec.ts`** — `skipTests: true` en todos los schematics de `angular.json`. Los specs deben crearse manualmente.
-- **Config de entorno runtime**: se inyecta via `window.__env` en `index.html`, no via `environments/*.ts`. Los helpers están en `src/environments/env.config.ts`. Ejecutar `pnpm run setup:env` para crear `.env` desde `.env.example`.
-- **Tailwind v4**: configuración CSS-first, entry point `src/tailwind.css`. No existe `tailwind.config.js`.
+- **Config de entorno runtime**: se inyecta via `window.__env` en `index.html`, no via `environments/*.ts`. Los helpers están en `src/environments/env.config.ts`. Ejecutar `pnpm run setup:env` para crear `.env` desde `.env.example`. No usar `environments/environment.ts`.
+- **Tailwind v4**: configuración CSS-first en `src/tailwind.css` (tema via `@theme {}`, paleta Material Design 3). No existe `tailwind.config.js`.
 - **Rutas NO son lazy-loaded** a pesar de lo que sugiere la estructura — todos los componentes están importados estáticamente en `app.routes.ts`.
-- **`auth.service.ts` usa `BehaviorSubject`** para `authChanged$` + refresh token automático al recibir 401 (código legacy, no cambiar a signals sin refactor completo).
+- **`auth.service.ts`** vive en `core/auth/auth.service.ts` (no en `core/services/`). Usa `BehaviorSubject` para `authChanged$` — no cambiar a signals sin refactor completo.
 - **ESLint prohíbe `any`** (`no-explicit-any: error`) — no usar `any` en TypeScript.
+- **Path aliases** (definidos en `tsconfig.app.json`): `@app/*`, `@core/*`, `@shared/*`, `@features/*`, `@env/*`.
 - **Librerías UI de terceros**: `@bluehalo/ngx-leaflet` + `leaflet` + `leaflet-control-geocoder` (mapas), `qrcode` (tickets).
 - Estilos en `angular.json` en orden: `src/tailwind.css` → `src/styles.scss` → `leaflet.css`. El orden importa.
+- No existe karma.conf.js; los tests se configuran exclusivamente en `angular.json`.
 
 ## Redis
 
 - Keys: `vento:event:{id}:available_tickets` (tickets disponibles), `vento:reservation:{orderId}` (TTL 5min)
 - Order states: `PENDING` → `CONFIRMED` | `CANCELLED` | `EXPIRED`
+- payment-service **no usa Redis**.
 
 ## Jobs en background
 
@@ -176,7 +195,7 @@ Crea analyzer `autocomplete` (edge_ngram min=2, max=20), campo `location` como `
 - Unit tests usan solo `@ExtendWith(MockitoExtension.class)`, sin Spring context.
 - `EventServiceTest` debe llamar `eventService.init()` manualmente (el `@PostConstruct` no se ejecuta sin contexto).
 - Tests de integración Kafka usan `EmbeddedKafka` de `spring-kafka-test` (no Testcontainers).
-- api-gateway **no tiene directorio de tests**.
+- api-gateway **no tiene directorio de tests**. order-service y payment-service tampoco tienen tests actualmente.
 - Reports HTML: `microservices/*/build/reports/tests/test/index.html`
 
 ## Agregar microservicio

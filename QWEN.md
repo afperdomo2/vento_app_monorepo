@@ -1,8 +1,8 @@
-# Vento App Monorepo — Contexto de Qwen
+# Vento App - Contexto del Proyecto
 
 ## Resumen del Proyecto
 
-**Vento App** es una plataforma de gestión de eventos construida como un monorepo de Spring Boot + Gradle con arquitectura de microservicios y un frontend en Angular 21. La aplicación permite crear eventos, gestionar inventario de tickets y procesar reservas con un sistema de reservas temporales respaldado por TTL de Redis.
+**Vento App** es una plataforma integral de gestión de eventos construida como un **monorepo de Spring Boot + Gradle** con una **arquitectura de microservicios** y un **frontend en Angular 21**. La plataforma permite crear eventos, gestionar inventario de tickets y procesar reservas con un sistema de reservas temporales respaldado por TTL de Redis.
 
 ### Arquitectura
 
@@ -14,14 +14,14 @@ vento_app_monorepo/
 │   ├── event-service/           # CRUD de eventos + inventario de tickets (puerto 8082)
 │   ├── order-service/           # Gestión de pedidos/reservas (puerto 8083)
 │   └── payment-service/         # Procesamiento de pagos simulado (puerto 8084)
-├── frontend/                    # SPA Angular 21 (puerto 4200)
+├── frontend/                    # SPA de Angular 21 (puerto 4200)
 └── database/                    # Scripts SQL y migraciones
 ```
 
 ### Stack Tecnológico
 
 | Capa | Tecnología | Versión |
-|------|------------|---------|
+|------|-----------|---------|
 | **Backend** | Java | 25 |
 | | Spring Boot | 3.5.0 |
 | | Spring Cloud | 2025.0.0 |
@@ -55,7 +55,7 @@ nvm install 22
 npm install -g pnpm
 ```
 
-### Inicio Rápido — Stack Completo (Desarrollo Local)
+### Inicio Rápido - Stack Completo (Desarrollo Local)
 
 ```bash
 # Terminal 1: Infraestructura (PostgreSQL, Redis, Keycloak, Elasticsearch)
@@ -87,7 +87,6 @@ cd frontend && pnpm start
 ./gradlew build                              # Compilar todo con tests
 ./gradlew build -x test                      # Compilar sin tests
 ./gradlew :microservices:event-service:build # Módulo específico
-./gradlew test                               # Ejecutar todos los tests
 ./gradlew :microservices:event-service:test --tests "*SomeTest*"  # Test específico
 ./gradlew test --info                        # Tests con salida detallada
 ./gradlew :microservices:event-service:bootRun  # Ejecutar un servicio
@@ -155,26 +154,12 @@ Aliases disponibles (configurados en `tsconfig.app.json`):
 ```
 src/app/
 ├── core/                     # Servicios globales singleton (auth, guards, interceptors)
-├── shared/                   # Componentes, directivas, pipes, UI reutilizables
+├── shared/                   # Componentes, directivas, pipes reutilizables
 └── features/                 # Módulos de negocio (lazy-loaded)
     └── <feature>/
         ├── components/       # Componentes hijos específicos del feature
         ├── services/         # Servicios del feature
         └── <feature>.page.ts # Página principal (orquestador)
-```
-
-### Componentización de la Home Page
-
-La home page se compone de 4 componentes hijos (patrón smart/presentational):
-
-```
-home/
-├── home.page.ts                          # Orquestador (~30 líneas)
-└── components/
-    ├── home-hero-banner/                 # Dumb — banner hero estático
-    ├── home-featured-events/             # Smart — carga eventos vía EventService
-    ├── home-nearby-events/               # Smart — geolocalización + eventos cercanos
-    └── home-newsletter-cta/              # Dumb — sección newsletter
 ```
 
 ### Todos los Features
@@ -185,7 +170,7 @@ home/
 | `events-list/` | Listado completo con búsqueda, filtros, scroll infinito |
 | `event-detail/` | Vista individual de evento con reserva de tickets |
 | `checkout/` | Flujo de revisión de pedido y pago |
-| `my-orders/` | Historial de pedidos del usuario y detalle con tickets QR |
+| `my-orders/` | Historial de pedidos del usuario con tickets QR |
 | `nearby/` | Descubrimiento de eventos cercanos basado en mapa |
 | `login/` | Página de autenticación |
 | `profile/` | Gestión de perfil de usuario |
@@ -264,7 +249,7 @@ microservices/<servicio>/src/main/java/com/vento/<modulo>/
 ### Convenciones de Nombres
 
 | Tipo | Convención | Ejemplo |
-|------|------------|---------|
+|------|-----------|---------|
 | Clases | PascalCase | `EventController`, `OrderService` |
 | Métodos | camelCase | `createEvent()`, `findById()` |
 | Constantes | UPPER_SNAKE_CASE | `DEFAULT_PAGE_SIZE`, `REDIS_TTL` |
@@ -300,7 +285,7 @@ microservices/<servicio>/src/main/java/com/vento/<modulo>/
 
 | Servicio | Puerto (dev) | Puerto (prod) | Propósito |
 |----------|-------------|---------------|-----------|
-| API Gateway | 8080 | 8080 | Enrutamiento de peticiones (única entrada al backend) |
+| API Gateway | 8080 | 8080 | Enrutamiento de peticiones (única entrada) |
 | Event Service | 8082 | — | Gestión de eventos (solo vía API Gateway en prod) |
 | Order Service | 8083 | — | Gestión de pedidos/reservas (solo vía API Gateway en prod) |
 | Payment Service | 8084 | — | Procesamiento de pagos (solo vía API Gateway en prod) |
@@ -344,7 +329,7 @@ PENDING → CONFIRMED (pago exitoso)
 | Token válido, sin rol | `403 Forbidden` |
 | Token válido, con rol | `200 OK` |
 
-**Frontend — Token expiration:**
+**Frontend — Expiración de token:**
 - Los tokens de Keycloak tienen una duración de 5 minutos (`expires_in: 300`)
 - El frontend considera el token expirado 1 minuto antes del `exp` real (buffer de 60s)
 - **Refresh automático**: al recibir 401 del gateway, el interceptor llama a `refreshSession()` (`grant_type=refresh_token`) y reintenta la petición original con el nuevo access token
@@ -359,7 +344,7 @@ PENDING → CONFIRMED (pago exitoso)
 
 ## Observabilidad
 
-### Pipeline completo
+### Pipeline Completo
 
 ```
 Microservicios → OTel Collector → Jaeger (traces)
@@ -375,22 +360,22 @@ Jaeger UI (http://localhost:16686) ← traces distribuidos
 ### Herramientas
 
 | Herramienta | Propósito | Acceso |
-|---|---|---|
-| **OTel Collector** | Recibe traces OTLP de todos los servicios, los envía a Jaeger | Interno solo |
+|-------------|-----------|--------|
+| **OTel Collector** | Recibe traces OTLP de todos los servicios, los envía a Jaeger | Solo interno |
 | **Jaeger** | Almacena y visualiza traces distribuidos | Puerto 16686 (UI directa) |
-| **Prometheus** | Scrapea métricas de Spring Boot Actuator (`/actuator/prometheus`) | Interno solo (vía Grafana) |
-| **Loki** | Agrega logs de todos los contenedores via Promtail | Interno solo (vía Grafana) |
+| **Prometheus** | Scrapea métricas de Spring Boot Actuator (`/actuator/prometheus`) | Solo interno (vía Grafana) |
+| **Loki** | Agrega logs de todos los contenedores via Promtail | Solo interno (vía Grafana) |
 | **Grafana** | Dashboards unificados para métricas y logs | Puerto 3000 (dev) / 3001 (prod) |
 
-### Grafana — Datasources provisionados
+### Grafana — Datasources Provisionados
 
 - **Prometheus** (`grafana/provisioning/datasources/prometheus.yml`) → datasource default
 - **Loki** (`grafana/provisioning-{dev,prod}/datasources/loki.yml`) → logs
 
-### Grafana — Dashboards disponibles
+### Grafana — Dashboards Disponibles
 
 | Dashboard | Archivo | Propósito |
-|---|---|---|
+|-----------|---------|-----------|
 | **Vento — Log Explorer** | `logs-dashboard.json` | Volumen de logs, errores, logs por servicio/nivel |
 | **Infrastructure** | `infrastructure-dashboard.json` | Health de servicios, CPU, memoria, uptime |
 | **Performance** | `performance-dashboard.json` | Latencia de requests, throughput, percentiles |
@@ -403,7 +388,7 @@ Acceso directo en `http://localhost:16686` para:
 - Timeline visual completo con spans y critical path
 - Grafo de dependencias entre servicios
 
-### Métricas expuestas
+### Métricas Expuestas
 
 Cada microservicio expone en `/actuator/prometheus`:
 - `http_server_requests_seconds` — latencia de requests (histograma)
@@ -439,6 +424,10 @@ POSTGRES_ORDERS_DB=orders_db
 POSTGRES_ORDERS_USER=postgres
 POSTGRES_ORDERS_PASSWORD=postgres
 
+POSTGRES_PAYMENTS_DB=payments_db
+POSTGRES_PAYMENTS_USER=postgres
+POSTGRES_PAYMENTS_PASSWORD=postgres
+
 # Keycloak
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=admin
@@ -458,7 +447,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:3000
 docker compose -f docker-compose.yml -f docker-compose.local.yml ps
 
 # Ver logs de la BD
-docker compose logs postgres-events
+docker compose -f docker-compose.yml -f docker-compose.local.yml logs postgres-events
 ```
 
 ### API Gateway "Connection Refused"
